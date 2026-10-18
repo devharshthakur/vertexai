@@ -11,7 +11,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write --ignore-unknown --list-different .",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "prepare": "husky"
   },
   "dependencies": {
     "nuxt": "4.6.2",
@@ -22,7 +23,11 @@
     "@nuxt/eslint": "1.17.0",
     "@types/node": "24.19.2",
     "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "husky": "9.1.7",
+    "nano-staged": "1.0.2",
     "prettier": "3.9.10",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vue-tsc": "3.3.13"
   }
 }

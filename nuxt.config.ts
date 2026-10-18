@@ -2,7 +2,11 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/fonts'],
+  modules: ['@nuxt/eslint', '@nuxt/fonts', 'shadcn-nuxt'],
+  shadcn: {
+    prefix: '',
+    componentDir: '@/components/ui'
+  },
   fonts: {
     provider: 'fontsource'
   },

@@ -1,0 +1,21 @@
+# Dependencies
+node_modules
+
+# Nuxt / Nitro build & cache output
+.nuxt
+.output
+.data
+.nitro
+.cache
+dist
+
+# Package manager lockfile (managed by pnpm)
+pnpm-lock.yaml
+
+# Exported / binary documents
+docs/PRD.docx
+docs/PRD.md
+
+# Logs & OS files
+*.log
+.DS_Store

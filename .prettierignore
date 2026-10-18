@@ -19,3 +19,6 @@ docs/PRD.md
 # Logs & OS files
 *.log
 .DS_Store
+
+# Externally installed agent skills
+.agents/

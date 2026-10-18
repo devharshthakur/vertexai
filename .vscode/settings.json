@@ -1,4 +1,15 @@
 {
   // Required in vscode-eslint < v3.0.10 only
-  "eslint.useFlatConfig": true
+  "eslint.useFlatConfig": true,
+
+  // Externally installed agent skills (gitignored): exclude from search/watcher, read-only in editor
+  "search.exclude": {
+    "**/.agents": true
+  },
+  "files.watcherExclude": {
+    "**/.agents/**": true
+  },
+  "files.readonlyInclude": {
+    "**/.agents/**": true
+  }
 }

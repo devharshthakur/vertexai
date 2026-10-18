@@ -5,6 +5,7 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "typecheck": "nuxt typecheck",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "lint": "eslint .",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@nuxt/eslint": "1.17.0",
+    "@types/node": "24.19.2",
     "eslint": "10.13.0",
     "typescript": "6.0.3"
   }

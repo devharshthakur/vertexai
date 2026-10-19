@@ -2,10 +2,19 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: ['@nuxt/eslint', '@nuxt/fonts', 'shadcn-nuxt'],
+  modules: [
+    '@nuxt/eslint',
+    '@nuxt/fonts',
+    'shadcn-nuxt',
+    '@nuxt/icon',
+    '@nuxtjs/color-mode'
+  ],
   shadcn: {
     prefix: '',
     componentDir: '@/components/ui'
+  },
+  colorMode: {
+    classSuffix: ''
   },
   fonts: {
     provider: 'fontsource'

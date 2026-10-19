@@ -13,6 +13,7 @@ import { CheckIcon } from '@lucide/vue'
         <CheckIcon data-icon="inline-start" />
         shadcn-vue is set up
       </Button>
+      <ModeToggle />
     </main>
   </div>
 </template>

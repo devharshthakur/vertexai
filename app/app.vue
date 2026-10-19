@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { CheckIcon } from '@lucide/vue'
+import ModeToggle from '@/components/ModeToggle.vue'
 </script>
 
 <template>

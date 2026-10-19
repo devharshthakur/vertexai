@@ -9,6 +9,12 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxtjs/color-mode'
   ],
+  components: {
+    dirs: []
+  },
+  imports: {
+    scan: false
+  },
   shadcn: {
     prefix: '',
     componentDir: '@/components/ui'

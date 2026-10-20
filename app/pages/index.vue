@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { CheckIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
-import ModeToggle from '@/components/ModeToggle.vue'
 </script>
 
 <template>
@@ -14,7 +13,6 @@ import ModeToggle from '@/components/ModeToggle.vue'
         <CheckIcon data-icon="inline-start" />
         shadcn-vue is set up
       </Button>
-      <ModeToggle />
     </main>
   </div>
 </template>

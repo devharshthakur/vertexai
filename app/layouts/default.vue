@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
+import ModeToggle from '@/components/ModeToggle.vue'
 import {
   refreshAuthSession,
   useAuthSession
@@ -41,6 +42,7 @@ async function signOut() {
               <NuxtLink to="/auth/signup">Sign up</NuxtLink>
             </Button>
           </template>
+          <ModeToggle />
         </nav>
       </div>
     </header>

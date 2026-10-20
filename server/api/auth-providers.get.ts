@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { enabledAuthProviders } from '../utils/auth-providers'
+import { enabledAuthProviders } from '#server/utils/auth-providers'
 
 /**
  * Lists the sign-in methods this deployment supports.

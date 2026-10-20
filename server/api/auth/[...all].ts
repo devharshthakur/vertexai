@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { auth } from '../../utils/auth'
+import { auth } from '#server/utils/auth'
 
 /**
  * Mounts the Better Auth handler on `/api/auth/**`.

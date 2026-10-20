@@ -10,6 +10,7 @@
     "**/.agents/**": true
   },
   "files.readonlyInclude": {
-    "**/.agents/**": true
+    "**/.agents/**": true,
+    "**/app/components/ui/**": true
   }
 }

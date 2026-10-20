@@ -22,3 +22,5 @@ docs/PRD.md
 
 # Externally installed agent skills
 .agents/
+
+app/components/ui/

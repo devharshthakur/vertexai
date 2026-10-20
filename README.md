@@ -26,14 +26,37 @@ What the repository contains today:
 | --------- | ---------------------------------------- |
 | Framework | Nuxt 4, Vue 3, TypeScript                |
 | UI        | Tailwind CSS 4, shadcn-vue, Lucide icons |
+| Data      | PostgreSQL (Docker Compose), Drizzle ORM |
 | Tooling   | ESLint, Prettier, Husky                  |
 
 What is being built next:
 
 - **Better Auth** for sessions and roles, instead of hand-rolled auth
-- **PostgreSQL with pgvector** for LMS data and course-level semantic search
+- **Drizzle schema** for the LMS entities, with **pgvector** for course-level semantic search
 - **Redis** for caching and background jobs
 - A **RAG pipeline** that grounds the AI tutor in each course's own material
+
+## Local development
+
+The database runs in Docker. Copy the environment template once, then start it:
+
+```bash
+cp .env.example .env
+pnpm db:up # start PostgreSQL on localhost:5433
+```
+
+The host port lives in `POSTGRES_PORT` (`5433` by default, so it does not clash with a PostgreSQL already running on `5432`).
+
+Schema changes follow the Drizzle workflow. Tables are defined in `server/db/schema`, and `drizzle.config.ts` reads the same `DATABASE_URL` the Nuxt server uses:
+
+```bash
+pnpm db:generate # write a migration from server/db/schema
+pnpm db:migrate # apply pending migrations
+pnpm db:check # validate the migration history
+pnpm db:studio # browse the database
+```
+
+No domain tables are modelled yet, so `pnpm db:generate` currently reports no changes. `GET /api/health` reports whether the database is reachable.
 
 ## Status
 

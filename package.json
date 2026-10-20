@@ -34,6 +34,8 @@
     "clean:all": "nuxt cleanup && node -e \"require('node:fs').rmSync('node_modules', { recursive: true, force: true })\"",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
+    "db:start": "docker compose start db",
+    "db:stop": "docker compose stop db",
     "db:logs": "docker compose logs -f db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

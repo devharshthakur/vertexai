@@ -46,6 +46,13 @@ cp .env.example .env
 pnpm db:up # start PostgreSQL on localhost:5433
 ```
 
+Once the container exists, `db:start`/`db:stop` resume or pause it without removing the container or its data:
+
+```bash
+pnpm db:start # start an existing (stopped) db container
+pnpm db:stop # stop the db container, keeping the volume
+```
+
 The host port lives in `POSTGRES_PORT` (`5433` by default, so it does not clash with a PostgreSQL already running on `5432`).
 
 Better Auth needs a secret of its own. Generate one and put it in `.env` next to the database settings:

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "servers": {
+      "better-auth": {
+        "type": "remote",
+        "url": "https://mcp.better-auth.com/mcp",
+        "disabled": false,
+      },
+      "shadcnVue": {
+        "type": "local",
+        "command": [
+          "npx",
+          "shadcn-vue@latest",
+          "mcp"
+        ],
+        "disabled": false,
+      }
+    }
+  }
+}

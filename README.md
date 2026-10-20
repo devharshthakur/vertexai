@@ -1,75 +1,48 @@
-# Nuxt Minimal Starter
+# VertexAI
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+An AI-augmented learning management system with a tutor that knows your course.
 
-## Setup
+> **Under active development.** The project is early — nothing here is production-ready, and there are no releases yet.
 
-Make sure to install dependencies:
+## What is VertexAI?
 
-```bash
-# npm
-npm install
+VertexAI is a learning management system built around one idea: the AI tutor should answer from _your_ course material, not from a generic chatbot. It is designed to bring the familiar LMS loop — courses, lectures, assignments, quizzes, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from.
 
-# pnpm
-pnpm install
+Planned capabilities:
 
-# yarn
-yarn install
+- Course authoring, a searchable catalog, and enrollment
+- Lectures with progress tracking, notes, and bookmarks
+- Assignments, auto-graded quizzes, certificates, streaks, and badges
+- An AI tutor grounded in course material, with source citations
+- AI-generated lecture summaries, flashcards, and quiz drafts
+- Explanations that adapt to a beginner, intermediate, or advanced level
+- Instructor analytics, plus an admin layer for approvals and moderation
 
-# bun
-bun install
-```
+## Stack
 
-## Development Server
+What the repository contains today:
 
-Start the development server on `http://localhost:3000`:
+| Layer     | Choice                                   |
+| --------- | ---------------------------------------- |
+| Framework | Nuxt 4, Vue 3, TypeScript                |
+| UI        | Tailwind CSS 4, shadcn-vue, Lucide icons |
+| Tooling   | ESLint, Prettier, Husky                  |
 
-```bash
-# npm
-npm run dev
+What is being built next:
 
-# pnpm
-pnpm dev
+- **Better Auth** for sessions and roles, instead of hand-rolled auth
+- **PostgreSQL with pgvector** for LMS data and course-level semantic search
+- **Redis** for caching and background jobs
+- A **RAG pipeline** that grounds the AI tutor in each course's own material
 
-# yarn
-yarn dev
+## Status
 
-# bun
-bun run dev
-```
+VertexAI is being built in the open from the LMS-AI product requirements document, kept in [`docs/PRD.md`](docs/PRD.md). The design is still moving, so expect frequent changes and breaking changes to the structure. Follow the repository to see how it progresses.
 
-## Production
+## Author
 
-Build the application for production:
+**Harsh Thakur** — [GitHub](https://github.com/devharshthakur/) · [harshprojects2002@outlook.com](mailto:harshprojects2002@outlook.com)
 
-```bash
-# npm
-npm run build
+## License
 
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+[MIT](./LICENSE)

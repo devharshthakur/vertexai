@@ -1,7 +1,29 @@
 {
   "name": "vertexai",
+  "version": "0.1.0",
+  "description": "An AI-augmented learning management system with a course-grounded AI tutor, built with Nuxt 4, Vue 3, and TypeScript.",
   "type": "module",
   "private": true,
+  "author": {
+    "name": "Harsh Thakur",
+    "email": "harshprojects2002@outlook.com",
+    "url": "https://github.com/devharshthakur/"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/devharshthakur/vertexai#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devharshthakur/vertexai.git"
+  },
+  "keywords": [
+    "lms",
+    "ai-tutor",
+    "rag",
+    "e-learning",
+    "nuxt",
+    "vue",
+    "typescript"
+  ],
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev --port 5173",

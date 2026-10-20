@@ -22,6 +22,18 @@ export default defineNuxtConfig({
   colorMode: {
     classSuffix: ''
   },
+  app: {
+    head: {
+      title: 'VertexAI',
+      meta: [
+        {
+          name: 'description',
+          content:
+            'An AI-augmented learning management system with a tutor that knows your course.'
+        }
+      ]
+    }
+  },
   fonts: {
     provider: 'fontsource'
   },

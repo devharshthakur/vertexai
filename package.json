@@ -8,6 +8,8 @@
     "typecheck": "nuxt typecheck",
     "generate": "nuxt generate",
     "preview": "nuxt preview --port 4173",
+    "clean": "nuxt cleanup",
+    "clean:all": "nuxt cleanup && node -e \"require('node:fs').rmSync('node_modules', { recursive: true, force: true })\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write --ignore-unknown --list-different .",

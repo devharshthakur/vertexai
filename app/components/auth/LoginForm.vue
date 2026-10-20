@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { GalleryVerticalEnd } from '@lucide/vue'
+import { useForm } from '@tanstack/vue-form'
 import { Button } from '@/components/ui/button'
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator
@@ -12,18 +14,11 @@ import { Input } from '@/components/ui/input'
 import { useAuthProviders } from '@/composables/useAuthProviders'
 import { refreshAuthSession } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
+import { toErrorMessages } from '@/lib/form-errors'
+import { loginSchema } from '#shared/validation/auth'
+import type { LoginValues } from '#shared/validation/auth'
 
 const route = useRoute()
-
-const email = ref('')
-const password = ref('')
-const pending = ref(false)
-const errorMessage = ref('')
-
-const { data: providers } = await useAuthProviders()
-const githubEnabled = computed(
-  () => providers.value?.providers.includes('github') ?? false
-)
 
 /**
  * Only same-origin paths are accepted, so the `redirect` query parameter
@@ -38,37 +33,64 @@ const redirectTo = computed(() => {
     : '/dashboard'
 })
 
-async function onSubmit() {
-  pending.value = true
-  errorMessage.value = ''
+/** Failures reported by Better Auth, which belong to the form as a whole. */
+const serverError = ref('')
 
-  const { error } = await authClient.signIn.email({
-    email: email.value,
-    password: password.value
-  })
+/**
+ * The form is created before the first `await`: `useForm` registers a mount
+ * hook, and Vue drops the current component instance across an `await`.
+ *
+ * The Zod schema is attached as a form-level validator, so TanStack Form
+ * spreads its issues over the matching fields and blocks the submission
+ * while any of them fails.
+ */
+const form = useForm({
+  defaultValues: { email: '', password: '' } satisfies LoginValues,
+  validators: { onChange: loginSchema },
+  onSubmit: async ({ value }) => {
+    serverError.value = ''
 
-  if (error) {
-    errorMessage.value = error.message ?? 'Unable to sign in.'
-    pending.value = false
-    return
+    const { error } = await authClient.signIn.email({
+      email: value.email,
+      password: value.password
+    })
+
+    if (error) {
+      serverError.value = error.message ?? 'Unable to sign in.'
+      return
+    }
+
+    await refreshAuthSession()
+    await navigateTo(redirectTo.value)
   }
+})
 
-  await refreshAuthSession()
-  await navigateTo(redirectTo.value)
-}
+const { data: providers } = await useAuthProviders()
+const githubEnabled = computed(
+  () => providers.value?.providers.includes('github') ?? false
+)
 
 async function signInWithGitHub() {
-  errorMessage.value = ''
+  serverError.value = ''
 
   await authClient.signIn.social({
     provider: 'github',
     callbackURL: redirectTo.value
   })
 }
+
+/**
+ * Field errors stay hidden until the visitor reaches the field. The form-level
+ * schema already flags fields that have not been filled in yet, and reporting
+ * those would show problems the visitor cannot act on yet.
+ */
+function fieldErrors(state: { meta: { isTouched: boolean; errors: unknown } }) {
+  return state.meta.isTouched ? toErrorMessages(state.meta.errors) : []
+}
 </script>
 
 <template>
-  <form class="flex flex-col gap-6" @submit.prevent="onSubmit">
+  <form class="flex flex-col gap-6" @submit.prevent.stop="form.handleSubmit()">
     <FieldGroup>
       <div class="flex flex-col items-center gap-2 text-center">
         <NuxtLink to="/" class="flex flex-col items-center gap-2 font-medium">
@@ -85,35 +107,51 @@ async function signInWithGitHub() {
           </NuxtLink>
         </FieldDescription>
       </div>
-      <Field>
-        <FieldLabel for="email"> Email </FieldLabel>
-        <Input
-          id="email"
-          v-model="email"
-          type="email"
-          placeholder="m@example.com"
-          autocomplete="email"
-          required
-        />
-      </Field>
-      <Field>
-        <FieldLabel for="password"> Password </FieldLabel>
-        <Input
-          id="password"
-          v-model="password"
-          type="password"
-          placeholder="••••••••"
-          autocomplete="current-password"
-          required
-        />
-      </Field>
-      <Field>
-        <Button type="submit" class="w-full" :disabled="pending">
-          {{ pending ? 'Signing in…' : 'Sign in' }}
-        </Button>
-      </Field>
-      <p v-if="errorMessage" class="text-sm text-destructive" role="alert">
-        {{ errorMessage }}
+      <form.Field name="email">
+        <template #default="{ field }">
+          <Field :data-invalid="fieldErrors(field.state).length > 0">
+            <FieldLabel :for="field.name"> Email </FieldLabel>
+            <Input
+              :id="field.name"
+              :model-value="field.state.value"
+              :aria-invalid="fieldErrors(field.state).length > 0"
+              type="email"
+              placeholder="m@example.com"
+              autocomplete="email"
+              @update:model-value="(value) => field.handleChange(String(value))"
+              @blur="field.handleBlur"
+            />
+            <FieldError :errors="fieldErrors(field.state)" />
+          </Field>
+        </template>
+      </form.Field>
+      <form.Field name="password">
+        <template #default="{ field }">
+          <Field :data-invalid="fieldErrors(field.state).length > 0">
+            <FieldLabel :for="field.name"> Password </FieldLabel>
+            <Input
+              :id="field.name"
+              :model-value="field.state.value"
+              :aria-invalid="fieldErrors(field.state).length > 0"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              @update:model-value="(value) => field.handleChange(String(value))"
+              @blur="field.handleBlur"
+            />
+            <FieldError :errors="fieldErrors(field.state)" />
+          </Field>
+        </template>
+      </form.Field>
+      <form.Subscribe v-slot="{ isSubmitting }">
+        <Field>
+          <Button type="submit" class="w-full" :disabled="isSubmitting">
+            {{ isSubmitting ? 'Signing in…' : 'Sign in' }}
+          </Button>
+        </Field>
+      </form.Subscribe>
+      <p v-if="serverError" class="text-sm text-destructive" role="alert">
+        {{ serverError }}
       </p>
       <template v-if="githubEnabled">
         <FieldSeparator>Or</FieldSeparator>

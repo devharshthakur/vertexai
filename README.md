@@ -28,6 +28,7 @@ What the repository contains today:
 | UI        | Tailwind CSS 4, shadcn-vue, Lucide icons |
 | Data      | PostgreSQL (Docker Compose), Drizzle ORM |
 | Auth      | Better Auth (email + password, GitHub)   |
+| Forms     | TanStack Form, Zod                       |
 | Tooling   | ESLint, Prettier, Husky                  |
 
 What is being built next:
@@ -93,6 +94,51 @@ pnpm dlx auth@1.7.11 generate --config server/utils/auth.ts \
 pnpm db:generate
 pnpm db:migrate
 ```
+
+## Forms
+
+[TanStack Form](https://tanstack.com/form/latest/docs/framework/vue/quick-start) drives the credential forms, and [Zod](https://zod.dev) describes their rules. The schemas live in `shared/validation/auth.ts`, so the browser and the Nitro server can validate the same payloads with the same rules.
+
+A form is created with `useForm`, and the schema is attached as a form-level validator. TanStack Form then spreads the schema's issues over the matching fields:
+
+```vue
+<script setup lang="ts">
+import { useForm } from '@tanstack/vue-form'
+import { loginSchema } from '#shared/validation/auth'
+
+const form = useForm({
+  defaultValues: { email: '', password: '' },
+  validators: { onChange: loginSchema },
+  onSubmit: async ({ value }) => {
+    // ...
+  }
+})
+</script>
+```
+
+Fields are rendered with `form.Field`, and their errors are shown with the shadcn `FieldError` component:
+
+```vue
+<form.Field name="email">
+  <template #default="{ field }">
+    <Field :data-invalid="fieldErrors(field.state).length > 0">
+      <FieldLabel :for="field.name">Email</FieldLabel>
+      <Input
+        :id="field.name"
+        :model-value="field.state.value"
+        @update:model-value="(value) => field.handleChange(String(value))"
+        @blur="field.handleBlur"
+      />
+      <FieldError :errors="fieldErrors(field.state)" />
+    </Field>
+  </template>
+</form.Field>
+```
+
+Two details are easy to get wrong:
+
+- `useForm` has to run before the first `await` in `<script setup>`. It registers a mount hook, and Vue drops the current component instance across an `await`.
+- Field errors stay hidden until the field has been touched. The form-level schema already flags fields the visitor has not filled in yet, and reporting those would show problems they cannot act on yet.
 
 ## Status
 

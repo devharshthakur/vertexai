@@ -1,5 +1,8 @@
 {
   "eslint.useFlatConfig": true,
+  "material-icon-theme.folders.associations": {
+    "py": "python"
+  },
   "search.exclude": {
     "**/.agents": true,
     "**/app/components/ui/**": true

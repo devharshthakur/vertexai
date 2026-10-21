@@ -1,7 +1,8 @@
 {
   "eslint.useFlatConfig": true,
   "search.exclude": {
-    "**/.agents": true
+    "**/.agents": true,
+    "**/app/components/ui/**": true
   },
   "files.watcherExclude": {
     "**/.agents/**": true

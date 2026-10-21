@@ -55,6 +55,19 @@ export default defineNuxtConfig({
   devtools: { enabled: false },
   css: ['~/assets/css/main.css'],
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    optimizeDeps: {
+      include: [
+        '@lucide/vue',
+        '@tanstack/vue-form',
+        '@vueuse/core',
+        'better-auth/client/plugins',
+        'better-auth/vue',
+        'class-variance-authority',
+        'cn',
+        'reka-ui',
+        'zod'
+      ]
+    }
   }
 })

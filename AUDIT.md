@@ -24,7 +24,7 @@ Legend: **Effort** S ≈ hours · M ≈ a day · L ≈ multi-day. **Confidence**
 
 ## Priority 1 — do these first
 
-### [ ] SEC-01 — Server-side session/role guard pattern does not exist
+### [x] SEC-01 — Server-side session/role guard pattern
 
 Authorization today is client route middleware only (`app/middleware/auth.ts:7-13`, `app/middleware/guest.ts:6-11`). No server route performs a session or role check; the only `/api` routes are `auth/[...all]` (better-auth's own handler), `auth-providers` and `health` (both intentionally public). No live exposure exists today, but the next feature (catalog/enrollment APIs) ships exposed if it copies the current pattern — client middleware does not protect API calls, and it is trivially bypassable.
 
@@ -33,6 +33,7 @@ Authorization today is client route middleware only (`app/middleware/auth.ts:7-1
 - **Evidence:** `app/middleware/auth.ts:7-13`, `app/middleware/guest.ts:6-11`, `server/api/`, `server/utils/auth.ts`
 - **Fix sketch:** add a server util (e.g. `server/utils/requireSession.ts`) built on `auth.api.getSession({ headers })` plus a role-check helper, and apply it to every new data route.
 - **Done when:** a reusable server guard exists, one representative route uses it, and an unauthenticated request to that route is rejected with 401.
+- **Change (2026-10-21):** added `server/utils/require-session.ts` (`requireSession` → 401, `requireRole` → 403, both on `auth.api.getSession`) and applied it to `server/api/me.get.ts`; verified 401 unauthenticated, 200 authenticated, public routes unchanged.
 
 ### [ ] BUG-01 — `/api/health` throws instead of reporting a degraded database
 

@@ -8,6 +8,13 @@
       "when": 1792498155899,
       "tag": "0000_wakeful_grim_reaper",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792782749701,
+      "tag": "0001_supreme_leo",
+      "breakpoints": true
     }
   ]
 }

@@ -70,7 +70,7 @@ pnpm db:check # validate the migration history
 pnpm db:studio # browse the database
 ```
 
-No domain tables are modelled yet, so `pnpm db:generate` currently reports no changes beyond the auth tables. `GET /api/health` reports whether the database is reachable.
+No domain tables are modelled yet, so `pnpm db:generate` currently reports no changes beyond the auth tables. `GET /api/health` reports whether the database is reachable: when it is, the endpoint returns `200` with `{ "status": "ok", "database": "up" }`; when the probe fails, it returns `503` with `{ "status": "error", "database": "down" }`.
 
 ## Authentication
 

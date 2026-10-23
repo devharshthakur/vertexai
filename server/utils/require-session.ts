@@ -21,6 +21,16 @@ export async function requireSession(event: RequestEvent) {
 }
 
 /**
+ * The session when there is one, `null` otherwise.
+ *
+ * Public routes use this to answer differently for signed-in users (an
+ * instructor seeing their own pending course) without turning them private.
+ */
+export async function optionalSession(event: RequestEvent) {
+  return auth.api.getSession({ headers: event.req.headers })
+}
+
+/**
  * Session guard plus a role check. Use it for routes that are not available to
  * every signed-in user; `requireSession` alone is enough for routes that are.
  */

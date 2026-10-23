@@ -31,6 +31,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview --port 4173",
     "clean": "nuxt cleanup",
+    "git:clean": "cleanup --auto",
     "clean:all": "nuxt cleanup && node -e \"require('node:fs').rmSync('node_modules', { recursive: true, force: true })\"",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
@@ -69,6 +70,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@devharshthakur/cleanup": "0.1.0",
     "@iconify-json/lucide": "1.2.145",
     "@iconify-json/simple-icons": "1.2.100",
     "@nuxt/eslint": "1.17.0",

@@ -131,9 +131,10 @@ vertexai/
 │   │   ├── me.get.ts                  ✅
 │   │   ├── health.get.ts              ✅   # uptime / observability
 │   │   ├── auth-providers.get.ts      ✅
-│   │   ├── courses/                   ⬜   # index.get (catalog, cached) · index.post · [id].get ·
-│   │   │                                 #   [id].put · [id]/enroll.post · [id]/approve.post ·
-│   │   │                                 #   [id]/modules.post · [id]/announcements.post
+│   │   ├── courses/                   ⬜   # ✅ index.get (catalog, uncached until Week 2) · index.post ·
+│   │   │                                 #   ✅ mine.get · ✅ [id].get · ✅ [id].put · ✅ [id]/modules.post
+│   │   │                                 #   ⬜ [id]/enroll.post · ⬜ [id]/approve.post ·
+│   │   │                                 #   ⬜ [id]/announcements.post
 │   │   ├── modules/[id]/lectures.post ⬜   # multipart upload → storage + enqueue embedding job
 │   │   ├── lectures/                  ⬜   # [id]/video.get (stream, Range support) ·
 │   │   │                                 #   [id]/progress.post · [id]/notes.post · [id]/bookmarks.post
@@ -161,7 +162,7 @@ vertexai/
 │   │   │                                 #   process shares the exact same client
 │   │   ├── schema/                         # one file per domain (Drizzle table definitions)
 │   │   │   ├── auth.ts                ✅   # users, sessions, accounts, verifications (+ role column)
-│   │   │   ├── courses.ts             ⬜   # courses, modules, lectures
+│   │   │   ├── courses.ts             ✅   # courses, modules, lectures
 │   │   │   ├── enrollments.ts         ⬜   # enrollments, lecture_progress, notes, bookmarks
 │   │   │   ├── assignments.ts         ⬜   # assignments, assignment_submissions
 │   │   │   ├── quizzes.ts             ⬜   # quizzes, quiz_questions, quiz_options, quiz_attempts, quiz_answers
@@ -177,7 +178,7 @@ vertexai/
 │   ├── queues/index.ts                ⬜   # BullMQ producers: API routes call these to ENQUEUE work
 │   │
 │   ├── services/                           # all business logic lives here; routes stay thin
-│   │   ├── course-service.ts          ⬜
+│   │   ├── course-service.ts          ✅
 │   │   ├── enrollment-service.ts      ⬜
 │   │   ├── progress-service.ts        ⬜   # progress % recompute, resume position
 │   │   ├── assignment-service.ts      ⬜
@@ -204,9 +205,10 @@ vertexai/
 │   ├── utils/                              # auto-imported inside server/ only
 │   │   ├── auth.ts                    ✅   # better-auth instance (admin plugin: default role student)
 │   │   ├── auth-providers.ts          ✅
-│   │   ├── require-session.ts         ✅   # 401 if no session
-│   │   ├── require-role.ts            ⬜   # 403 unless session role matches
-│   │   ├── validate.ts                ⬜   # zod-validate request bodies/queries (shared schemas)
+│   │   ├── require-session.ts         ✅   # 401 if no session · requireRole (403) · optionalSession
+│   │   ├── service-error.ts           ✅   # domain errors the services raise (no HTTP objects)
+│   │   ├── errors.ts                  ✅   # maps service errors to 404 / 403
+│   │   ├── validate.ts                ✅   # zod-validate request bodies/queries (shared schemas)
 │   │   └── rate-limit.ts              ⬜   # per-IP on auth, per-user on ai/chat (PRD §8.9)
 │   └── middleware/logger.ts           ⬜   # structured request logging
 │
@@ -218,7 +220,8 @@ vertexai/
 ├── shared/                                 # ── code usable on BOTH client and server ────────
 │   ├── validation/                       # zod schemas per API payload — ONE source of truth,
 │   │   ├── auth.ts                  ✅   #   used by the client form AND the server route
-│   │   ├── courses.ts / quizzes.ts / assignments.ts / ai.ts / discussions.ts / admin.ts  ⬜
+│   │   ├── courses.ts             ✅   #   course create/update/query schemas + difficulty & status values
+│   │   ├── quizzes.ts / assignments.ts / ai.ts / discussions.ts / admin.ts  ⬜
 │   └── types/                       ⬜   # DTO shapes the API returns (Course, QuizAttempt, …)
 │
 ├── docs/PRD.md + PRD.docx             ✅   # canonical product spec
@@ -564,8 +567,9 @@ route middleware, base UI). Each week ends demoable; buffer days absorb overruns
 ### Week 1 — Foundation & catalog (finish the loop: register → browse → enroll)
 
 - ✅ Day 1–3: repo, DB, auth, RBAC base
-- ⬜ Day 4: `courses.ts` schema (courses/modules/lectures) → migrate → catalog + course CRUD
+- ✅ Day 4: `courses.ts` schema (courses/modules/lectures) → migrate → catalog + course CRUD
   routes with validation, ownership checks, pagination
+  (also added: `courses/mine.get.ts`, `courses/[id]/modules.post.ts`)
 - ⬜ Day 5: catalog page + course detail page (public), enroll endpoint + button
 - ⬜ Day 6–7: student dashboard wired to real enrollments; buffer + tests
 - **Milestone:** register → login → browse → enroll works end-to-end.
@@ -649,10 +653,12 @@ route middleware, base UI). Each week ends demoable; buffer days absorb overruns
 
 ## 14. Decisions Deferred (with their deadlines)
 
-| Decision                               | Deadline                             | Default leaning                                              |
-| -------------------------------------- | ------------------------------------ | ------------------------------------------------------------ |
-| Embeddings provider + vector dimension | Week 3 Day 1 (before `ai.ts` schema) | OpenAI `text-embedding-3-small` (1536 dims, matches PRD DDL) |
-| Email sending provider                 | Week 4 Day 24                        | In-app notifications first; email if time                    |
-| S3 credentials/bucket                  | Deploy (Week 4 Day 26)               | Local disk until then                                        |
-| Deployment target                      | Week 4 Day 26                        | Single container host running web + worker                   |
-| Payments                               | Out of scope (PRD §15)               | `payments` table is a stub for metrics shape only            |
+| Decision                               | Deadline                             | Default leaning                                                                                                          |
+| -------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Embeddings provider + vector dimension | Week 3 Day 1 (before `ai.ts` schema) | OpenAI `text-embedding-3-small` (1536 dims, matches PRD DDL)                                                             |
+| Email sending provider                 | Week 4 Day 24                        | In-app notifications first; email if time                                                                                |
+| S3 credentials/bucket                  | Deploy (Week 4 Day 26)               | Local disk until then                                                                                                    |
+| Deployment target                      | Week 4 Day 26                        | Single container host running web + worker                                                                               |
+| Payments                               | Out of scope (PRD §15)               | `payments` table is a stub for metrics shape only                                                                        |
+| Catalog cache (Redis)                  | Week 2 Day 12 (with Redis)           | The catalog endpoint ships uncached in Week 1; the cache is added inside `course-service` later                          |
+| Catalog "rating" filter                | Not planned                          | PRD FR-S3 mentions ratings, but no ratings table exists in PRD §7 — this build ships search + category + difficulty only |

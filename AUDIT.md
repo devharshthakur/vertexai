@@ -35,7 +35,7 @@ Authorization today is client route middleware only (`app/middleware/auth.ts:7-1
 - **Done when:** a reusable server guard exists, one representative route uses it, and an unauthenticated request to that route is rejected with 401.
 - **Change (2026-10-21):** added `server/utils/require-session.ts` (`requireSession` → 401, `requireRole` → 403, both on `auth.api.getSession`) and applied it to `server/api/me.get.ts`; verified 401 unauthenticated, 200 authenticated, public routes unchanged.
 
-### [ ] BUG-01 — `/api/health` throws instead of reporting a degraded database
+### [x] BUG-01 — `/api/health` throws instead of reporting a degraded database
 
 `server/api/health.get.ts:5-9` awaits the probe with no error handling. When the database is down the rejection escapes the handler, so Nitro returns an unstructured 500 (and in dev the error details reach the response) instead of the `{ status, database }` contract the README describes.
 
@@ -44,6 +44,7 @@ Authorization today is client route middleware only (`app/middleware/auth.ts:7-1
 - **Evidence:** `server/api/health.get.ts:5-9`, README `GET /api/health` note (line 73)
 - **Fix sketch:** wrap the probe in try/catch, return `503` with `{ status: 'error', database: 'down' }` on failure.
 - **Done when:** with the database stopped the endpoint returns 503 and a JSON body, and 200 with `{ status: 'ok', database: 'up' }` when it is running.
+- **Change (2026-10-23):** wrapped the probe in `server/api/health.get.ts` in try/catch, logging the failure server-side and returning `503` with `{ status: 'error', database: 'down' }`; verified the pre-fix `500`, the `503` body with an unreachable `DATABASE_URL`, the `200` body against the local database, and unchanged `/api/auth-providers` (200) / `/api/me` (401); `pnpm validate` green.
 
 ### [ ] BUG-02 — Credential form submit path has no error boundary
 

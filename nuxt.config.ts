@@ -42,9 +42,6 @@ export default defineNuxtConfig({
   },
   typescript: {
     nodeTsConfig: {
-      // Root-level Node config files are not covered by any generated
-      // project, so the editor falls back to an inferred one without node
-      // types ("Cannot find name 'process'"). Include them explicitly.
       include: ['../drizzle.config.ts'],
       compilerOptions: {
         types: ['node']

@@ -8,7 +8,8 @@
     "**/app/components/ui/**": true
   },
   "files.watcherExclude": {
-    "**/.agents/**": true
+    "**/.agents/**": true,
+    "**/node_modules/**": true
   },
   "files.readonlyInclude": {
     "**/.agents/**": true,

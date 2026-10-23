@@ -1,8 +1,7 @@
 # Agent instructions
 
-Run `pnpm lint` after changing code and fix every error before finishing.
-`@shadcn/lint` checks `.vue` templates against the design system; its errors
-name the component, the theme file, and the fix.
+Run `pnpm validate` after changing code and fix every failure before finishing.
+Never build the project every time to validate your changes unless user explicitly asks
 
 When a rule blocks a legitimate design decision, add
 `eslint-disable-next-line shadcn/<rule> -- <reason>` at that call site.

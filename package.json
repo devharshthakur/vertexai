@@ -44,6 +44,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write --ignore-unknown --list-different .",
+    "validate": "pnpm exec prettier --check --ignore-unknown . && pnpm lint && pnpm typecheck",
     "postinstall": "nuxt prepare",
     "prepare": "husky && nuxt prepare"
   },

@@ -11,4 +11,6 @@ docs/PRD.md
 *.log
 .DS_Store
 .agents/
+# Tool config; JSONC keeps its own formatting.
+.opencode/opencode.jsonc
 app/components/ui/

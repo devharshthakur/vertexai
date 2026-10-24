@@ -70,6 +70,7 @@ export default defineNuxtConfig({
       include: [
         '@lucide/vue',
         '@tanstack/vue-form',
+        '@tanstack/vue-query',
         '@vueuse/core',
         'better-auth/client/plugins',
         'better-auth/vue',

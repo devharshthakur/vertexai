@@ -36,9 +36,6 @@ export default defineNuxtConfig({
   },
   fonts: {
     provider: 'fontsource',
-    // `--font-sans` already gets Inter detected, but that only resolves the
-    // default weight; declaring the family pins the weights the UI uses and
-    // keeps the download to the two subsets the app needs.
     families: [
       {
         name: 'Inter',

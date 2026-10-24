@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { BookOpenIcon } from '@lucide/vue'
+import CourseBadges from '@/components/course/CourseBadges.vue'
 import EnrollButton from '@/components/course/EnrollButton.vue'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -21,6 +21,7 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCourse } from '@/composables/useCourse'
+import { pluralize } from '@/lib/pluralize'
 
 const route = useRoute()
 const courseId = computed(() => String(route.params.id))
@@ -70,14 +71,10 @@ useSeoMeta({
 
     <div v-else class="flex flex-col gap-8">
       <header class="flex flex-col gap-4">
-        <div class="flex items-center gap-2">
-          <Badge v-if="course.course.category" variant="secondary">
-            {{ course.course.category }}
-          </Badge>
-          <Badge v-if="course.course.difficulty" variant="outline">
-            {{ course.course.difficulty }}
-          </Badge>
-        </div>
+        <CourseBadges
+          :category="course.course.category"
+          :difficulty="course.course.difficulty"
+        />
 
         <h1 class="text-3xl font-semibold tracking-tight">
           {{ course.course.title }}
@@ -108,8 +105,7 @@ useSeoMeta({
           <CardHeader>
             <CardTitle>{{ module.title }}</CardTitle>
             <CardDescription>
-              {{ module.lectures.length }}
-              {{ module.lectures.length === 1 ? 'lecture' : 'lectures' }}
+              {{ pluralize(module.lectures.length, 'lecture') }}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -129,8 +125,7 @@ useSeoMeta({
           v-if="course.modules.length > 0"
           class="text-sm text-muted-foreground"
         >
-          {{ lectureCount }}
-          {{ lectureCount === 1 ? 'lecture' : 'lectures' }} in total.
+          {{ pluralize(lectureCount, 'lecture') }} in total.
         </p>
       </section>
     </div>

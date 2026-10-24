@@ -1,4 +1,4 @@
-import type { CourseStatus } from '../validation/courses'
+import type { CourseStatus } from '#shared/validation/courses'
 
 /**
  * The shapes the course API returns.

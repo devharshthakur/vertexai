@@ -1,4 +1,14 @@
-import { and, asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
+import {
+  and,
+  asc,
+  count,
+  desc,
+  eq,
+  ilike,
+  inArray,
+  isNotNull,
+  or
+} from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { courses, lectures, modules } from '#server/db/schema'
@@ -9,6 +19,13 @@ import type {
   CreateCourseValues,
   UpdateCourseValues
 } from '#shared/validation/courses'
+import type {
+  CourseListResult,
+  CourseSummary,
+  CourseWithCurriculum,
+  LectureSummary,
+  ModuleSummary
+} from '#shared/types/courses'
 import { ServiceError } from '#server/utils/service-error'
 
 /**
@@ -32,52 +49,6 @@ export interface CourseOwner {
   role?: string | null
 }
 
-export interface CourseSummary {
-  id: string
-  instructorId: string
-  title: string
-  description: string | null
-  category: string | null
-  difficulty: string | null
-  thumbnailUrl: string | null
-  price: number
-  status: CourseStatus
-  createdAt: Date
-  updatedAt: Date
-}
-
-export interface LectureSummary {
-  id: string
-  moduleId: string
-  title: string
-  videoUrl: string | null
-  transcript: string | null
-  durationSeconds: number | null
-  orderIndex: number
-  resourceUrls: string[]
-}
-
-export interface ModuleSummary {
-  id: string
-  courseId: string
-  title: string
-  orderIndex: number
-  lectures: LectureSummary[]
-}
-
-export interface CourseWithCurriculum {
-  course: CourseSummary
-  modules: ModuleSummary[]
-}
-
-export interface CourseListResult {
-  items: CourseSummary[]
-  page: number
-  limit: number
-  total: number
-  totalPages: number
-}
-
 /** Escapes the wildcard characters of a user-supplied search term. */
 function escapeLike(term: string) {
   return term.replace(/[\\%_]/g, (character) => `\\${character}`)
@@ -94,8 +65,8 @@ function toCourseSummary(row: typeof courses.$inferSelect): CourseSummary {
     thumbnailUrl: row.thumbnailUrl,
     price: Number(row.price),
     status: row.status as CourseStatus,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString()
   }
 }
 
@@ -117,6 +88,26 @@ export async function listInstructorCourses(
   instructorId: string
 ): Promise<CourseListResult> {
   return listCourses(query, eq(courses.instructorId, instructorId))
+}
+
+/**
+ * The categories that approved courses actually use.
+ *
+ * The product has no fixed taxonomy, so the catalog filter offers what
+ * exists rather than a hard-coded list.
+ */
+export async function listCourseCategories(): Promise<string[]> {
+  const db = useDb()
+
+  const rows = await db
+    .selectDistinct({ category: courses.category })
+    .from(courses)
+    .where(and(eq(courses.status, 'approved'), isNotNull(courses.category)))
+    .orderBy(asc(courses.category))
+
+  return rows
+    .map((row) => row.category)
+    .filter((category): category is string => Boolean(category))
 }
 
 async function listCourses(

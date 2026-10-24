@@ -63,6 +63,13 @@ export const addModuleSchema = z.object({
 })
 
 /**
+ * Enrolling in a course carries no payload — the student comes from the
+ * session. The schema exists so the route validates its body like every other
+ * mutation, and rejects fields it does not know.
+ */
+export const enrollCourseSchema = z.object({}).strict().optional()
+
+/**
  * Catalog query parameters. Values arrive as strings, so the numbers are
  * coerced before they are validated.
  */

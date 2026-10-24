@@ -21,5 +21,22 @@ export const signupSchema = z.object({
   password: z.string().min(8, 'Use at least 8 characters.')
 })
 
+export const profileSchema = z.object({
+  name: z.string().min(1, 'Enter your name.')
+})
+
+export const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Enter your current password.'),
+    newPassword: z.string().min(8, 'Use at least 8 characters.'),
+    confirmPassword: z.string().min(1, 'Confirm your new password.')
+  })
+  .refine((values) => values.newPassword === values.confirmPassword, {
+    message: 'Passwords do not match.',
+    path: ['confirmPassword']
+  })
+
 export type LoginValues = z.input<typeof loginSchema>
 export type SignupValues = z.input<typeof signupSchema>
+export type ProfileValues = z.input<typeof profileSchema>
+export type PasswordValues = z.input<typeof passwordSchema>

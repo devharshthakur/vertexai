@@ -6,6 +6,7 @@
 
 @theme {
   --font-sans: 'Inter', sans-serif;
+  --container-page: 64rem;
 }
 
 @theme inline {

@@ -46,7 +46,7 @@ useSeoMeta({
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-5xl px-6 py-10">
+  <div>
     <div v-if="pending" class="flex flex-col gap-6" aria-busy="true">
       <Skeleton class="h-10 w-2/3" />
       <Skeleton class="h-40 w-full" />

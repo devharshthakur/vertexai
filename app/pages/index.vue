@@ -89,7 +89,7 @@ const upcomingFeatures = [
       </div>
 
       <div class="grid gap-4 md:grid-cols-3">
-        <Card class="md:row-span-2">
+        <Card>
           <CardHeader>
             <div class="flex items-center justify-between gap-3">
               <BookOpenIcon class="text-primary" />

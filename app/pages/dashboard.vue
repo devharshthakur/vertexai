@@ -1,77 +1,86 @@
 <script setup lang="ts">
+import { BookOpenIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import {
-  useAuthSession,
-  refreshAuthSession
-} from '@/composables/useAuthSession'
-import { authClient } from '@/lib/auth-client'
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle
+} from '@/components/ui/empty'
+import { Separator } from '@/components/ui/separator'
+import { useAuthSession } from '@/composables/useAuthSession'
 
 definePageMeta({ middleware: 'auth' })
+
+useSeoMeta({
+  title: 'Your dashboard · VertexAI',
+  description: 'Your learning space on VertexAI.'
+})
 
 const { data: session } = await useAuthSession()
 
 const firstName = computed(
   () => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there'
 )
-
-async function signOut() {
-  await authClient.signOut()
-  await refreshAuthSession()
-  await navigateTo('/')
-}
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-3xl px-6 py-12">
-    <div class="flex flex-col gap-12">
-      <header class="flex flex-col gap-2">
-        <p class="text-sm text-muted-foreground">Dashboard</p>
-        <h1 class="text-3xl font-semibold tracking-tight">
-          Welcome back, {{ firstName }}
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-10 px-6 py-12">
+    <header
+      class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between"
+    >
+      <div class="flex flex-col gap-2">
+        <p class="text-sm font-medium text-muted-foreground">Your dashboard</p>
+        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
+          Welcome back, {{ firstName }}.
         </h1>
-        <p class="text-muted-foreground">
-          You are signed in. The LMS modules land here next.
+        <p class="max-w-2xl text-muted-foreground">
+          Your learning home is ready. Find a course to get started.
         </p>
-      </header>
+      </div>
 
-      <section class="flex flex-col gap-4">
-        <h2
-          class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-        >
-          Your account
-        </h2>
-        <dl class="flex flex-col divide-y divide-border">
-          <div class="flex items-baseline justify-between gap-6 py-3">
-            <dt class="text-sm text-muted-foreground">Name</dt>
-            <dd class="text-sm font-medium">{{ session?.user.name }}</dd>
-          </div>
-          <div class="flex items-baseline justify-between gap-6 py-3">
-            <dt class="text-sm text-muted-foreground">Email</dt>
-            <dd class="text-sm font-medium">{{ session?.user.email }}</dd>
-          </div>
-          <div class="flex items-baseline justify-between gap-6 py-3">
-            <dt class="text-sm text-muted-foreground">Role</dt>
-            <dd class="text-sm font-medium">
-              {{ session?.user.role ?? 'student' }}
-            </dd>
-          </div>
-        </dl>
-      </section>
+      <Button variant="outline" as-child>
+        <NuxtLink to="/courses">Explore courses</NuxtLink>
+      </Button>
+    </header>
 
-      <section class="flex flex-col gap-4">
-        <h2
-          class="text-xs font-medium tracking-wider text-muted-foreground uppercase"
-        >
-          Your courses
-        </h2>
-        <p class="text-sm text-muted-foreground">
-          Enrolled courses, progress and streaks will appear here.
-        </p>
-      </section>
+    <Separator />
 
-      <footer class="border-t border-border pt-6">
-        <Button variant="ghost" size="sm" @click="signOut">Sign out</Button>
-      </footer>
-    </div>
+    <section class="flex flex-col gap-4" aria-labelledby="courses-heading">
+      <Card>
+        <CardHeader>
+          <CardTitle id="courses-heading">Your courses</CardTitle>
+          <CardDescription>Courses you join will appear here.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <BookOpenIcon />
+              </EmptyMedia>
+              <EmptyTitle>Your learning starts with a course</EmptyTitle>
+              <EmptyDescription>
+                Enrolled courses and learning progress will show up here. Browse
+                the catalog and choose what you would like to learn next.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button as-child>
+                <NuxtLink to="/courses">Browse courses</NuxtLink>
+              </Button>
+            </EmptyContent>
+          </Empty>
+        </CardContent>
+      </Card>
+    </section>
   </div>
 </template>

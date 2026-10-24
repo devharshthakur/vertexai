@@ -1,6 +1,6 @@
 import { defineEventHandler } from 'nuxt/server'
 import { auth } from '#server/utils/auth'
-import type { AuthProviderId } from '#shared/types/auth'
+import type { AuthProviderId, AuthProvidersResponse } from '#shared/types/auth'
 
 /**
  * Lists the sign-in methods this deployment supports.
@@ -13,7 +13,7 @@ import type { AuthProviderId } from '#shared/types/auth'
  * hand-written one, so it can never drift from the providers that are
  * actually registered.
  */
-export default defineEventHandler((): { providers: AuthProviderId[] } => {
+export default defineEventHandler((): AuthProvidersResponse => {
   const socialProviders = Object.entries(auth.options.socialProviders ?? {})
     .filter(([, config]) => {
       // A provider may be configured as a function that resolves per request;

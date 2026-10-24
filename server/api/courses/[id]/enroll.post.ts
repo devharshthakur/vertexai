@@ -1,7 +1,7 @@
 import { defineEventHandler, setResponseStatus } from 'nuxt/server'
 import { courseIdSchema, enrollCourseSchema } from '#shared/validation/courses'
 import { enrollStudent } from '#server/services/enrollment-service'
-import { toHttpError } from '#server/utils/errors'
+import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
 import { parseBody, parseParam } from '#server/utils/validate'
 
@@ -17,13 +17,11 @@ export default defineEventHandler(async (event) => {
 
   await parseBody(event, enrollCourseSchema)
 
-  try {
+  return withServiceErrors(async () => {
     const enrollment = await enrollStudent(courseId, session.user.id)
 
     setResponseStatus(event, 201)
 
     return enrollment
-  } catch (error) {
-    throw toHttpError(error)
-  }
+  })
 })

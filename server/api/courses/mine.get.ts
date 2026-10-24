@@ -1,6 +1,6 @@
 import { defineEventHandler } from 'nuxt/server'
 import { courseQuerySchema } from '#shared/validation/courses'
-import { listInstructorCourses } from '#server/services/course-service'
+import { listInstructorCourses } from '#server/services/courses/queries'
 import { requireRole } from '#server/utils/require-session'
 import { parseQuery } from '#server/utils/validate'
 

@@ -17,3 +17,12 @@ export function toHttpError(error: unknown): unknown {
 
   return error
 }
+
+/** Translates service errors raised by an async route operation. */
+export async function withServiceErrors<T>(operation: () => Promise<T>) {
+  try {
+    return await operation()
+  } catch (error) {
+    throw toHttpError(error)
+  }
+}

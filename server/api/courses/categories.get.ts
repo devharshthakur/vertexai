@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { listCourseCategories } from '#server/services/course-service'
+import { listCourseCategories } from '#server/services/courses/queries'
 
 /**
  * The categories that published courses use.

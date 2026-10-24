@@ -1,4 +1,4 @@
-Vertexon Learning Technologies  \|  LMS-AI PRD v1.0
+Vertexon Learning Technologies \| LMS-AI PRD v1.0
 
 # PRODUCT REQUIREMENTS DOCUMENT
 
@@ -8,14 +8,14 @@ Learning Management System with AI Tutor
 
 Vertexon Learning Technologies Pvt. Ltd.
 
-| Field | Detail |
-| --- | --- |
-| Document Type | Product Requirements Document (PRD) |
-| Document Version | v1.0 |
-| Status | Approved for Development |
-| Project Duration | 4 Weeks — Single Developer, Full Stack |◊
-| Target Audience | Final-Year Students / Interns / Hackathon Teams / Portfolio Builders |
-| Classification | Internal – Engineering Handoff |
+| Field            | Detail                                                               |
+| ---------------- | -------------------------------------------------------------------- |
+| Document Type    | Product Requirements Document (PRD)                                  |
+| Document Version | v1.0                                                                 |
+| Status           | Approved for Development                                             |
+| Project Duration | 4 Weeks — Single Developer, Full Stack                               | ◊   |
+| Target Audience  | Final-Year Students / Interns / Hackathon Teams / Portfolio Builders |
+| Classification   | Internal – Engineering Handoff                                       |
 
 ## Table of Contents
 
@@ -47,13 +47,13 @@ Traditional LMS platforms (Moodle-style, corporate e-learning portals) are passi
 
 Framed as KPIs a real product would track once live:
 
-| Metric | Target |
-| --- | --- |
-| Course completion rate | +25% vs. baseline (no-AI control group) |
-| Average doubt resolution time | Under 10 seconds (AI tutor response) |
-| Quiz auto-generation accuracy (human-reviewed) | ≥ 85% usable without edits |
-| Student daily active usage (7-day streak retention) | ≥ 40% |
-| API p95 latency (non-AI endpoints) | Under 300ms |
+| Metric                                              | Target                                  |
+| --------------------------------------------------- | --------------------------------------- |
+| Course completion rate                              | +25% vs. baseline (no-AI control group) |
+| Average doubt resolution time                       | Under 10 seconds (AI tutor response)    |
+| Quiz auto-generation accuracy (human-reviewed)      | ≥ 85% usable without edits              |
+| Student daily active usage (7-day streak retention) | ≥ 40%                                   |
+| API p95 latency (non-AI endpoints)                  | Under 300ms                             |
 
 ## 3. Product Scope
 
@@ -119,66 +119,66 @@ Meera, Platform Admin. Manages instructor onboarding, approves new courses befor
 
 ### 5.1 Student Module
 
-| ID | Requirement | Priority |
-| --- | --- | --- |
-| FR-S1 | User can register/login via email+password with JWT session issuance | P0 |
-| FR-S2 | Student dashboard shows enrolled courses, % progress per course, streak counter | P0 |
-| FR-S3 | Course catalog supports category, difficulty, and rating filters + search | P0 |
-| FR-S4 | Video player supports resume-from-last-position and playback speed control | P0 |
-| FR-S5 | Student can create timestamped notes and bookmarks on any lecture | P1 |
-| FR-S6 | Student can upload assignment files (PDF/ZIP/code) before a deadline | P0 |
-| FR-S7 | Quiz engine supports MCQ, multi-select, short-answer with auto-grading for objective types | P0 |
-| FR-S8 | On 100% module completion, system auto-generates a downloadable certificate (PDF) | P1 |
-| FR-S9 | Badges awarded on milestones (first course completed, 7-day streak, quiz perfect score) | P2 |
-| FR-S10 | Recommendation widget suggests next course/topic based on quiz performance | P1 |
+| ID     | Requirement                                                                                | Priority |
+| ------ | ------------------------------------------------------------------------------------------ | -------- |
+| FR-S1  | User can register/login via email+password with JWT session issuance                       | P0       |
+| FR-S2  | Student dashboard shows enrolled courses, % progress per course, streak counter            | P0       |
+| FR-S3  | Course catalog supports category, difficulty, and rating filters + search                  | P0       |
+| FR-S4  | Video player supports resume-from-last-position and playback speed control                 | P0       |
+| FR-S5  | Student can create timestamped notes and bookmarks on any lecture                          | P1       |
+| FR-S6  | Student can upload assignment files (PDF/ZIP/code) before a deadline                       | P0       |
+| FR-S7  | Quiz engine supports MCQ, multi-select, short-answer with auto-grading for objective types | P0       |
+| FR-S8  | On 100% module completion, system auto-generates a downloadable certificate (PDF)          | P1       |
+| FR-S9  | Badges awarded on milestones (first course completed, 7-day streak, quiz perfect score)    | P2       |
+| FR-S10 | Recommendation widget suggests next course/topic based on quiz performance                 | P1       |
 
 ### 5.2 AI Tutor Module
 
-| ID | Requirement | Priority |
-| --- | --- | --- |
-| FR-A1 | Chat interface lets a student ask a question about the current course | P0 |
-| FR-A2 | AI response grounded only in that course's ingested material via RAG, with source citation | P0 |
-| FR-A3 | AI can summarize a selected lecture transcript into key points | P0 |
-| FR-A4 | AI generates a personalized study plan from a student's quiz score history | P1 |
-| FR-A5 | AI auto-generates a quiz (5–10 questions) from a lecture transcript for instructor review | P1 |
-| FR-A6 | AI adjusts explanation depth: Beginner / Intermediate / Advanced | P1 |
-| FR-A7 | AI generates flashcards (Q/A pairs) per module for spaced revision | P2 |
-| FR-A8 | System tracks per-topic mastery score, feeding difficulty adjustment for chat and quizzes | P1 |
+| ID    | Requirement                                                                                | Priority |
+| ----- | ------------------------------------------------------------------------------------------ | -------- |
+| FR-A1 | Chat interface lets a student ask a question about the current course                      | P0       |
+| FR-A2 | AI response grounded only in that course's ingested material via RAG, with source citation | P0       |
+| FR-A3 | AI can summarize a selected lecture transcript into key points                             | P0       |
+| FR-A4 | AI generates a personalized study plan from a student's quiz score history                 | P1       |
+| FR-A5 | AI auto-generates a quiz (5–10 questions) from a lecture transcript for instructor review  | P1       |
+| FR-A6 | AI adjusts explanation depth: Beginner / Intermediate / Advanced                           | P1       |
+| FR-A7 | AI generates flashcards (Q/A pairs) per module for spaced revision                         | P2       |
+| FR-A8 | System tracks per-topic mastery score, feeding difficulty adjustment for chat and quizzes  | P1       |
 
 ### 5.3 Instructor Module
 
-| ID | Requirement | Priority |
-| --- | --- | --- |
-| FR-I1 | Instructor can create a course with title, description, category, thumbnail, pricing tier | P0 |
-| FR-I2 | Instructor can upload video/PDF/slide material per module/lecture | P0 |
-| FR-I3 | Instructor can create assignments with rubric and deadline | P0 |
-| FR-I4 | Instructor can build or approve AI-generated quizzes | P0 |
-| FR-I5 | Instructor analytics dashboard shows per-lecture drop-off, avg. quiz score, time-on-task | P1 |
-| FR-I6 | Instructor can post announcements visible to all enrolled students | P2 |
+| ID    | Requirement                                                                               | Priority |
+| ----- | ----------------------------------------------------------------------------------------- | -------- |
+| FR-I1 | Instructor can create a course with title, description, category, thumbnail, pricing tier | P0       |
+| FR-I2 | Instructor can upload video/PDF/slide material per module/lecture                         | P0       |
+| FR-I3 | Instructor can create assignments with rubric and deadline                                | P0       |
+| FR-I4 | Instructor can build or approve AI-generated quizzes                                      | P0       |
+| FR-I5 | Instructor analytics dashboard shows per-lecture drop-off, avg. quiz score, time-on-task  | P1       |
+| FR-I6 | Instructor can post announcements visible to all enrolled students                        | P2       |
 
 ### 5.4 Admin Module
 
-| ID | Requirement | Priority |
-| --- | --- | --- |
-| FR-AD1 | Admin can approve/reject a newly submitted course before it is publicly listed | P0 |
-| FR-AD2 | Admin can view/suspend/delete user accounts | P0 |
-| FR-AD3 | Admin dashboard shows platform-wide metrics: DAU, enrollments, completion rate, revenue | P1 |
-| FR-AD4 | Admin can assign/revoke roles (student/instructor/admin) | P0 |
-| FR-AD5 | Admin can moderate reported forum posts/comments | P2 |
+| ID     | Requirement                                                                             | Priority |
+| ------ | --------------------------------------------------------------------------------------- | -------- |
+| FR-AD1 | Admin can approve/reject a newly submitted course before it is publicly listed          | P0       |
+| FR-AD2 | Admin can view/suspend/delete user accounts                                             | P0       |
+| FR-AD3 | Admin dashboard shows platform-wide metrics: DAU, enrollments, completion rate, revenue | P1       |
+| FR-AD4 | Admin can assign/revoke roles (student/instructor/admin)                                | P0       |
+| FR-AD5 | Admin can moderate reported forum posts/comments                                        | P2       |
 
 ## 6. Non-Functional Requirements
 
-| Category | Requirement |
-| --- | --- |
-| Performance | Non-AI API endpoints respond within 300ms at p95 under 100 concurrent users |
-| Scalability | Stateless backend services; horizontal scaling behind a load balancer |
-| Security | Passwords hashed with bcrypt/argon2; short-lived JWT access + refresh tokens; RBAC middleware; input validation on all endpoints |
-| Availability | Target 99.5% uptime for core LMS services (excludes best-effort AI endpoints) |
-| Data Privacy | Student PII encrypted at rest; access logs retained for audit |
-| Accessibility | WCAG 2.1 AA — keyboard navigation, ARIA labels, color-contrast compliance |
-| Observability | Structured logging, request tracing, health-check endpoints per service |
-| Caching | Redis caching for catalog listing, course metadata, and leaderboard reads |
-| Rate Limiting | Per-user and per-IP rate limits on auth and AI-chat endpoints |
+| Category      | Requirement                                                                                                                      |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Performance   | Non-AI API endpoints respond within 300ms at p95 under 100 concurrent users                                                      |
+| Scalability   | Stateless backend services; horizontal scaling behind a load balancer                                                            |
+| Security      | Passwords hashed with bcrypt/argon2; short-lived JWT access + refresh tokens; RBAC middleware; input validation on all endpoints |
+| Availability  | Target 99.5% uptime for core LMS services (excludes best-effort AI endpoints)                                                    |
+| Data Privacy  | Student PII encrypted at rest; access logs retained for audit                                                                    |
+| Accessibility | WCAG 2.1 AA — keyboard navigation, ARIA labels, color-contrast compliance                                                        |
+| Observability | Structured logging, request tracing, health-check endpoints per service                                                          |
+| Caching       | Redis caching for catalog listing, course metadata, and leaderboard reads                                                        |
+| Rate Limiting | Per-user and per-IP rate limits on auth and AI-chat endpoints                                                                    |
 
 ## 7. Database Schema Design
 
@@ -202,18 +202,18 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(30) UNIQUE NOT NULL -- student, instructor, admin
 );
- 
+
 CREATE TABLE user_roles (
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     role_id INT REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, role_id)
 );
- 
+
 -- COURSES ---------------------------------------------------------------------
 CREATE TABLE courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -227,14 +227,14 @@ CREATE TABLE courses (
     status VARCHAR(20) DEFAULT 'pending', -- pending/approved/rejected/archived
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE modules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID REFERENCES courses(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
     order_index INT NOT NULL
 );
- 
+
 CREATE TABLE lectures (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     module_id UUID REFERENCES modules(id) ON DELETE CASCADE,
@@ -245,7 +245,7 @@ CREATE TABLE lectures (
     order_index INT NOT NULL,
     resource_urls TEXT[] -- PDFs, slides
 );
- 
+
 -- ENROLLMENT & PROGRESS -------------------------------------------------------
 CREATE TABLE enrollments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -255,7 +255,7 @@ CREATE TABLE enrollments (
     progress_percent NUMERIC(5,2) DEFAULT 0,
     UNIQUE (user_id, course_id)
 );
- 
+
 CREATE TABLE lecture_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     enrollment_id UUID REFERENCES enrollments(id) ON DELETE CASCADE,
@@ -264,7 +264,7 @@ CREATE TABLE lecture_progress (
     completed BOOLEAN DEFAULT FALSE,
     last_watched_at TIMESTAMPTZ
 );
- 
+
 CREATE TABLE notes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -273,7 +273,7 @@ CREATE TABLE notes (
     content TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE bookmarks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -281,7 +281,7 @@ CREATE TABLE bookmarks (
     timestamp_seconds INT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 -- ASSIGNMENTS ------------------------------------------------------------------
 CREATE TABLE assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -291,7 +291,7 @@ CREATE TABLE assignments (
     rubric JSONB,
     due_date TIMESTAMPTZ
 );
- 
+
 CREATE TABLE assignment_submissions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     assignment_id UUID REFERENCES assignments(id),
@@ -301,7 +301,7 @@ CREATE TABLE assignment_submissions (
     grade NUMERIC(5,2),
     feedback TEXT
 );
- 
+
 -- QUIZZES ----------------------------------------------------------------------
 CREATE TABLE quizzes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -310,7 +310,7 @@ CREATE TABLE quizzes (
     is_ai_generated BOOLEAN DEFAULT FALSE,
     generated_from_lecture_id UUID REFERENCES lectures(id)
 );
- 
+
 CREATE TABLE quiz_questions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     quiz_id UUID REFERENCES quizzes(id) ON DELETE CASCADE,
@@ -318,14 +318,14 @@ CREATE TABLE quiz_questions (
     question_type VARCHAR(20), -- mcq/multi_select/short_answer
     order_index INT
 );
- 
+
 CREATE TABLE quiz_options (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     question_id UUID REFERENCES quiz_questions(id) ON DELETE CASCADE,
     option_text TEXT,
     is_correct BOOLEAN DEFAULT FALSE
 );
- 
+
 CREATE TABLE quiz_attempts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     quiz_id UUID REFERENCES quizzes(id),
@@ -334,7 +334,7 @@ CREATE TABLE quiz_attempts (
     started_at TIMESTAMPTZ DEFAULT now(),
     submitted_at TIMESTAMPTZ
 );
- 
+
 CREATE TABLE quiz_answers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     attempt_id UUID REFERENCES quiz_attempts(id) ON DELETE CASCADE,
@@ -343,7 +343,7 @@ CREATE TABLE quiz_answers (
     text_answer TEXT,
     is_correct BOOLEAN
 );
- 
+
 -- GAMIFICATION -------------------------------------------------------------------
 CREATE TABLE certificates (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -352,28 +352,28 @@ CREATE TABLE certificates (
     certificate_url TEXT,
     issued_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE badges (
     id SERIAL PRIMARY KEY,
     name VARCHAR(80),
     description TEXT,
     icon_url TEXT
 );
- 
+
 CREATE TABLE user_badges (
     user_id UUID REFERENCES users(id),
     badge_id INT REFERENCES badges(id),
     earned_at TIMESTAMPTZ DEFAULT now(),
     PRIMARY KEY (user_id, badge_id)
 );
- 
+
 CREATE TABLE streaks (
     user_id UUID PRIMARY KEY REFERENCES users(id),
     current_streak INT DEFAULT 0,
     longest_streak INT DEFAULT 0,
     last_active_date DATE
 );
- 
+
 -- AI TUTOR -----------------------------------------------------------------------
 CREATE TABLE ai_chat_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -382,7 +382,7 @@ CREATE TABLE ai_chat_sessions (
     mode VARCHAR(20) DEFAULT 'intermediate',
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE ai_chat_messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id UUID REFERENCES ai_chat_sessions(id) ON DELETE CASCADE,
@@ -391,10 +391,10 @@ CREATE TABLE ai_chat_messages (
     source_lecture_ids UUID[],
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 -- VECTOR STORE (pgvector) ---------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS vector;
- 
+
 CREATE TABLE document_chunks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID REFERENCES courses(id),
@@ -404,7 +404,7 @@ CREATE TABLE document_chunks (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX ON document_chunks USING ivfflat (embedding vector_cosine_ops);
- 
+
 -- RECOMMENDATIONS & STUDY PLANS ---------------------------------------------------
 CREATE TABLE study_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -413,14 +413,14 @@ CREATE TABLE study_plans (
     plan_json JSONB,
     generated_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE flashcards (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     module_id UUID REFERENCES modules(id),
     question TEXT,
     answer TEXT
 );
- 
+
 CREATE TABLE recommendations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -429,7 +429,7 @@ CREATE TABLE recommendations (
     score NUMERIC(5,2),
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 -- DISCUSSIONS, ANNOUNCEMENTS, NOTIFICATIONS ---------------------------------------
 CREATE TABLE discussion_threads (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -438,7 +438,7 @@ CREATE TABLE discussion_threads (
     title VARCHAR(200),
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE discussion_posts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     thread_id UUID REFERENCES discussion_threads(id) ON DELETE CASCADE,
@@ -447,7 +447,7 @@ CREATE TABLE discussion_posts (
     is_flagged BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE announcements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID REFERENCES courses(id),
@@ -455,7 +455,7 @@ CREATE TABLE announcements (
     content TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -464,7 +464,7 @@ CREATE TABLE notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 -- ADMIN / GOVERNANCE ----------------------------------------------------------------
 CREATE TABLE course_approvals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -474,7 +474,7 @@ CREATE TABLE course_approvals (
     comment TEXT,
     reviewed_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id),
@@ -483,7 +483,7 @@ CREATE TABLE payments (
     status VARCHAR(20), -- success/failed/refunded
     created_at TIMESTAMPTZ DEFAULT now()
 );
- 
+
 CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     actor_id UUID REFERENCES users(id),
@@ -513,20 +513,20 @@ Base URL: /api/v1. All endpoints except auth and public catalog require Authoriz
 
 ### 8.1 Auth
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | /auth/register | Register a new user (default role: student) |
-| POST | /auth/login | Returns access + refresh token |
-| POST | /auth/refresh | Issues a new access token |
-| POST | /auth/logout | Invalidates refresh token |
-| GET | /auth/me | Returns current authenticated user profile |
+| Method | Endpoint       | Description                                 |
+| ------ | -------------- | ------------------------------------------- |
+| POST   | /auth/register | Register a new user (default role: student) |
+| POST   | /auth/login    | Returns access + refresh token              |
+| POST   | /auth/refresh  | Issues a new access token                   |
+| POST   | /auth/logout   | Invalidates refresh token                   |
+| GET    | /auth/me       | Returns current authenticated user profile  |
 
 #### POST /auth/login — sample
 
 ```jsonc
 // Request
 { "email": "ananya@example.com", "password": "SecurePass123" }
- 
+
 // Response 200
 {
   "access_token": "eyJhbGciOi...",
@@ -537,55 +537,55 @@ Base URL: /api/v1. All endpoints except auth and public catalog require Authoriz
 
 ### 8.2 Courses
 
-| Method | Endpoint | Description | Role |
-| --- | --- | --- | --- |
-| GET | /courses | List/filter/search catalog (category, difficulty, q, page) | Public |
-| GET | /courses/:id | Course detail with modules/lectures | Public |
-| POST | /courses | Create a course (status defaults to pending) | Instructor |
-| PUT | /courses/:id | Update course metadata | Instructor (owner) |
-| POST | /courses/:id/modules | Add module | Instructor (owner) |
-| POST | /modules/:id/lectures | Add lecture (multipart upload) | Instructor (owner) |
-| POST | /courses/:id/approve | Approve/reject course | Admin |
+| Method | Endpoint              | Description                                                | Role               |
+| ------ | --------------------- | ---------------------------------------------------------- | ------------------ |
+| GET    | /courses              | List/filter/search catalog (category, difficulty, q, page) | Public             |
+| GET    | /courses/:id          | Course detail with modules/lectures                        | Public             |
+| POST   | /courses              | Create a course (status defaults to pending)               | Instructor         |
+| PUT    | /courses/:id          | Update course metadata                                     | Instructor (owner) |
+| POST   | /courses/:id/modules  | Add module                                                 | Instructor (owner) |
+| POST   | /modules/:id/lectures | Add lecture (multipart upload)                             | Instructor (owner) |
+| POST   | /courses/:id/approve  | Approve/reject course                                      | Admin              |
 
 ### 8.3 Enrollment &amp; Progress
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | /courses/:id/enroll | Enroll current student |
-| GET | /enrollments/me | List my enrolled courses with progress |
-| POST | /lectures/:id/progress | Update watched-seconds / mark complete |
-| POST | /lectures/:id/notes | Add a note |
-| POST | /lectures/:id/bookmarks | Add a bookmark |
+| Method | Endpoint                | Description                            |
+| ------ | ----------------------- | -------------------------------------- |
+| POST   | /courses/:id/enroll     | Enroll current student                 |
+| GET    | /enrollments/me         | List my enrolled courses with progress |
+| POST   | /lectures/:id/progress  | Update watched-seconds / mark complete |
+| POST   | /lectures/:id/notes     | Add a note                             |
+| POST   | /lectures/:id/bookmarks | Add a bookmark                         |
 
 ### 8.4 Assignments &amp; Quizzes
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | /assignments | Create assignment (instructor) |
-| POST | /assignments/:id/submit | Submit file (student) |
-| PUT | /submissions/:id/grade | Grade a submission (instructor) |
-| POST | /quizzes | Create quiz manually (instructor) |
-| POST | /quizzes/:id/attempt | Start an attempt (student) |
-| POST | /attempts/:id/submit | Submit answers, receive auto-graded score |
+| Method | Endpoint                | Description                               |
+| ------ | ----------------------- | ----------------------------------------- |
+| POST   | /assignments            | Create assignment (instructor)            |
+| POST   | /assignments/:id/submit | Submit file (student)                     |
+| PUT    | /submissions/:id/grade  | Grade a submission (instructor)           |
+| POST   | /quizzes                | Create quiz manually (instructor)         |
+| POST   | /quizzes/:id/attempt    | Start an attempt (student)                |
+| POST   | /attempts/:id/submit    | Submit answers, receive auto-graded score |
 
 ### 8.5 AI Tutor
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| POST | /ai/chat/sessions | Start a chat session scoped to a course |
-| POST | /ai/chat/sessions/:id/messages | Send a message, get RAG-grounded AI reply |
-| POST | /ai/lectures/:id/summarize | Generate a lecture summary |
-| POST | /ai/lectures/:id/generate-quiz | Auto-generate a quiz draft from transcript |
-| POST | /ai/modules/:id/flashcards | Generate flashcards for a module |
-| POST | /ai/study-plan | Generate a personalized study plan from quiz history |
-| PUT | /ai/chat/sessions/:id/mode | Switch explanation mode (beginner/intermediate/advanced) |
+| Method | Endpoint                       | Description                                              |
+| ------ | ------------------------------ | -------------------------------------------------------- |
+| POST   | /ai/chat/sessions              | Start a chat session scoped to a course                  |
+| POST   | /ai/chat/sessions/:id/messages | Send a message, get RAG-grounded AI reply                |
+| POST   | /ai/lectures/:id/summarize     | Generate a lecture summary                               |
+| POST   | /ai/lectures/:id/generate-quiz | Auto-generate a quiz draft from transcript               |
+| POST   | /ai/modules/:id/flashcards     | Generate flashcards for a module                         |
+| POST   | /ai/study-plan                 | Generate a personalized study plan from quiz history     |
+| PUT    | /ai/chat/sessions/:id/mode     | Switch explanation mode (beginner/intermediate/advanced) |
 
 #### POST /ai/chat/sessions/:id/messages — sample
 
 ```jsonc
 // Request
 { "message": "Why does quicksort degrade to O(n^2) on sorted input?" }
- 
+
 // Response 200
 {
   "reply": "Because the pivot chosen (commonly the first or last element)...",
@@ -598,23 +598,23 @@ Base URL: /api/v1. All endpoints except auth and public catalog require Authoriz
 
 ### 8.6 Recommendations &amp; Gamification
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| GET | /recommendations/me | Personalized course/topic suggestions |
-| GET | /users/me/badges | Earned badges |
-| GET | /users/me/streak | Current and longest streak |
-| GET | /leaderboard/:courseId | Course leaderboard by quiz score/engagement |
+| Method | Endpoint               | Description                                 |
+| ------ | ---------------------- | ------------------------------------------- |
+| GET    | /recommendations/me    | Personalized course/topic suggestions       |
+| GET    | /users/me/badges       | Earned badges                               |
+| GET    | /users/me/streak       | Current and longest streak                  |
+| GET    | /leaderboard/:courseId | Course leaderboard by quiz score/engagement |
 
 ### 8.7 Admin
 
-| Method | Endpoint | Description |
-| --- | --- | --- |
-| GET | /admin/users | List/search all users |
-| PUT | /admin/users/:id/role | Assign/revoke role |
-| PUT | /admin/users/:id/suspend | Suspend account |
-| GET | /admin/courses/pending | Approval queue |
-| GET | /admin/analytics/overview | Platform-wide metrics |
-| GET | /admin/moderation/flagged-posts | Reported forum content |
+| Method | Endpoint                        | Description            |
+| ------ | ------------------------------- | ---------------------- |
+| GET    | /admin/users                    | List/search all users  |
+| PUT    | /admin/users/:id/role           | Assign/revoke role     |
+| PUT    | /admin/users/:id/suspend        | Suspend account        |
+| GET    | /admin/courses/pending          | Approval queue         |
+| GET    | /admin/analytics/overview       | Platform-wide metrics  |
+| GET    | /admin/moderation/flagged-posts | Reported forum content |
 
 ### 8.8 Standard Error Format
 
@@ -630,10 +630,10 @@ Base URL: /api/v1. All endpoints except auth and public catalog require Authoriz
 
 ### 8.9 Rate Limits
 
-| Endpoint group | Limit |
-| --- | --- |
-| /auth/\* | 10 requests / minute / IP |
-| /ai/chat/\* | 20 requests / minute / user |
+| Endpoint group                    | Limit                        |
+| --------------------------------- | ---------------------------- |
+| /auth/\*                          | 10 requests / minute / IP    |
+| /ai/chat/\*                       | 20 requests / minute / user  |
 | All other authenticated endpoints | 100 requests / minute / user |
 
 ## 9. System Architecture
@@ -670,7 +670,7 @@ Base URL: /api/v1. All endpoints except auth and public catalog require Authoriz
 |  users, courses,       |   |  document_chunks with       |   |  BullMQ/Celery jobs,  |
 |  quizzes, submissions  |   |  embeddings for RAG         |   |  session cache, limits |
 +----------------------+   +---------------------------+   +----------------------+
- 
+
           +----------------------------+          +----------------------------+
           |   Object Storage (S3)       |          |   External LLM Provider     |
           |  video, PDFs, certs,        |          |  (Anthropic API)            |
@@ -809,27 +809,27 @@ lms-ai-platform/
 
 ## 11. User Roles &amp; Permissions Matrix
 
-| Capability | Student | Instructor | Admin |
-| --- | --- | --- | --- |
-| Register / Login | Yes | Yes | Yes |
-| Browse course catalog | Yes | Yes | Yes |
-| Enroll in a course | Yes | No | No |
-| Watch lectures / track progress | Yes | No | No |
-| Create notes/bookmarks | Yes | No | No |
-| Submit assignments | Yes | No | No |
-| Attempt quizzes | Yes | No | No |
-| Use AI tutor chat | Yes | Yes (as reviewer) | No |
-| Create/edit own course | No | Yes | Yes (any course) |
-| Upload lecture material | No | Yes (own course) | Yes |
-| Create/approve AI-generated quiz | No | Yes (own course) | Yes |
-| Grade assignments | No | Yes (own course) | Yes |
-| View own-course analytics | No | Yes | Yes |
-| View platform-wide analytics | No | No | Yes |
-| Approve/reject submitted courses | No | No | Yes |
-| Manage user roles | No | No | Yes |
-| Suspend/delete accounts | No | No | Yes |
-| Moderate forum content | No | Yes (own course threads) | Yes (platform-wide) |
-| Manage revenue/subscriptions | No | No | Yes |
+| Capability                       | Student | Instructor               | Admin               |
+| -------------------------------- | ------- | ------------------------ | ------------------- |
+| Register / Login                 | Yes     | Yes                      | Yes                 |
+| Browse course catalog            | Yes     | Yes                      | Yes                 |
+| Enroll in a course               | Yes     | No                       | No                  |
+| Watch lectures / track progress  | Yes     | No                       | No                  |
+| Create notes/bookmarks           | Yes     | No                       | No                  |
+| Submit assignments               | Yes     | No                       | No                  |
+| Attempt quizzes                  | Yes     | No                       | No                  |
+| Use AI tutor chat                | Yes     | Yes (as reviewer)        | No                  |
+| Create/edit own course           | No      | Yes                      | Yes (any course)    |
+| Upload lecture material          | No      | Yes (own course)         | Yes                 |
+| Create/approve AI-generated quiz | No      | Yes (own course)         | Yes                 |
+| Grade assignments                | No      | Yes (own course)         | Yes                 |
+| View own-course analytics        | No      | Yes                      | Yes                 |
+| View platform-wide analytics     | No      | No                       | Yes                 |
+| Approve/reject submitted courses | No      | No                       | Yes                 |
+| Manage user roles                | No      | No                       | Yes                 |
+| Suspend/delete accounts          | No      | No                       | Yes                 |
+| Moderate forum content           | No      | Yes (own course threads) | Yes (platform-wide) |
+| Manage revenue/subscriptions     | No      | No                       | Yes                 |
 
 Enforcement: role checks happen at the API middleware layer (requireRole()), and ownership checks (e.g., "instructor owns this course") happen at the service layer before any mutation.
 
@@ -839,54 +839,54 @@ The plan assumes ~6-7 focused hours/day. Each week ends with a working, demoable
 
 ### Week 1 — Foundation, Auth, Core Data Layer
 
-| Day | Tasks |
-| --- | --- |
-| 1 | Repo setup, monorepo/folder structure, Docker Compose (Postgres, Redis), CI skeleton |
-| 2 | Database schema migration scripts for users/roles/courses/modules/lectures |
-| 3 | Auth module: register, login, JWT issuance, refresh token, RBAC middleware |
-| 4 | Course CRUD APIs + catalog listing/filtering, pagination |
-| 5 | Frontend scaffold (routing, layout, auth pages, protected routes) |
-| 6-7 | Student dashboard UI + course catalog UI wired to backend; buffer/testing |
+| Day | Tasks                                                                                |
+| --- | ------------------------------------------------------------------------------------ |
+| 1   | Repo setup, monorepo/folder structure, Docker Compose (Postgres, Redis), CI skeleton |
+| 2   | Database schema migration scripts for users/roles/courses/modules/lectures           |
+| 3   | Auth module: register, login, JWT issuance, refresh token, RBAC middleware           |
+| 4   | Course CRUD APIs + catalog listing/filtering, pagination                             |
+| 5   | Frontend scaffold (routing, layout, auth pages, protected routes)                    |
+| 6-7 | Student dashboard UI + course catalog UI wired to backend; buffer/testing            |
 
 Milestone: Users can register, log in, and browse/enroll in courses. Instructor can create a course.
 
 ### Week 2 — Learning Core: Lectures, Progress, Assignments, Quizzes
 
-| Day | Tasks |
-| --- | --- |
-| 8 | Video upload to object storage + streaming playback in course player |
-| 9 | Lecture progress tracking, notes, bookmarks |
-| 10 | Assignment creation + submission + manual grading flow |
-| 11 | Quiz builder (manual) + attempt + auto-grading engine for objective questions |
-| 12 | Certificates (PDF generation), badges, streak logic (daily cron job) |
-| 13-14 | Instructor analytics dashboard (drop-off, avg. score); buffer/testing |
+| Day   | Tasks                                                                         |
+| ----- | ----------------------------------------------------------------------------- |
+| 8     | Video upload to object storage + streaming playback in course player          |
+| 9     | Lecture progress tracking, notes, bookmarks                                   |
+| 10    | Assignment creation + submission + manual grading flow                        |
+| 11    | Quiz builder (manual) + attempt + auto-grading engine for objective questions |
+| 12    | Certificates (PDF generation), badges, streak logic (daily cron job)          |
+| 13-14 | Instructor analytics dashboard (drop-off, avg. score); buffer/testing         |
 
 Milestone: A student can complete a full course loop: watch, note, submit assignment, take quiz, earn a certificate.
 
 ### Week 3 — AI Tutor &amp; Recommendations
 
-| Day | Tasks |
-| --- | --- |
-| 15 | Set up AI service (FastAPI), integrate LLM provider client |
-| 16 | Document ingestion pipeline: transcript chunking + embedding generation into pgvector |
-| 17 | RAG retriever + chat endpoint with source citation |
-| 18 | Lesson summarization + flashcard generation endpoints |
-| 19 | Auto quiz generation from transcript + instructor review/approval UI |
+| Day   | Tasks                                                                                                 |
+| ----- | ----------------------------------------------------------------------------------------------------- |
+| 15    | Set up AI service (FastAPI), integrate LLM provider client                                            |
+| 16    | Document ingestion pipeline: transcript chunking + embedding generation into pgvector                 |
+| 17    | RAG retriever + chat endpoint with source citation                                                    |
+| 18    | Lesson summarization + flashcard generation endpoints                                                 |
+| 19    | Auto quiz generation from transcript + instructor review/approval UI                                  |
 | 20-21 | Difficulty-mode switching, mastery-score tracking, study plan + recommendation engine; buffer/testing |
 
 Milestone: AI tutor answers course-grounded questions with citations; auto-generates quizzes, summaries, flashcards, and a study plan.
 
 ### Week 4 — Admin Panel, Discussions, Polish, Deployment
 
-| Day | Tasks |
-| --- | --- |
-| 22 | Admin panel: user management, role assignment, course approval queue |
-| 23 | Admin analytics dashboard (platform-wide metrics), content moderation for forum |
-| 24 | Discussion forum (threaded), announcements, in-app + email notifications |
-| 25 | Dark mode, accessibility pass, i18n scaffolding, rate limiting, caching pass |
-| 26 | Containerize all services, write CI/CD pipeline (GitHub Actions), staging deploy |
-| 27 | Load testing (basic), bug fixes, security review (JWT expiry, input validation, RBAC edge cases) |
-| 28 | Final polish, seed demo data, README + documentation, production deploy |
+| Day | Tasks                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------ |
+| 22  | Admin panel: user management, role assignment, course approval queue                             |
+| 23  | Admin analytics dashboard (platform-wide metrics), content moderation for forum                  |
+| 24  | Discussion forum (threaded), announcements, in-app + email notifications                         |
+| 25  | Dark mode, accessibility pass, i18n scaffolding, rate limiting, caching pass                     |
+| 26  | Containerize all services, write CI/CD pipeline (GitHub Actions), staging deploy                 |
+| 27  | Load testing (basic), bug fixes, security review (JWT expiry, input validation, RBAC edge cases) |
+| 28  | Final polish, seed demo data, README + documentation, production deploy                          |
 
 Milestone: Full platform deployed to a cloud environment, all three role workspaces functional end-to-end, CI/CD pipeline green.
 
@@ -896,29 +896,29 @@ Days 6-7, 13-14, and 20-21 are intentionally kept as buffer/testing days within 
 
 ## 13. Suggested Technology Stack
 
-| Layer | Technology | Notes |
-| --- | --- | --- |
-| Frontend | React 18 + TypeScript, Vite | Fast dev server, strong typing |
-| State Management | Redux Toolkit (or Zustand) | Predictable global state for auth/course/session data |
-| Styling | Tailwind CSS | Utility-first, fast to theme (incl. dark mode) |
-| Frontend Data Fetching | TanStack Query (React Query) | Caching, retries, background refetch |
-| Backend (Core LMS) | Node.js + Express (or NestJS) + TypeScript | REST APIs, RBAC middleware |
-| Backend (AI Service) | Python + FastAPI | Best ecosystem fit for RAG/embedding pipelines |
-| Database | PostgreSQL 15+ | Relational integrity for LMS entities |
-| Vector Store | pgvector (Postgres extension) | Avoids running a separate vector DB at this scale |
-| Cache / Queue | Redis + BullMQ (Node) / Celery (Python) | Caching + background jobs |
-| Object Storage | AWS S3 (or MinIO for local dev) | Video, PDFs, certificates |
-| LLM Provider | Anthropic API (Claude models) | Chat, summarization, quiz generation |
-| Auth | JWT (access + refresh), bcrypt/argon2 | Stateless auth |
-| Video Delivery | HLS via a CDN in front of S3 | Progressive/adaptive streaming |
-| Speech-to-Text | Whisper (self-hosted) or managed STT API | Lecture transcription |
-| PDF Generation | Puppeteer / pdf-lib | Certificates |
-| Containerization | Docker + Docker Compose | Local dev parity with prod |
-| Orchestration (optional) | Kubernetes (minikube / managed K8s) | Only if scaling beyond single-node deploy |
-| CI/CD | GitHub Actions | Lint, test, build, deploy pipeline |
-| Monitoring | Prometheus + Grafana (or hosted APM) | Metrics, health checks |
-| Logging | Winston (Node) / structlog (Python) | Structured logs, centralized via Loki/CloudWatch |
-| Testing | Jest, Supertest, Pytest, Playwright | Backend, AI service, frontend/E2E |
+| Layer                    | Technology                                 | Notes                                                 |
+| ------------------------ | ------------------------------------------ | ----------------------------------------------------- |
+| Frontend                 | React 18 + TypeScript, Vite                | Fast dev server, strong typing                        |
+| State Management         | Redux Toolkit (or Zustand)                 | Predictable global state for auth/course/session data |
+| Styling                  | Tailwind CSS                               | Utility-first, fast to theme (incl. dark mode)        |
+| Frontend Data Fetching   | TanStack Query (React Query)               | Caching, retries, background refetch                  |
+| Backend (Core LMS)       | Node.js + Express (or NestJS) + TypeScript | REST APIs, RBAC middleware                            |
+| Backend (AI Service)     | Python + FastAPI                           | Best ecosystem fit for RAG/embedding pipelines        |
+| Database                 | PostgreSQL 15+                             | Relational integrity for LMS entities                 |
+| Vector Store             | pgvector (Postgres extension)              | Avoids running a separate vector DB at this scale     |
+| Cache / Queue            | Redis + BullMQ (Node) / Celery (Python)    | Caching + background jobs                             |
+| Object Storage           | AWS S3 (or MinIO for local dev)            | Video, PDFs, certificates                             |
+| LLM Provider             | Anthropic API (Claude models)              | Chat, summarization, quiz generation                  |
+| Auth                     | JWT (access + refresh), bcrypt/argon2      | Stateless auth                                        |
+| Video Delivery           | HLS via a CDN in front of S3               | Progressive/adaptive streaming                        |
+| Speech-to-Text           | Whisper (self-hosted) or managed STT API   | Lecture transcription                                 |
+| PDF Generation           | Puppeteer / pdf-lib                        | Certificates                                          |
+| Containerization         | Docker + Docker Compose                    | Local dev parity with prod                            |
+| Orchestration (optional) | Kubernetes (minikube / managed K8s)        | Only if scaling beyond single-node deploy             |
+| CI/CD                    | GitHub Actions                             | Lint, test, build, deploy pipeline                    |
+| Monitoring               | Prometheus + Grafana (or hosted APM)       | Metrics, health checks                                |
+| Logging                  | Winston (Node) / structlog (Python)        | Structured logs, centralized via Loki/CloudWatch      |
+| Testing                  | Jest, Supertest, Pytest, Playwright        | Backend, AI service, frontend/E2E                     |
 
 ## 14. Deployment Strategy
 
@@ -1056,4 +1056,4 @@ Ordered roughly by expected value-to-effort ratio for a post-4-week phase:
 
 End of Document — Vertexon Learning Technologies Pvt. Ltd. — LMS-AI PRD v1.0
 
-Page  of 
+Page of

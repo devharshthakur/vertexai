@@ -8,9 +8,9 @@ import { useAuthSession } from './useAuthSession'
  * The list is only fetched when somebody is signed in: the endpoint is
  * private, and an anonymous visitor must not trigger a 401.
  *
- * Reading the session means awaiting, and a composable called after an
- * `await` no longer has the Nuxt instance. `runWithContext` restores it for
- * the calls that need it, so the session and the fetch keep working.
+ * Reading the session is async. Nuxt's implicit app context may be
+ * unavailable after an `await`, so `nuxtApp` is captured before the first
+ * one and later Nuxt-dependent calls run with `runWithContext`.
  */
 export async function useMyEnrollments(nuxtApp: NuxtApp = useNuxtApp()) {
   const { data: session } = await nuxtApp.runWithContext(() => useAuthSession())

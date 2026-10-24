@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { HTMLAttributes } from 'vue'
+import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import AppContainer from '@/components/layout/AppContainer.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
@@ -8,11 +10,12 @@ import {
 } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     variant?: 'full' | 'minimal'
+    class?: HTMLAttributes['class']
   }>(),
-  { variant: 'full' }
+  { variant: 'full', class: undefined }
 )
 
 const { data: session } = await useAuthSession()
@@ -25,7 +28,7 @@ async function signOut() {
 </script>
 
 <template>
-  <header class="border-b">
+  <header :class="cn('border-b', props.class)">
     <AppContainer class="flex h-14 items-center justify-between gap-4">
       <NuxtLink to="/" class="text-sm font-semibold tracking-tight">
         VertexAI

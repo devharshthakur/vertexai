@@ -1,3 +1,5 @@
+import type { AuthProvidersResponse } from '#shared/types/auth'
+
 /**
  * Sign-in methods this deployment supports.
  *
@@ -5,7 +7,7 @@
  * configured, so the UI asks instead of guessing.
  */
 export function useAuthProviders() {
-  return useFetch<{ providers: string[] }>('/api/auth-providers', {
+  return useFetch<AuthProvidersResponse>('/api/auth-providers', {
     key: 'auth:providers'
   })
 }

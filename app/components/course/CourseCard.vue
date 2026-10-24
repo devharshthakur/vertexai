@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Badge } from '@/components/ui/badge'
+import CourseBadges from '@/components/course/CourseBadges.vue'
 import {
   Card,
   CardContent,
@@ -15,14 +15,10 @@ const { course } = defineProps<{ course: CourseSummary }>()
 <template>
   <Card class="flex flex-col">
     <CardHeader>
-      <div class="flex items-center gap-2">
-        <Badge v-if="course.category" variant="secondary">
-          {{ course.category }}
-        </Badge>
-        <Badge v-if="course.difficulty" variant="outline">
-          {{ course.difficulty }}
-        </Badge>
-      </div>
+      <CourseBadges
+        :category="course.category"
+        :difficulty="course.difficulty"
+      />
       <CardTitle>
         <NuxtLink :to="`/courses/${course.id}`" class="hover:underline">
           {{ course.title }}

@@ -18,6 +18,7 @@ import {
   useCourses,
   type CatalogFilterState
 } from '@/composables/useCourses'
+import { pluralize } from '@/lib/pluralize'
 
 useSeoMeta({
   title: 'Courses · VertexAI',
@@ -50,7 +51,7 @@ function updateFilters(patch: Partial<CatalogFilterState>) {
         <p class="text-muted-foreground">
           {{
             courses
-              ? `${courses.total} published ${courses.total === 1 ? 'course' : 'courses'}`
+              ? pluralize(courses.total, 'published course')
               : 'Loading courses…'
           }}
         </p>

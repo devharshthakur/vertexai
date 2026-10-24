@@ -10,6 +10,7 @@ import {
   varchar
 } from 'drizzle-orm/pg-core'
 import { users } from './auth'
+import { COURSE_STATUSES } from '#shared/validation/courses'
 
 /**
  * Course authoring tables: `courses` → `modules` → `lectures`.
@@ -35,7 +36,9 @@ export const courses = pgTable(
     difficulty: varchar('difficulty', { length: 20 }),
     thumbnailUrl: text('thumbnail_url'),
     price: numeric('price', { precision: 10, scale: 2 }).default('0').notNull(),
-    status: varchar('status', { length: 20 }).default('pending').notNull(),
+    status: varchar('status', { length: 20, enum: COURSE_STATUSES })
+      .default('pending')
+      .notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()

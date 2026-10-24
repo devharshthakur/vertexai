@@ -1,6 +1,6 @@
 import { defineEventHandler, setResponseStatus } from 'nuxt/server'
 import { createCourseSchema } from '#shared/validation/courses'
-import { createCourse } from '#server/services/course-service'
+import { createCourse } from '#server/services/courses/commands'
 import { requireRole } from '#server/utils/require-session'
 import { parseBody } from '#server/utils/validate'
 
@@ -14,10 +14,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireRole(event, 'instructor', 'admin')
   const body = await parseBody(event, createCourseSchema)
 
-  const course = await createCourse(body, {
-    id: session.user.id,
-    role: session.user.role
-  })
+  const course = await createCourse(body, session.user.id)
 
   setResponseStatus(event, 201)
 

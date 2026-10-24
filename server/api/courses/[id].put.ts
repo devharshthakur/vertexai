@@ -1,7 +1,7 @@
 import { defineEventHandler } from 'nuxt/server'
 import { courseIdSchema, updateCourseSchema } from '#shared/validation/courses'
-import { updateCourse } from '#server/services/course-service'
-import { toHttpError } from '#server/utils/errors'
+import { updateCourse } from '#server/services/courses/commands'
+import { withServiceErrors } from '#server/utils/errors'
 import { requireRole } from '#server/utils/require-session'
 import { parseBody, parseParam } from '#server/utils/validate'
 
@@ -17,12 +17,10 @@ export default defineEventHandler(async (event) => {
   const courseId = parseParam(event, 'id', courseIdSchema)
   const body = await parseBody(event, updateCourseSchema)
 
-  try {
+  return withServiceErrors(async () => {
     return await updateCourse(courseId, body, {
       id: session.user.id,
       role: session.user.role
     })
-  } catch (error) {
-    throw toHttpError(error)
-  }
+  })
 })

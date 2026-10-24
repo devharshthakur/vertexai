@@ -1,6 +1,6 @@
 import { defineEventHandler } from 'nuxt/server'
 import { courseQuerySchema } from '#shared/validation/courses'
-import { listPublishedCourses } from '#server/services/course-service'
+import { listPublishedCourses } from '#server/services/courses/queries'
 import { parseQuery } from '#server/utils/validate'
 
 /**

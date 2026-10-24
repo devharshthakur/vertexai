@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
-  CardContent,
   CardDescription,
   CardHeader,
   CardTitle
@@ -20,6 +19,8 @@ useSeoMeta({
   description:
     'Explore courses and build a focused learning habit with VertexAI.'
 })
+
+definePageMeta({ layout: 'marketing' })
 
 const upcomingFeatures = [
   {
@@ -38,14 +39,11 @@ const upcomingFeatures = [
 </script>
 
 <template>
-  <div
-    class="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-16 sm:py-24"
-  >
+  <div class="flex flex-col gap-12">
     <section
-      class="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center"
+      class="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 text-center"
     >
       <Badge variant="secondary">A more focused way to learn</Badge>
-
       <div class="flex flex-col gap-4">
         <h1
           class="text-4xl font-semibold tracking-tight text-balance sm:text-6xl"
@@ -82,7 +80,7 @@ const upcomingFeatures = [
         >
           Start with a course. Grow from there.
         </h2>
-        <p class="mx-auto max-w-2xl text-muted-foreground">
+        <p class="mx-auto max-w-xl text-balance text-muted-foreground">
           Browse the catalog today. More tools for learning and tracking your
           progress are taking shape.
         </p>
@@ -100,11 +98,6 @@ const upcomingFeatures = [
               Browse published courses and find a topic that moves you forward.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button variant="outline" as-child>
-              <NuxtLink to="/courses">Browse the catalog</NuxtLink>
-            </Button>
-          </CardContent>
         </Card>
 
         <Card v-for="feature in upcomingFeatures" :key="feature.title">

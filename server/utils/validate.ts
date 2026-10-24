@@ -17,6 +17,16 @@ import type { ZodType } from 'zod'
 
 type Validator<T> = ZodType<T>
 
+function parse<T>(value: unknown, schema: Validator<T>) {
+  const result = schema.safeParse(value)
+
+  if (!result.success) {
+    throw toValidationError(result.error)
+  }
+
+  return result.data
+}
+
 /** Turns a Zod failure into a 400 with the field issues attached. */
 function toValidationError(error: { issues: unknown }) {
   return createError({
@@ -28,25 +38,12 @@ function toValidationError(error: { issues: unknown }) {
 
 /** Validates the JSON body of a request. */
 export async function parseBody<T>(event: RequestEvent, schema: Validator<T>) {
-  const body = await readBody(event)
-  const result = schema.safeParse(body)
-
-  if (!result.success) {
-    throw toValidationError(result.error)
-  }
-
-  return result.data
+  return parse(await readBody(event), schema)
 }
 
 /** Validates the query string of a request. */
 export function parseQuery<T>(event: RequestEvent, schema: Validator<T>) {
-  const result = schema.safeParse(getQuery(event))
-
-  if (!result.success) {
-    throw toValidationError(result.error)
-  }
-
-  return result.data
+  return parse(getQuery(event), schema)
 }
 
 /** Validates a route parameter, such as a course id. */

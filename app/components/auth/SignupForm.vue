@@ -12,7 +12,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { refreshAuthSession } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
-import { toErrorMessages } from '@/lib/form-errors'
 import { signupSchema } from '#shared/validation/auth'
 import type { SignupValues } from '#shared/validation/auth'
 
@@ -64,18 +63,24 @@ const form = useForm({
   }
 })
 
+const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
+
 /**
- * Field errors stay hidden until the visitor reaches the field. The form-level
- * schema already flags fields that have not been filled in yet, and reporting
- * those would show problems the visitor cannot act on yet.
+ * Field errors stay hidden until the visitor submits the form. The form-level
+ * schema still runs on change, so messages can be corrected immediately after
+ * that first attempt.
  */
-function fieldErrors(state: { meta: { isTouched: boolean; errors: unknown } }) {
-  return state.meta.isTouched ? toErrorMessages(state.meta.errors) : []
+function isInvalid(state: { meta: { isValid: boolean } }) {
+  return hasSubmitted.value && !state.meta.isValid
 }
 </script>
 
 <template>
-  <form class="flex flex-col gap-6" @submit.prevent.stop="form.handleSubmit()">
+  <form
+    class="flex flex-col gap-6"
+    novalidate
+    @submit.prevent.stop="form.handleSubmit()"
+  >
     <FieldGroup>
       <div class="flex flex-col items-center gap-2 text-center">
         <NuxtLink to="/" class="flex flex-col items-center gap-2 font-medium">
@@ -94,55 +99,64 @@ function fieldErrors(state: { meta: { isTouched: boolean; errors: unknown } }) {
       </div>
       <form.Field name="name">
         <template #default="{ field }">
-          <Field :data-invalid="fieldErrors(field.state).length > 0">
+          <Field :data-invalid="isInvalid(field.state)">
             <FieldLabel :for="field.name"> Name </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="fieldErrors(field.state).length > 0"
+              :aria-invalid="isInvalid(field.state)"
               type="text"
               placeholder="Ada Lovelace"
               autocomplete="name"
               @update:model-value="(value) => field.handleChange(String(value))"
               @blur="field.handleBlur"
             />
-            <FieldError :errors="fieldErrors(field.state)" />
+            <FieldError
+              v-if="isInvalid(field.state)"
+              :errors="field.state.meta.errors"
+            />
           </Field>
         </template>
       </form.Field>
       <form.Field name="email">
         <template #default="{ field }">
-          <Field :data-invalid="fieldErrors(field.state).length > 0">
+          <Field :data-invalid="isInvalid(field.state)">
             <FieldLabel :for="field.name"> Email </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="fieldErrors(field.state).length > 0"
+              :aria-invalid="isInvalid(field.state)"
               type="email"
               placeholder="m@example.com"
               autocomplete="email"
               @update:model-value="(value) => field.handleChange(String(value))"
               @blur="field.handleBlur"
             />
-            <FieldError :errors="fieldErrors(field.state)" />
+            <FieldError
+              v-if="isInvalid(field.state)"
+              :errors="field.state.meta.errors"
+            />
           </Field>
         </template>
       </form.Field>
       <form.Field name="password">
         <template #default="{ field }">
-          <Field :data-invalid="fieldErrors(field.state).length > 0">
+          <Field :data-invalid="isInvalid(field.state)">
             <FieldLabel :for="field.name"> Password </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="fieldErrors(field.state).length > 0"
+              :aria-invalid="isInvalid(field.state)"
               type="password"
               placeholder="At least 8 characters"
               autocomplete="new-password"
               @update:model-value="(value) => field.handleChange(String(value))"
               @blur="field.handleBlur"
             />
-            <FieldError :errors="fieldErrors(field.state)" />
+            <FieldError
+              v-if="isInvalid(field.state)"
+              :errors="field.state.meta.errors"
+            />
           </Field>
         </template>
       </form.Field>

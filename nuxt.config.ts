@@ -49,9 +49,15 @@ export default defineNuxtConfig({
   },
   typescript: {
     nodeTsConfig: {
-      include: ['../drizzle.config.ts'],
+      include: [
+        '../drizzle.config.ts',
+        '../eslint.config.mjs',
+        '../prettier.config.js',
+        '../.nano-staged.mjs'
+      ],
       compilerOptions: {
-        types: ['node']
+        types: ['node'],
+        checkJs: true
       }
     }
   },

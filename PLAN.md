@@ -44,7 +44,8 @@ vertexai/
 │   │
 │   ├── components/
 │   │   ├── ui/                        ✅   # shadcn-vue ONLY — installed via CLI, never hand-styled
-│   │   │                                 #   installed: button, card, field, input, label, separator
+│   │   │                                 #   installed: button, card, field, input, label, separator,
+│   │   │                                 #   badge, select, skeleton, empty, spinner
 │   │   │                                 #   add later: sidebar, table, dialog, sheet, tabs, select,
 │   │   │                                 #   badge, avatar, dropdown-menu, sonner, skeleton,
 │   │   │                                 #   progress, accordion, textarea, tooltip, alert-dialog,
@@ -73,9 +74,9 @@ vertexai/
 │   │   ├── useAuthSession.ts          ✅
 │   │   ├── useAuthProviders.ts        ✅
 │   │   ├── useRole.ts                 ⬜   # derived role flags (isStudent/isInstructor/isAdmin)
-│   │   ├── useCourses.ts              ⬜   # catalog list + filters
-│   │   ├── useCourse.ts               ⬜   # course detail
-│   │   ├── useEnrollment.ts           ⬜
+│   │   ├── useCourses.ts              ✅   # catalog list + filters
+│   │   ├── useCourse.ts               ✅   # course detail
+│   │   ├── useEnrollment.ts           ✅   # enroll action + my enrollments
 │   │   ├── useLectureProgress.ts      ⬜   # throttled progress posting (~every 10s)
 │   │   ├── useNotes.ts                ⬜
 │   │   ├── useQuiz.ts                 ⬜
@@ -103,8 +104,8 @@ vertexai/
 │   │   ├── index.vue                  ✅   # landing
 │   │   ├── auth/login.vue             ✅
 │   │   ├── auth/signup.vue            ✅
-│   │   ├── courses/index.vue          ⬜   # catalog: search + category/difficulty filters (public)
-│   │   ├── courses/[id]/index.vue     ⬜   # course detail + enroll CTA (public); discussions tab
+│   │   ├── courses/index.vue          ✅   # catalog: search + category/difficulty filters (public)
+│   │   ├── courses/[id]/index.vue     ✅   # course detail + enroll CTA (public); discussions tab later
 │   │   ├── dashboard.vue              🚧   # student home: enrollments, progress %, streak (stub ✅)
 │   │   ├── learn/[courseId]/index.vue ⬜   # resolves resume position → redirects to lecture
 │   │   ├── learn/[courseId]/lectures/[lectureId].vue  ⬜  # player + notes + AI tutor panel
@@ -133,12 +134,12 @@ vertexai/
 │   │   ├── auth-providers.get.ts      ✅
 │   │   ├── courses/                   ⬜   # ✅ index.get (catalog, uncached until Week 2) · index.post ·
 │   │   │                                 #   ✅ mine.get · ✅ [id].get · ✅ [id].put · ✅ [id]/modules.post
-│   │   │                                 #   ⬜ [id]/enroll.post · ⬜ [id]/approve.post ·
+│   │   │                                 #   ✅ [id]/enroll.post · ⬜ [id]/approve.post ·
 │   │   │                                 #   ⬜ [id]/announcements.post
 │   │   ├── modules/[id]/lectures.post ⬜   # multipart upload → storage + enqueue embedding job
 │   │   ├── lectures/                  ⬜   # [id]/video.get (stream, Range support) ·
 │   │   │                                 #   [id]/progress.post · [id]/notes.post · [id]/bookmarks.post
-│   │   ├── enrollments/me.get         ⬜
+│   │   ├── enrollments/me.get         ✅
 │   │   ├── assignments/               ⬜   # index.post (instructor) · [id]/submit.post (student)
 │   │   ├── submissions/[id]/grade.put ⬜
 │   │   ├── quizzes/                   ⬜   # index.post · [id]/attempt.post
@@ -163,7 +164,7 @@ vertexai/
 │   │   ├── schema/                         # one file per domain (Drizzle table definitions)
 │   │   │   ├── auth.ts                ✅   # users, sessions, accounts, verifications (+ role column)
 │   │   │   ├── courses.ts             ✅   # courses, modules, lectures
-│   │   │   ├── enrollments.ts         ⬜   # enrollments, lecture_progress, notes, bookmarks
+│   │   │   ├── enrollments.ts         ✅   # enrollments ✅ · lecture_progress, notes, bookmarks ⬜ (Week 2)
 │   │   │   ├── assignments.ts         ⬜   # assignments, assignment_submissions
 │   │   │   ├── quizzes.ts             ⬜   # quizzes, quiz_questions, quiz_options, quiz_attempts, quiz_answers
 │   │   │   ├── gamification.ts        ⬜   # certificates, badges, user_badges, streaks
@@ -179,7 +180,7 @@ vertexai/
 │   │
 │   ├── services/                           # all business logic lives here; routes stay thin
 │   │   ├── course-service.ts          ✅
-│   │   ├── enrollment-service.ts      ⬜
+│   │   ├── enrollment-service.ts      ✅
 │   │   ├── progress-service.ts        ⬜   # progress % recompute, resume position
 │   │   ├── assignment-service.ts      ⬜
 │   │   ├── quiz-service.ts            ⬜   # auto-grading, mastery updates
@@ -222,7 +223,7 @@ vertexai/
 │   │   ├── auth.ts                  ✅   #   used by the client form AND the server route
 │   │   ├── courses.ts             ✅   #   course create/update/query schemas + difficulty & status values
 │   │   ├── quizzes.ts / assignments.ts / ai.ts / discussions.ts / admin.ts  ⬜
-│   └── types/                       ⬜   # DTO shapes the API returns (Course, QuizAttempt, …)
+│   └── types/                       ✅   # DTO shapes the API returns (Course, Enrollment, …)
 │
 ├── docs/PRD.md + PRD.docx             ✅   # canonical product spec
 ├── public/                          ✅   # static assets only (NEVER user uploads)
@@ -570,7 +571,9 @@ route middleware, base UI). Each week ends demoable; buffer days absorb overruns
 - ✅ Day 4: `courses.ts` schema (courses/modules/lectures) → migrate → catalog + course CRUD
   routes with validation, ownership checks, pagination
   (also added: `courses/mine.get.ts`, `courses/[id]/modules.post.ts`)
-- ⬜ Day 5: catalog page + course detail page (public), enroll endpoint + button
+- ✅ Day 5: catalog page + course detail page (public), enroll endpoint + button
+  (also shipped: `enrollments/me`, catalog categories endpoint, URL-addressable
+  filters; the discussions tab and the instructor builder come later)
 - ⬜ Day 6–7: student dashboard wired to real enrollments; buffer + tests
 - **Milestone:** register → login → browse → enroll works end-to-end.
 

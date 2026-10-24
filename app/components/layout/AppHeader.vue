@@ -1,14 +1,21 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
+import { LogOutIcon, UserCogIcon, UserRoundIcon } from '@lucide/vue'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import AppContainer from '@/components/layout/AppContainer.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
-import {
-  refreshAuthSession,
-  useAuthSession
-} from '@/composables/useAuthSession'
-import { authClient } from '@/lib/auth-client'
+import { useAuthSession } from '@/composables/useAuthSession'
+import { useSignOut } from '@/composables/useSignOut'
 
 const props = withDefaults(
   defineProps<{
@@ -19,12 +26,7 @@ const props = withDefaults(
 )
 
 const { data: session } = await useAuthSession()
-
-async function signOut() {
-  await authClient.signOut()
-  await refreshAuthSession()
-  await navigateTo('/')
-}
+const { signOut } = useSignOut()
 </script>
 
 <template>
@@ -36,17 +38,34 @@ async function signOut() {
 
       <div class="flex items-center gap-2">
         <nav v-if="variant === 'full'" class="flex items-center gap-2">
-          <template v-if="session">
-            <span class="hidden text-sm text-muted-foreground sm:inline">
-              {{ session.user.email }}
-            </span>
-            <Button size="sm" as-child>
-              <NuxtLink to="/dashboard">Dashboard</NuxtLink>
-            </Button>
-            <Button variant="ghost" size="sm" @click="signOut">
-              Sign out
-            </Button>
-          </template>
+          <DropdownMenu v-if="session">
+            <DropdownMenuTrigger as-child>
+              <Button variant="ghost" size="icon" aria-label="Account menu">
+                <UserRoundIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56">
+              <DropdownMenuLabel>
+                {{ session.user.email }}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem as-child>
+                  <NuxtLink to="/account/settings">
+                    <UserCogIcon data-icon="inline-start" />
+                    Account settings
+                  </NuxtLink>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem @click="signOut">
+                  <LogOutIcon data-icon="inline-start" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <template v-else>
             <Button variant="ghost" size="sm" as-child>
               <NuxtLink to="/auth/login">Sign in</NuxtLink>

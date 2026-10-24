@@ -4,11 +4,30 @@ An AI-augmented learning management system with a tutor that knows your course.
 
 > **Under active development.** The project is early — nothing here is production-ready, and there are no releases yet.
 
-## What is VertexAI?
+## Table of Contents
 
-VertexAI is a learning management system built around one idea: the AI tutor should answer from _your_ course material, not from a generic chatbot. It is designed to bring the familiar LMS loop — courses, lectures, assignments, quizzes, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from.
+- [What is VertexAI](#what-is-vertexai)
+- [Who it's for](#who-its-for)
+- [Features](#features)
+- [Tech stack](#tech-stack)
+- [Getting started](#getting-started)
+- [Project documentation](#project-documentation)
+- [Author](#author)
+- [License](#license)
 
-Planned capabilities:
+## What is VertexAI
+
+VertexAI is a learning management system built around one idea: the AI tutor should answer from _your_ course material, not from a generic chatbot.
+
+It brings the familiar LMS loop — courses, lectures, assignments, quizzes, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from.
+
+## Who it's for
+
+- **Students** who want an LMS that actually answers their questions, grounded in the material they were given.
+- **Instructors** who author courses and need visibility into where learners struggle.
+- **Admins** who approve courses, moderate content, and manage the platform.
+
+## Features
 
 - Course authoring, a searchable catalog, and enrollment
 - Lectures with progress tracking, notes, and bookmarks
@@ -18,9 +37,7 @@ Planned capabilities:
 - Explanations that adapt to a beginner, intermediate, or advanced level
 - Instructor analytics, plus an admin layer for approvals and moderation
 
-## Stack
-
-What the repository contains today:
+## Tech stack
 
 | Layer     | Choice                                   |
 | --------- | ---------------------------------------- |
@@ -31,125 +48,14 @@ What the repository contains today:
 | Forms     | TanStack Form, Zod                       |
 | Tooling   | ESLint, Prettier, Husky                  |
 
-What is being built next:
+## Getting started
 
-- **Drizzle schema** for the LMS entities, with **pgvector** for course-level semantic search
-- **Redis** for caching and background jobs
-- A **RAG pipeline** that grounds the AI tutor in each course's own material
+Follow **[SETUP.md](./SETUP.md)** to run the app locally: database, environment, migrations, and auth.
 
-## Local development
+## Project documentation
 
-The database runs in Docker. Copy the environment template once, then start it:
-
-```bash
-cp .env.example .env
-pnpm db:up # start PostgreSQL on localhost:5433
-```
-
-Once the container exists, `db:start`/`db:stop` resume or pause it without removing the container or its data:
-
-```bash
-pnpm db:start # start an existing (stopped) db container
-pnpm db:stop # stop the db container, keeping the volume
-```
-
-The host port lives in `POSTGRES_PORT` (`5433` by default, so it does not clash with a PostgreSQL already running on `5432`).
-
-Better Auth needs a secret of its own. Generate one and put it in `.env` next to the database settings:
-
-```bash
-openssl rand -base64 32
-```
-
-Schema changes follow the Drizzle workflow. Tables are defined in `server/db/schema`, and `drizzle.config.ts` reads the same `DATABASE_URL` the Nuxt server uses:
-
-```bash
-pnpm db:generate # write a migration from server/db/schema
-pnpm db:migrate # apply pending migrations
-pnpm db:check # validate the migration history
-pnpm db:studio # browse the database
-```
-
-No domain tables are modelled yet, so `pnpm db:generate` currently reports no changes beyond the auth tables. `GET /api/health` reports whether the database is reachable: when it is, the endpoint returns `200` with `{ "status": "ok", "database": "up" }`; when the probe fails, it returns `503` with `{ "status": "error", "database": "down" }`.
-
-## Authentication
-
-[Better Auth](https://better-auth.com) handles sign-in, sessions and roles. The server instance lives in `server/utils/auth.ts` and is mounted on `/api/auth/**` by `server/api/auth/[...all].ts`.
-
-Sign-in works with email and password out of the box. GitHub sign-in is optional: set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in `.env` (the callback URL is `http://localhost:5173/api/auth/callback/github`) and the button appears on the login page. The secret is read from `BETTER_AUTH_SECRET`, and `BETTER_AUTH_URL` tells Better Auth where the app is served.
-
-| Route                 | What it is                              |
-| --------------------- | --------------------------------------- |
-| `/auth/login`         | Sign in with email, password or GitHub  |
-| `/auth/signup`        | Create an account                       |
-| `/dashboard`          | A page that requires a session          |
-| `/api/auth/**`        | The Better Auth API                     |
-| `/api/auth-providers` | The sign-in methods this deployment has |
-
-New accounts get the `student` role. Admins are created with the Better Auth CLI and can promote accounts to `instructor` or `admin`:
-
-```bash
-pnpm dlx auth@1.7.11 create-admin --config server/utils/auth.ts \
-  --email you@example.com --name "Your Name" --role admin
-```
-
-The auth tables (`users`, `sessions`, `accounts`, `verifications`) are generated by the Better Auth CLI into `server/db/schema/auth.ts`. Regenerate them after changing the auth config or its plugins, then run the usual Drizzle workflow:
-
-```bash
-pnpm dlx auth@1.7.11 generate --config server/utils/auth.ts \
-  --output server/db/schema/auth.ts -y
-pnpm db:generate
-pnpm db:migrate
-```
-
-## Forms
-
-[TanStack Form](https://tanstack.com/form/latest/docs/framework/vue/quick-start) drives the credential forms, and [Zod](https://zod.dev) describes their rules. The schemas live in `shared/validation/auth.ts`, so the browser and the Nitro server can validate the same payloads with the same rules.
-
-A form is created with `useForm`, and the schema is attached as a form-level validator. TanStack Form then spreads the schema's issues over the matching fields:
-
-```vue
-<script setup lang="ts">
-import { useForm } from '@tanstack/vue-form'
-import { loginSchema } from '#shared/validation/auth'
-
-const form = useForm({
-  defaultValues: { email: '', password: '' },
-  validators: { onChange: loginSchema },
-  onSubmit: async ({ value }) => {
-    // ...
-  }
-})
-</script>
-```
-
-Fields are rendered with `form.Field`, and their errors are shown with the shadcn `FieldError` component:
-
-```vue
-<form.Field name="email">
-  <template #default="{ field }">
-    <Field :data-invalid="fieldErrors(field.state).length > 0">
-      <FieldLabel :for="field.name">Email</FieldLabel>
-      <Input
-        :id="field.name"
-        :model-value="field.state.value"
-        @update:model-value="(value) => field.handleChange(String(value))"
-        @blur="field.handleBlur"
-      />
-      <FieldError :errors="fieldErrors(field.state)" />
-    </Field>
-  </template>
-</form.Field>
-```
-
-Two details are easy to get wrong:
-
-- `useForm` has to run before the first `await` in `<script setup>`. It registers a mount hook, and Vue drops the current component instance across an `await`.
-- Field errors stay hidden until the field has been touched. The form-level schema already flags fields the visitor has not filled in yet, and reporting those would show problems they cannot act on yet.
-
-## Status
-
-VertexAI is being built in the open from the LMS-AI product requirements document, kept in [`docs/PRD.md`](docs/PRD.md). The design is still moving, so expect frequent changes and breaking changes to the structure. Follow the repository to see how it progresses.
+- [SETUP.md](./SETUP.md) — local development setup
+- [docs/PRD.md](./docs/PRD.md) — the product requirements document this is built from
 
 ## Author
 
@@ -157,4 +63,4 @@ VertexAI is being built in the open from the LMS-AI product requirements documen
 
 ## License
 
-[MIT](./LICENSE)
+MIT License — Copyright (c) 2026 Harsh Thakur. Full text in [LICENSE](./LICENSE).

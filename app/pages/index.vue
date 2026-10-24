@@ -13,6 +13,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
+import { useAuthSession } from '@/composables/useAuthSession'
 
 useSeoMeta({
   title: 'VertexAI · Learn with focus',
@@ -21,6 +22,8 @@ useSeoMeta({
 })
 
 definePageMeta({ layout: 'marketing' })
+
+const { data: session } = await useAuthSession()
 
 const upcomingFeatures = [
   {
@@ -65,7 +68,7 @@ const upcomingFeatures = [
             <ArrowRightIcon data-icon="inline-end" />
           </NuxtLink>
         </Button>
-        <Button variant="outline" size="lg" as-child>
+        <Button v-if="!session" variant="outline" size="lg" as-child>
           <NuxtLink to="/auth/signup">Create an account</NuxtLink>
         </Button>
       </div>

@@ -42,12 +42,12 @@ const upcomingFeatures = [
 </script>
 
 <template>
-  <div class="flex flex-col gap-12">
+  <div class="flex flex-col gap-8">
     <section
-      class="mx-auto flex w-full max-w-3xl flex-col items-center gap-6 text-center"
+      class="mx-auto flex w-full max-w-3xl flex-col items-center gap-5 text-center sm:gap-6"
     >
       <Badge variant="secondary">A more focused way to learn</Badge>
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3 sm:gap-4">
         <h1
           class="text-4xl font-semibold tracking-tight text-balance sm:text-6xl"
         >
@@ -62,7 +62,13 @@ const upcomingFeatures = [
       </div>
 
       <div class="flex flex-wrap items-center justify-center gap-3">
-        <Button size="lg" as-child>
+        <Button v-if="session" size="lg" as-child>
+          <NuxtLink to="/dashboard">
+            Dashboard
+            <ArrowRightIcon data-icon="inline-end" />
+          </NuxtLink>
+        </Button>
+        <Button v-else size="lg" as-child>
           <NuxtLink to="/courses">
             Explore courses
             <ArrowRightIcon data-icon="inline-end" />
@@ -74,7 +80,7 @@ const upcomingFeatures = [
       </div>
     </section>
 
-    <section class="flex flex-col gap-6" aria-labelledby="platform-heading">
+    <section class="flex flex-col gap-5" aria-labelledby="platform-heading">
       <div class="flex flex-col gap-2 text-center">
         <p class="text-sm font-medium text-primary">The learning space</p>
         <h2

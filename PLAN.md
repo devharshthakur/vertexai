@@ -572,8 +572,9 @@ route middleware, base UI). Each week ends demoable; buffer days absorb overruns
   routes with validation, ownership checks, pagination
   (also added: `courses/mine.get.ts`, `courses/[id]/modules.post.ts`)
 - ✅ Day 5: catalog page + course detail page (public), enroll endpoint + button
-  (also shipped: `enrollments/me`, catalog categories endpoint, URL-addressable
-  filters; the discussions tab and the instructor builder come later)
+  (also shipped: `enrollments/me`, catalog categories endpoint; the filters are
+  component state for now — URL-addressable filters, the discussions tab and the
+  instructor builder come later)
 - ⬜ Day 6–7: student dashboard wired to real enrollments; buffer + tests
 - **Milestone:** register → login → browse → enroll works end-to-end.
 

@@ -1,4 +1,5 @@
 import { plugin as shadcn } from '@shadcn/lint'
+import pluginQuery from '@tanstack/eslint-plugin-query'
 import withNuxt from './.nuxt/eslint.config.mjs'
 import prettier from 'eslint-config-prettier/flat'
 
@@ -21,6 +22,7 @@ const designSystem = {
 export default withNuxt(
   { ignores: ['.agents/**'] },
   { ignores: ['app/components/ui/**'] },
+  ...pluginQuery.configs['flat/recommended-strict'],
   designSystem,
   prettier
 )

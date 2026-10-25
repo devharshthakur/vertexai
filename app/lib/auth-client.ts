@@ -1,13 +1,7 @@
 import { adminClient } from 'better-auth/client/plugins'
 import { createAuthClient } from 'better-auth/vue'
 
-/**
- * Browser-side Better Auth client.
- *
- * The base URL is intentionally left unset: Better Auth then resolves it to
- * `/api/auth` on the current origin, which is where the Nitro handler is
- * mounted.
- */
+/** Leave `baseURL` unset so Better Auth uses `/api/auth` on the current origin. */
 export const authClient = createAuthClient({
   plugins: [adminClient()]
 })

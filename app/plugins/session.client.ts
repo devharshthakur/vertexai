@@ -1,12 +1,6 @@
 import { authClient, type AuthSession } from '@/lib/auth-client'
 
-/**
- * Puts the session that was rendered on the server into the client-side
- * session store.
- *
- * Without this the first client render would not know about the session and
- * would disagree with the server-rendered markup.
- */
+/** Seed Better Auth's client store so the first browser render matches the server. */
 export default defineNuxtPlugin(() => {
   const session = useState<AuthSession | null>('auth:session')
 

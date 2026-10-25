@@ -19,7 +19,6 @@ const props = defineProps<{
   email: string
 }>()
 
-/** Failures reported by Better Auth, which belong to the form as a whole. */
 const serverError = ref('')
 const saved = ref(false)
 
@@ -44,11 +43,7 @@ const form = useForm({
 
 const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
 
-/**
- * Field errors stay hidden until the visitor submits the form. The form-level
- * schema still runs on change, so messages can be corrected immediately after
- * that first attempt.
- */
+/** Do not show field errors before the first submission attempt. */
 function isInvalid(state: { meta: { isValid: boolean } }) {
   return hasSubmitted.value && !state.meta.isValid
 }

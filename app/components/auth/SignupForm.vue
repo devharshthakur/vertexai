@@ -17,10 +17,7 @@ import type { SignupValues } from '#shared/validation/auth'
 
 const route = useRoute()
 
-/**
- * Only same-origin paths are accepted, so the `redirect` query parameter
- * cannot be used to bounce the visitor to another site.
- */
+/** Accept only same-origin paths to prevent an open redirect. */
 const redirectTo = computed(() => {
   const target = route.query.redirect
   return typeof target === 'string' &&
@@ -30,17 +27,8 @@ const redirectTo = computed(() => {
     : '/dashboard'
 })
 
-/** Failures reported by Better Auth, which belong to the form as a whole. */
 const serverError = ref('')
 
-/**
- * The form is created before the first `await`: `useForm` registers a mount
- * hook, and Vue drops the current component instance across an `await`.
- *
- * The Zod schema is attached as a form-level validator, so TanStack Form
- * spreads its issues over the matching fields and blocks the submission
- * while any of them fails.
- */
 const form = useForm({
   defaultValues: { name: '', email: '', password: '' } satisfies SignupValues,
   validators: { onChange: signupSchema },
@@ -65,11 +53,7 @@ const form = useForm({
 
 const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
 
-/**
- * Field errors stay hidden until the visitor submits the form. The form-level
- * schema still runs on change, so messages can be corrected immediately after
- * that first attempt.
- */
+/** Do not show field errors before the first submission attempt. */
 function isInvalid(state: { meta: { isValid: boolean } }) {
   return hasSubmitted.value && !state.meta.isValid
 }

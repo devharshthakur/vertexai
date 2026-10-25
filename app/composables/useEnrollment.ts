@@ -2,15 +2,9 @@ import type { EnrollmentSummary } from '#shared/types/courses'
 import { useAuthSessionState } from './useAuthSession'
 
 /**
- * The caller's enrollments.
- *
- * The list is only fetched when somebody is signed in: the endpoint is
- * private, and an anonymous visitor must not trigger a 401.
- *
- * Both reads happen synchronously during setup. `useFetch` has to be
- * registered before the first `await`, otherwise Nuxt reports NUXT_E3003 and
- * cannot wait for the request. The session ref is safe to read that early
- * because the `session.global` middleware has already resolved it.
+ * Fetches only for signed-in users because the endpoint is private and an
+ * anonymous request would return 401. The fetch registers synchronously during
+ * setup so Nuxt can await it.
  */
 export function useMyEnrollments() {
   const session = useAuthSessionState()
@@ -23,8 +17,7 @@ export function useMyEnrollments() {
     default: () => []
   })
 
-  // The client store can still be loading the session on a cold page load, so
-  // run the request once the session is known to exist.
+  // A cold client load may still be resolving the session; fetch once it exists.
   if (import.meta.client) {
     watch(signedIn, (value) => {
       if (value) enrollments.refresh()
@@ -35,13 +28,8 @@ export function useMyEnrollments() {
 }
 
 /**
- * Enrolling in a course.
- *
- * Enrolling twice is not an error — the endpoint returns the existing
- * enrollment — so the button only has to reflect the current state.
- *
- * The setup reads are synchronous for the same reason as in `useMyEnrollments`:
- * the enrollment fetch must register during setup to avoid NUXT_E3003.
+ * Enrollment is idempotent; the endpoint returns the existing record when the
+ * visitor is already enrolled, so the UI only needs to reflect current state.
  */
 export function useEnroll(courseId: MaybeRefOrGetter<string>) {
   const session = useAuthSessionState()

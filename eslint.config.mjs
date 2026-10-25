@@ -3,8 +3,6 @@ import pluginQuery from '@tanstack/eslint-plugin-query'
 import withNuxt from './.nuxt/eslint.config.mjs'
 import prettier from 'eslint-config-prettier/flat'
 
-// Nuxt's generated config already parses .vue with vue-eslint-parser, so
-// this block only registers the plugin and the design-system rules.
 /** @type {import('eslint').Linter.Config} */
 const designSystem = {
   files: ['**/*.vue'],

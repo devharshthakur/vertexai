@@ -20,13 +20,17 @@ import {
 } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useCourse } from '@/composables/useCourse'
 import { pluralize } from '@/lib/pluralize'
+import type { CourseWithCurriculum } from '#shared/types/courses'
 
 const route = useRoute()
 const courseId = computed(() => String(route.params.id))
 
-const { data: course, pending, error } = useCourse(courseId)
+const {
+  data: course,
+  pending,
+  error
+} = useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`)
 
 const lectureCount = computed(
   () =>

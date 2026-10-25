@@ -12,13 +12,10 @@ import {
   EmptyTitle
 } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
-import {
-  DEFAULT_CATALOG_FILTERS,
-  useCourseCategories,
-  useCourses,
-  type CatalogFilterState
-} from '@/composables/useCourses'
+import { CATALOG_PAGE_SIZE, DEFAULT_CATALOG_FILTERS } from '@/lib/catalog'
+import type { CatalogFilterState } from '@/lib/catalog'
 import { pluralize } from '@/lib/pluralize'
+import type { CourseListResult } from '#shared/types/courses'
 
 useSeoMeta({
   title: 'Courses · VertexAI',
@@ -27,8 +24,23 @@ useSeoMeta({
 
 const filters = ref<CatalogFilterState>({ ...DEFAULT_CATALOG_FILTERS })
 
-const { data: courses, pending, error } = useCourses(filters)
-const { data: categories } = useCourseCategories()
+const query = computed(() => ({
+  q: filters.value.q || undefined,
+  category: filters.value.category || undefined,
+  difficulty: filters.value.difficulty || undefined,
+  page: filters.value.page,
+  limit: CATALOG_PAGE_SIZE
+}))
+
+const {
+  data: courses,
+  pending,
+  error
+} = useFetch<CourseListResult>('/api/courses', { query })
+
+const { data: categories } = useFetch<string[]>('/api/courses/categories', {
+  default: () => []
+})
 
 /** Return to page one when filters change so the current page cannot hide matches. */
 function updateFilters(patch: Partial<CatalogFilterState>) {

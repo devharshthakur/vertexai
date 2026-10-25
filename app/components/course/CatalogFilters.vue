@@ -12,7 +12,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { COURSE_DIFFICULTIES } from '#shared/validation/courses'
-import type { CatalogFilterState } from '@/composables/useCourses'
+import type { CatalogFilterState } from '@/lib/catalog'
 
 const { filters, categories } = defineProps<{
   filters: CatalogFilterState

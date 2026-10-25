@@ -2,9 +2,9 @@
 
 ## Day 6 — Real student dashboard
 
-1. [ ] Add the shadcn-vue `Progress` component.
-2. [ ] Wire `useMyEnrollments()` into `app/pages/dashboard.vue`.
-3. [ ] Expose enrollment data, pending state, error, and refresh.
+1. [x] Add the shadcn-vue `Progress` component.
+2. [x] Wire `useMyEnrollments()` into `app/pages/dashboard.vue`.
+3. [x] Expose enrollment data, pending state, error, and refresh.
 4. [ ] Extract `EnrolledCourseCard.vue`.
 5. [ ] Show course title, category, difficulty, progress, and a link to the course.
 6. [ ] Render loading skeletons, an error state with retry, an empty state, and enrolled-course cards.

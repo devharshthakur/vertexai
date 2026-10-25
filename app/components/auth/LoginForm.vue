@@ -11,9 +11,9 @@ import {
   FieldSeparator
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { useAuthProviders } from '@/composables/useAuthProviders'
 import { refreshAuthSession } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
+import type { AuthProvidersResponse } from '#shared/types/auth'
 import { loginSchema } from '#shared/validation/auth'
 import type { LoginValues } from '#shared/validation/auth'
 
@@ -55,7 +55,10 @@ const form = useForm({
 
 const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
 
-const { data: providers } = await useAuthProviders()
+const { data: providers } = await useFetch<AuthProvidersResponse>(
+  '/api/auth-providers',
+  { key: 'auth:providers' }
+)
 const githubEnabled = computed(
   () => providers.value?.providers.includes('github') ?? false
 )

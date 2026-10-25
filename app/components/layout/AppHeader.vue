@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import AppContainer from '@/components/layout/AppContainer.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
-import { useAuthSession } from '@/composables/useAuthSession'
+import { useAuthSessionState } from '@/composables/useAuthSession'
 import { useSignOut } from '@/composables/useSignOut'
 
 const props = withDefaults(
@@ -25,7 +25,7 @@ const props = withDefaults(
   { variant: 'full', class: undefined }
 )
 
-const { data: session } = await useAuthSession()
+const session = useAuthSessionState()
 const { signOut } = useSignOut()
 </script>
 

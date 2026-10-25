@@ -27,7 +27,6 @@ useSeoMeta({
   description: 'Your learning space on VertexAI.'
 })
 
-// Both reads are synchronous: `useFetch` has to register during setup.
 const session = useAuthSessionState()
 const { data: enrollments, pending, error, refresh } = useMyEnrollments()
 

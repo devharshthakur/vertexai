@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/card'
 import PasswordForm from '@/components/account/PasswordForm.vue'
 import ProfileForm from '@/components/account/ProfileForm.vue'
-import { useAuthSession } from '@/composables/useAuthSession'
+import { useAuthSessionState } from '@/composables/useAuthSession'
 import { useSignOut } from '@/composables/useSignOut'
 
 definePageMeta({ middleware: 'auth' })
@@ -21,7 +21,7 @@ useSeoMeta({
   description: 'Update your profile details and password.'
 })
 
-const { data: session } = await useAuthSession()
+const session = useAuthSessionState()
 const { signOut } = useSignOut()
 </script>
 

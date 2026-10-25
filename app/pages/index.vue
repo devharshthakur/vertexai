@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card'
-import { useAuthSession } from '@/composables/useAuthSession'
+import { useAuthSessionState } from '@/composables/useAuthSession'
 
 useSeoMeta({
   title: 'VertexAI · Learn with focus',
@@ -23,7 +23,7 @@ useSeoMeta({
 
 definePageMeta({ layout: 'marketing' })
 
-const { data: session } = await useAuthSession()
+const session = useAuthSessionState()
 
 const upcomingFeatures = [
   {

@@ -1,10 +1,8 @@
-import { useAuthSession } from '@/composables/useAuthSession'
+import { useAuthSessionState } from '@/composables/useAuthSession'
 
-/**
- * Keeps signed-in visitors away from the login and sign-up pages.
- */
-export default defineNuxtRouteMiddleware(async () => {
-  const { data: session } = await useAuthSession()
+/** Signed-in visitors have no reason to see the login or sign-up pages. */
+export default defineNuxtRouteMiddleware(() => {
+  const session = useAuthSessionState()
 
   if (session.value) {
     return navigateTo('/dashboard')

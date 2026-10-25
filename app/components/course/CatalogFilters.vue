@@ -23,10 +23,7 @@ const emit = defineEmits<{
   (e: 'update:filters', patch: Partial<CatalogFilterState>): void
 }>()
 
-/**
- * The search box keeps its own text so that typing does not fire a request
- * per keystroke; the term is applied when the form is submitted.
- */
+/** Keep draft text locally so requests fire on submit, not on every keystroke. */
 const search = ref(filters.q)
 
 watch(
@@ -48,7 +45,7 @@ function applyCategory(value: unknown) {
   emit('update:filters', { category: toFilterValue(value) })
 }
 
-/** The "All …" entry means "no filter", which the API reads as an empty value. */
+/** The "All …" entries map to an empty API filter value. */
 function toFilterValue(value: unknown) {
   const selected = typeof value === 'string' ? value : ''
 

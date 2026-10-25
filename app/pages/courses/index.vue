@@ -30,10 +30,7 @@ const filters = ref<CatalogFilterState>({ ...DEFAULT_CATALOG_FILTERS })
 const { data: courses, pending, error } = useCourses(filters)
 const { data: categories } = useCourseCategories()
 
-/**
- * Applying a filter returns to the first page — otherwise a search on page
- * three would show an empty list.
- */
+/** Return to page one when filters change so the current page cannot hide matches. */
 function updateFilters(patch: Partial<CatalogFilterState>) {
   filters.value = {
     ...filters.value,

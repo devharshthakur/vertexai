@@ -17,7 +17,8 @@ import {
   EmptyTitle
 } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
-import { useAuthSession } from '@/composables/useAuthSession'
+import { useAuthSessionState } from '@/composables/useAuthSession'
+import { useMyEnrollments } from '@/composables/useEnrollment'
 
 definePageMeta({ middleware: 'auth' })
 
@@ -26,7 +27,11 @@ useSeoMeta({
   description: 'Your learning space on VertexAI.'
 })
 
-const { data: session } = await useAuthSession()
+// Both reads are synchronous: `useFetch` has to register during setup.
+const session = useAuthSessionState()
+const { data: enrollments, pending, error, refresh } = useMyEnrollments()
+
+defineExpose({ enrollments, pending, error, refresh })
 
 const firstName = computed(
   () => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there'

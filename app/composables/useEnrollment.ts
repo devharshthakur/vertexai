@@ -1,6 +1,5 @@
-import type { NuxtApp } from '#app'
 import type { EnrollmentSummary } from '#shared/types/courses'
-import { useAuthSession } from './useAuthSession'
+import { useAuthSessionState } from './useAuthSession'
 
 /**
  * The caller's enrollments.
@@ -8,22 +7,31 @@ import { useAuthSession } from './useAuthSession'
  * The list is only fetched when somebody is signed in: the endpoint is
  * private, and an anonymous visitor must not trigger a 401.
  *
- * Reading the session is async. Nuxt's implicit app context may be
- * unavailable after an `await`, so `nuxtApp` is captured before the first
- * one and later Nuxt-dependent calls run with `runWithContext`.
+ * Both reads happen synchronously during setup. `useFetch` has to be
+ * registered before the first `await`, otherwise Nuxt reports NUXT_E3003 and
+ * cannot wait for the request. The session ref is safe to read that early
+ * because the `session.global` middleware has already resolved it.
  */
-export async function useMyEnrollments(nuxtApp: NuxtApp = useNuxtApp()) {
-  const { data: session } = await nuxtApp.runWithContext(() => useAuthSession())
+export function useMyEnrollments() {
+  const session = useAuthSessionState()
   const signedIn = computed(() => Boolean(session.value))
 
-  return nuxtApp.runWithContext(() =>
-    useFetch<EnrollmentSummary[]>('/api/enrollments/me', {
-      key: 'enrollments:me',
-      immediate: signedIn.value,
-      server: signedIn.value,
-      default: () => []
+  const enrollments = useFetch<EnrollmentSummary[]>('/api/enrollments/me', {
+    key: 'enrollments:me',
+    immediate: signedIn.value,
+    server: signedIn.value,
+    default: () => []
+  })
+
+  // The client store can still be loading the session on a cold page load, so
+  // run the request once the session is known to exist.
+  if (import.meta.client) {
+    watch(signedIn, (value) => {
+      if (value) enrollments.refresh()
     })
-  )
+  }
+
+  return enrollments
 }
 
 /**
@@ -31,12 +39,13 @@ export async function useMyEnrollments(nuxtApp: NuxtApp = useNuxtApp()) {
  *
  * Enrolling twice is not an error — the endpoint returns the existing
  * enrollment — so the button only has to reflect the current state.
+ *
+ * The setup reads are synchronous for the same reason as in `useMyEnrollments`:
+ * the enrollment fetch must register during setup to avoid NUXT_E3003.
  */
-export async function useEnroll(courseId: MaybeRefOrGetter<string>) {
-  const nuxtApp = useNuxtApp()
-
-  const { data: session } = await nuxtApp.runWithContext(() => useAuthSession())
-  const { data: enrollments, refresh } = await useMyEnrollments(nuxtApp)
+export function useEnroll(courseId: MaybeRefOrGetter<string>) {
+  const session = useAuthSessionState()
+  const { data: enrollments, refresh } = useMyEnrollments()
 
   const pending = ref(false)
   const error = ref<string | null>(null)

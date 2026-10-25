@@ -22,9 +22,28 @@ export async function useAuthSession(): Promise<{
     return { data }
   }
 
+  return { data: useAuthSessionState() }
+}
+
+/**
+ * The session as a ref that can be read synchronously during setup.
+ *
+ * The server value is filled by `useAuthSession()`, which the `session.global`
+ * middleware awaits before any page setup. In the browser the live Better Auth
+ * store is read instead; the session plugin hydrates it from the payload.
+ *
+ * Read the session through this ref when a Nuxt data fetch depends on it:
+ * `useFetch` and `useAsyncData` must be registered before the first `await`,
+ * otherwise Nuxt reports NUXT_E3003 and cannot wait for the request.
+ */
+export function useAuthSessionState(): Ref<AuthSession | null> {
+  if (import.meta.server) {
+    return useState<AuthSession | null>('auth:session', () => null)
+  }
+
   const state = authClient.useSession()
 
-  return { data: computed(() => state.value.data) }
+  return computed(() => state.value.data)
 }
 
 /**

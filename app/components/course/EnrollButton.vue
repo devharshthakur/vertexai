@@ -6,7 +6,7 @@ import { useEnroll } from '@/composables/useEnrollment'
 
 const { courseId } = defineProps<{ courseId: string }>()
 
-const { enroll, pending, error, isSignedIn, isEnrolled } = await useEnroll(
+const { enroll, pending, error, isSignedIn, isEnrolled } = useEnroll(
   () => courseId
 )
 </script>

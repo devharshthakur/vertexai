@@ -48,7 +48,7 @@ export function useMyEnrollments() {
   }
 
   return {
-    data: computed(() => query.data.value ?? []),
+    enrollments: computed(() => query.data.value ?? []),
     isPending: query.isPending,
     isError: query.isError,
     error: query.error,
@@ -63,7 +63,7 @@ export function useMyEnrollments() {
 export function useEnroll(courseId: MaybeRefOrGetter<string>) {
   const session = useAuthSessionState()
   const queryClient = useQueryClient()
-  const { data: enrollments } = useMyEnrollments()
+  const { enrollments } = useMyEnrollments()
 
   const mutation = useMutation({
     mutationFn: (id: string) =>

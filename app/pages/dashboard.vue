@@ -24,7 +24,7 @@ useSeoMeta({
 })
 
 const session = useAuthSessionState()
-const { data: enrollments, isPending, isError, refetch } = useMyEnrollments()
+const { enrollments, isPending, isError, refetch } = useMyEnrollments()
 
 defineExpose({ enrollments, isPending, isError, refetch })
 

@@ -5,8 +5,8 @@
 1. [x] Add the shadcn-vue `Progress` component.
 2. [x] Wire `useMyEnrollments()` into `app/pages/dashboard.vue`.
 3. [x] Expose enrollment data, pending state, error, and refresh.
-4. [ ] Extract `EnrolledCourseCard.vue`.
-5. [ ] Show course title, category, difficulty, progress, and a link to the course.
+4. [x] Extract `EnrolledCourseCard.vue`.
+5. [x] Show course title, category, difficulty, progress, and a link to the course.
 6. [ ] Render loading skeletons, an error state with retry, an empty state, and enrolled-course cards.
 7. [ ] Keep the dashboard limited to real data; do not fake streaks or a learning route.
 8. [ ] Run `pnpm validate`.

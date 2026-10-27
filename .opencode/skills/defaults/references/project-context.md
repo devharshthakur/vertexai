@@ -1,18 +1,15 @@
----
-name: project-context
-description: VertexAI project context — what to build comes from docs/PRD, but the tech stack is deliberately substituted. Load for scope, requirements, data model, API, architecture, or stack questions, and before acting on any technology the PRD names.
----
-
 # Project context
 
-VertexAI is an AI-augmented LMS — course authoring, enrollment, progress tracking, quizzes, certificates — with a course-grounded RAG AI tutor (chat, summaries, auto-quizzes, adaptive difficulty). Three roles: student, instructor, admin. Single-developer, 4-week build.
+VertexAI is an internship project implemented by a single developer: an AI-augmented LMS with course authoring, enrollment, progress tracking, quizzes, certificates, and a course-grounded RAG AI tutor (chat, summaries, auto-quizzes, adaptive difficulty). Three roles: student, instructor, admin. The initial build is planned for four weeks.
 
 ## Source-of-truth split
 
-- **Product**: `docs/PRD.docx` is canonical; `docs/PRD.md` is the readable mirror — read the `.md`. The PRD governs scope, data model, API surface, roles, and the delivery plan.
-- **Stack**: the repo itself (`package.json`, `nuxt.config.ts`, `components.json`). PRD §13 "Suggested Technology Stack" is **not followed** — the developer substitutes a stack they are comfortable in, which the project explicitly allows.
+- **Product**: `docs/PRD/PRD.docx` is canonical; `docs/PRD/PRD.md` is the readable mirror — read the `.md`. The PRD governs scope, data model, API surface, roles, and the delivery plan.
+- **Stack**: the repo itself (`package.json`, `nuxt.config.ts`, `components.json`). PRD §13 "Suggested Technology Stack" is **not followed** — the developer substitutes a stack they are comfortable with, which the project explicitly allows.
 
-## Stack substitution (deliberate — never "correct" the repo toward the PRD)
+## Stack substitution and porting
+
+The stack substitution is deliberate — never "correct" the repo toward the PRD.
 
 | PRD §13 suggests                          | This project uses                                                  |
 | ----------------------------------------- | ------------------------------------------------------------------ |
@@ -24,7 +21,7 @@ VertexAI is an AI-augmented LMS — course authoring, enrollment, progress track
 | PostgreSQL + pgvector                     | PostgreSQL via Drizzle ORM (unchanged)                             |
 | Python/FastAPI AI service, Redis + BullMQ | Not yet established — open decision; ask before introducing either |
 
-When the PRD names a technology, map it to the substituted equivalent: "React component" → Vue SFC, "Express middleware" → Nitro middleware, "REST endpoint" → Nitro server route. The requirement-in-spirit carries; the named technology does not.
+When porting PRD requirements, preserve the product behavior while mapping named technologies to their substituted equivalents: "React component" → Vue SFC, "Express middleware" → Nitro middleware, "REST endpoint" → Nitro server route. The requirement-in-spirit carries; the named technology does not.
 
 ## PRD navigation
 

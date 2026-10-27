@@ -24,32 +24,24 @@ useSeoMeta({
 })
 
 const session = useAuthSessionState()
-const {
-  data: enrollments,
-  pending,
-  status,
-  error,
-  refresh
-} = useMyEnrollments()
+const { data: enrollments, isPending, isError, refetch } = useMyEnrollments()
 
-defineExpose({ enrollments, pending, error, refresh })
+defineExpose({ enrollments, isPending, isError, refetch })
 
 const firstName = computed(
   () => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there'
 )
 
 /**
- * `pending` alone leaves a cold client load showing the empty state while the
- * session resolves and the fetch has not started, so idle counts as loading.
+ * A disabled query is pending too, so a cold client load shows skeletons while
+ * the session resolves instead of flashing the empty state.
  */
-const isLoading = computed(() => pending.value || status.value === 'idle')
-
 const coursesDescription = computed(() => {
-  if (isLoading.value) {
+  if (isPending.value) {
     return 'Loading your courses…'
   }
 
-  if (error.value) {
+  if (isError.value) {
     return 'We could not load your courses.'
   }
 
@@ -92,7 +84,7 @@ const coursesDescription = computed(() => {
       </div>
 
       <div
-        v-if="isLoading"
+        v-if="isPending"
         class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
         aria-busy="true"
       >
@@ -119,7 +111,7 @@ const coursesDescription = computed(() => {
         </Card>
       </div>
 
-      <Empty v-else-if="error">
+      <Empty v-else-if="isError">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <CircleAlertIcon />
@@ -130,7 +122,7 @@ const coursesDescription = computed(() => {
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
-          <Button variant="outline" @click="refresh()">Try again</Button>
+          <Button variant="outline" @click="refetch()">Try again</Button>
         </EmptyContent>
       </Empty>
 

@@ -1,30 +1,59 @@
 import type { EnrollmentSummary } from '#shared/types/courses'
+import {
+  queryOptions,
+  useMutation,
+  useQuery,
+  useQueryClient
+} from '@tanstack/vue-query'
 import { useAuthSessionState } from './useAuthSession'
 
 /**
+ * Enrollments are per-user, so the key carries the user ID to keep one account's
+ * cached list out of another's. Enrolling invalidates the shared root.
+ */
+const enrollmentKeys = {
+  all: ['enrollments'] as const,
+  mine: (userId: string | null) => ['enrollments', 'me', userId] as const
+}
+
+const ENROLL_ERROR = 'Could not enroll right now. Please try again.'
+
+/**
  * Fetches only for signed-in users because the endpoint is private and an
- * anonymous request would return 401. The fetch registers synchronously during
- * setup so Nuxt can await it.
+ * anonymous request would return 401. The query stays disabled until the
+ * session resolves, and its data is normalized so consumers always get a list.
  */
 export function useMyEnrollments() {
   const session = useAuthSessionState()
-  const signedIn = computed(() => Boolean(session.value))
+  const requestFetch = useRequestFetch()
+  const userId = computed(() => session.value?.user.id ?? null)
+  const signedIn = computed(() => userId.value !== null)
 
-  const enrollments = useFetch<EnrollmentSummary[]>('/api/enrollments/me', {
-    key: 'enrollments:me',
-    immediate: signedIn.value,
-    server: signedIn.value,
-    default: () => []
-  })
+  const query = useQuery(
+    computed(() =>
+      queryOptions({
+        queryKey: enrollmentKeys.mine(userId.value),
+        queryFn: () => requestFetch<EnrollmentSummary[]>('/api/enrollments/me'),
+        enabled: signedIn.value
+      })
+    )
+  )
 
-  // A cold client load may still be resolving the session; fetch once it exists.
-  if (import.meta.client) {
-    watch(signedIn, (value) => {
-      if (value) enrollments.refresh()
+  // During SSR the session is already known, so fetch before rendering. A
+  // disabled query would wait for `enabled`, holding the response open.
+  if (import.meta.server) {
+    onServerPrefetch(async () => {
+      if (signedIn.value) await query.suspense()
     })
   }
 
-  return enrollments
+  return {
+    data: computed(() => query.data.value ?? []),
+    isPending: query.isPending,
+    isError: query.isError,
+    error: query.error,
+    refetch: query.refetch
+  }
 }
 
 /**
@@ -33,10 +62,16 @@ export function useMyEnrollments() {
  */
 export function useEnroll(courseId: MaybeRefOrGetter<string>) {
   const session = useAuthSessionState()
-  const { data: enrollments, refresh } = useMyEnrollments()
+  const queryClient = useQueryClient()
+  const { data: enrollments } = useMyEnrollments()
 
-  const pending = ref(false)
-  const error = ref<string | null>(null)
+  const mutation = useMutation({
+    mutationFn: (id: string) =>
+      $fetch(`/api/courses/${id}/enroll`, { method: 'POST' }),
+    // Await the refetch so `pending` also covers the refreshed list.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all })
+  })
 
   const isSignedIn = computed(() => Boolean(session.value))
   const isEnrolled = computed(() =>
@@ -44,6 +79,7 @@ export function useEnroll(courseId: MaybeRefOrGetter<string>) {
       (enrollment) => enrollment.courseId === toValue(courseId)
     )
   )
+  const error = computed(() => (mutation.isError.value ? ENROLL_ERROR : null))
 
   async function enroll() {
     const id = toValue(courseId)
@@ -54,18 +90,18 @@ export function useEnroll(courseId: MaybeRefOrGetter<string>) {
       return
     }
 
-    pending.value = true
-    error.value = null
-
     try {
-      await $fetch(`/api/courses/${id}/enroll`, { method: 'POST' })
-      await refresh()
+      await mutation.mutateAsync(id)
     } catch {
-      error.value = 'Could not enroll right now. Please try again.'
-    } finally {
-      pending.value = false
+      // The mutation keeps the failure; `error` renders the friendly message.
     }
   }
 
-  return { enroll, pending, error, isSignedIn, isEnrolled }
+  return {
+    enroll,
+    pending: mutation.isPending,
+    error,
+    isSignedIn,
+    isEnrolled
+  }
 }

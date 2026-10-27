@@ -1,5 +1,7 @@
 # Agent instructions
 
+Load `defaults` at the start of every repository task.
+
 ## Project and architecture
 
 - Read `docs/PRD/PRD.md` for product scope, roles, data model, and API requirements. Its React/Express stack and deployment sections are suggestions, not the current architecture; this repository intentionally uses Nuxt 4/Vue 3, Nitro, Better Auth, Drizzle, and PostgreSQL. Do not introduce PRD-suggested infrastructure as if it already exists.

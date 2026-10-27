@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { BookOpenIcon } from '@lucide/vue'
+import EnrolledCourseCard from '@/components/course/EnrolledCourseCard.vue'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
 import {
   Empty,
   EmptyContent,
@@ -35,6 +29,12 @@ defineExpose({ enrollments, pending, error, refresh })
 const firstName = computed(
   () => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there'
 )
+
+const coursesDescription = computed(() =>
+  enrollments.value.length === 0
+    ? 'Courses you join will appear here.'
+    : 'Pick up where you left off.'
+)
 </script>
 
 <template>
@@ -60,31 +60,38 @@ const firstName = computed(
     <Separator />
 
     <section class="flex flex-col gap-4" aria-labelledby="courses-heading">
-      <Card>
-        <CardHeader>
-          <CardTitle id="courses-heading">Your courses</CardTitle>
-          <CardDescription>Courses you join will appear here.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Empty>
-            <EmptyHeader>
-              <EmptyMedia variant="icon">
-                <BookOpenIcon />
-              </EmptyMedia>
-              <EmptyTitle>Your learning starts with a course</EmptyTitle>
-              <EmptyDescription>
-                Enrolled courses and learning progress will show up here. Browse
-                the catalog and choose what you would like to learn next.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button as-child>
-                <NuxtLink to="/courses">Browse courses</NuxtLink>
-              </Button>
-            </EmptyContent>
-          </Empty>
-        </CardContent>
-      </Card>
+      <div class="flex flex-col gap-1">
+        <h2 id="courses-heading" class="text-xl font-semibold tracking-tight">
+          Your courses
+        </h2>
+        <p class="text-sm text-muted-foreground">{{ coursesDescription }}</p>
+      </div>
+
+      <Empty v-if="enrollments.length === 0">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <BookOpenIcon />
+          </EmptyMedia>
+          <EmptyTitle>Your learning starts with a course</EmptyTitle>
+          <EmptyDescription>
+            Enrolled courses and learning progress will show up here. Browse the
+            catalog and choose what you would like to learn next.
+          </EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button as-child>
+            <NuxtLink to="/courses">Browse courses</NuxtLink>
+          </Button>
+        </EmptyContent>
+      </Empty>
+
+      <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <EnrolledCourseCard
+          v-for="enrollment in enrollments"
+          :key="enrollment.id"
+          :enrollment="enrollment"
+        />
+      </div>
     </section>
   </div>
 </template>

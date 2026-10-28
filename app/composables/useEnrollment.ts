@@ -52,14 +52,15 @@ export function useMyEnrollments() {
   const userId = computed(() => session.value?.user.id ?? null)
   const signedIn = computed(() => userId.value !== null)
 
+  // Options stay a stable object: only `queryKey` and `enabled` are reactive, as
+  // Vue Query reads those per observation rather than rebuilding the observer.
   const query = useQuery(
-    computed(() =>
-      queryOptions({
-        queryKey: enrollmentKeys.mine(userId.value),
-        queryFn: () => requestFetch<EnrollmentSummary[]>('/api/enrollments/me'),
-        enabled: signedIn.value
-      })
-    )
+    queryOptions({
+      queryKey: computed(() => enrollmentKeys.mine(userId.value)),
+      queryFn: ({ signal }) =>
+        requestFetch<EnrollmentSummary[]>('/api/enrollments/me', { signal }),
+      enabled: signedIn
+    })
   )
 
   // During SSR the session is already known, so fetch before rendering. A
@@ -72,8 +73,12 @@ export function useMyEnrollments() {
 
   return {
     enrollments: computed(() => query.data.value ?? []),
+    // A failed background refetch keeps the last list; consumers need both facts
+    // to decide between an error screen and stale cards.
+    hasData: computed(() => query.data.value !== undefined),
     isPending: query.isPending,
     isError: query.isError,
+    isRefetchError: query.isRefetchError,
     error: query.error,
     refetch: query.refetch
   }

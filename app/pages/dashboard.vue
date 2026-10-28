@@ -24,7 +24,8 @@ useSeoMeta({
 })
 
 const session = useAuthSessionState()
-const { enrollments, isPending, isError, refetch } = useMyEnrollments()
+const { enrollments, hasData, isPending, isError, isRefetchError, refetch } =
+  useMyEnrollments()
 
 defineExpose({ enrollments, isPending, isError, refetch })
 
@@ -41,8 +42,12 @@ const coursesDescription = computed(() => {
     return 'Loading your courses…'
   }
 
-  if (isError.value) {
+  if (isError.value && !hasData.value) {
     return 'We could not load your courses.'
+  }
+
+  if (isRefetchError.value) {
+    return 'We could not refresh your courses. Showing your last known progress.'
   }
 
   if (enrollments.value.length === 0) {
@@ -111,7 +116,7 @@ const coursesDescription = computed(() => {
         </Card>
       </div>
 
-      <Empty v-else-if="isError">
+      <Empty v-else-if="isError && !hasData">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <CircleAlertIcon />

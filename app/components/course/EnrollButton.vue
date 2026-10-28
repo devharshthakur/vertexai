@@ -6,7 +6,7 @@ import { useEnroll } from '@/composables/useEnrollment'
 
 const { courseId } = defineProps<{ courseId: string }>()
 
-const { enroll, pending, error, isSignedIn, isEnrolled } = useEnroll(
+const { enroll, isPending, errorMessage, isSignedIn, isEnrolled } = useEnroll(
   () => courseId
 )
 </script>
@@ -34,12 +34,19 @@ const { enroll, pending, error, isSignedIn, isEnrolled } = useEnroll(
       Enrolled
     </Button>
 
-    <Button v-else class="w-full sm:w-auto" :disabled="pending" @click="enroll">
-      <Spinner v-if="pending" data-icon="inline-start" />
-      {{ pending ? 'Enrolling…' : 'Enroll for free' }}
+    <Button
+      v-else
+      class="w-full sm:w-auto"
+      :disabled="isPending"
+      @click="enroll"
+    >
+      <Spinner v-if="isPending" data-icon="inline-start" />
+      {{ isPending ? 'Enrolling…' : 'Enroll for free' }}
     </Button>
 
-    <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+    <p v-if="errorMessage" class="text-sm text-destructive">
+      {{ errorMessage }}
+    </p>
 
     <NuxtLink
       v-if="isEnrolled"

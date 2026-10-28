@@ -36,12 +36,12 @@ function toValidationError(error: { issues: unknown }) {
   })
 }
 
-/** Validates the JSON body of a request. */
+/** Validates the JSON body of a request against a zod schema. */
 export async function parseBody<T>(event: RequestEvent, schema: Validator<T>) {
   return parse(await readBody(event), schema)
 }
 
-/** Validates the query string of a request. */
+/** Validates the query string of a request against a zod schema. */
 export function parseQuery<T>(event: RequestEvent, schema: Validator<T>) {
   return parse(getQuery(event), schema)
 }

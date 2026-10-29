@@ -16,4 +16,5 @@
  */
 export * from './auth'
 export * from './courses'
+export * from './course-approvals'
 export * from './enrollments'

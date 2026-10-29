@@ -40,6 +40,7 @@
     "db:logs": "docker compose logs -f db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed": "tsx server/db/seed.ts",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",
     "lint": "eslint .",
@@ -92,6 +93,7 @@
     "shadcn-nuxt": "2.8.2",
     "shadcn-vue": "2.8.2",
     "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "vue-tsc": "3.3.13"
   }

@@ -10,7 +10,7 @@ import {
   varchar
 } from 'drizzle-orm/pg-core'
 import { users } from './auth'
-import { COURSE_STATUSES } from '#shared/validation/courses'
+import { COURSE_STATUSES } from '../../../shared/validation/courses'
 
 /**
  * Course authoring tables: `courses` → `modules` → `lectures`.

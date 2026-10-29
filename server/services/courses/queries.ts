@@ -46,6 +46,13 @@ export function listInstructorCourses(
   return listCourses(query, eq(courses.instructorId, instructorId))
 }
 
+/** Lists courses awaiting an administrator's review. */
+export function listPendingCourses(
+  query: CourseQueryValues
+): Promise<CourseListResult> {
+  return listCourses(query, eq(courses.status, 'pending'))
+}
+
 /** Lists distinct categories used by approved courses. */
 export async function listCourseCategories(): Promise<string[]> {
   const rows = await useDb()

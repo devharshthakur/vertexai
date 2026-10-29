@@ -1,5 +1,6 @@
 import { createError, type RequestEvent } from 'nuxt/server'
 import { auth } from '#server/utils/auth'
+import type { AppRole } from '#shared/types/auth'
 
 /**
  * Server-side session guard.
@@ -34,11 +35,11 @@ export async function optionalSession(event: RequestEvent) {
  * Session guard plus a role check. Use it for routes that are not available to
  * every signed-in user; `requireSession` alone is enough for routes that are.
  */
-export async function requireRole(event: RequestEvent, ...roles: string[]) {
+export async function requireRole(event: RequestEvent, ...roles: AppRole[]) {
   const session = await requireSession(event)
   const role = session.user.role
 
-  if (!role || !roles.includes(role)) {
+  if (!role || !roles.includes(role as AppRole)) {
     throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
   }
 

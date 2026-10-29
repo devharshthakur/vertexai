@@ -1,5 +1,13 @@
 import type { SocialProviderList } from 'better-auth'
 
+export const APP_ROLES = {
+  STUDENT: 'student',
+  INSTRUCTOR: 'instructor',
+  ADMIN: 'admin'
+} as const
+
+export type AppRole = (typeof APP_ROLES)[keyof typeof APP_ROLES]
+
 /**
  * The sign-in methods this deployment can offer.
  *

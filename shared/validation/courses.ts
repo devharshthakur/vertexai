@@ -62,6 +62,22 @@ export const addModuleSchema = z.object({
   orderIndex: z.number().int().min(0).optional()
 })
 
+export const reviewCourseSchema = z.object({
+  decision: z.enum(['approved', 'rejected']),
+  comment: z.string().trim().max(2000).nullable().optional()
+})
+
+export const reorderModulesSchema = z.object({
+  moduleIds: z
+    .array(courseIdSchema)
+    .min(1)
+    .max(100)
+    .refine(
+      (moduleIds) => new Set(moduleIds).size === moduleIds.length,
+      'Each module may appear only once.'
+    )
+})
+
 /**
  * Enrolling in a course carries no payload — the student comes from the
  * session. The schema exists so the route validates its body like every other
@@ -87,4 +103,6 @@ export type CourseStatus = (typeof COURSE_STATUSES)[number]
 export type CreateCourseValues = z.input<typeof createCourseSchema>
 export type UpdateCourseValues = z.input<typeof updateCourseSchema>
 export type AddModuleValues = z.input<typeof addModuleSchema>
+export type ReviewCourseValues = z.output<typeof reviewCourseSchema>
+export type ReorderModulesValues = z.output<typeof reorderModulesSchema>
 export type CourseQueryValues = z.output<typeof courseQuerySchema>

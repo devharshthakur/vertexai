@@ -1,10 +1,12 @@
-import { desc, eq } from 'drizzle-orm'
+import { asc, desc, eq } from 'drizzle-orm'
 import { useDb } from '#server/db'
-import { courses, modules } from '#server/db/schema'
+import { courseApprovals, courses, modules } from '#server/db/schema'
 import type { CourseSummary, ModuleSummary } from '#shared/types/courses'
 import type {
   AddModuleValues,
   CreateCourseValues,
+  ReorderModulesValues,
+  ReviewCourseValues,
   UpdateCourseValues
 } from '#shared/validation/courses'
 import { ServiceError } from '#server/utils/service-error'
@@ -76,6 +78,88 @@ export async function addModule(
     .returning()
 
   return toModuleSummary(row!)
+}
+
+/** Reorders every module in a course after verifying the submitted set. */
+export async function reorderModules(
+  courseId: string,
+  input: ReorderModulesValues,
+  actor: CourseActor
+): Promise<ModuleSummary[]> {
+  const existing = await requireOwnedCourse(courseId, actor)
+  const db = useDb()
+
+  return db.transaction(async (tx) => {
+    const currentModules = await tx
+      .select({ id: modules.id })
+      .from(modules)
+      .where(eq(modules.courseId, existing.id))
+      .orderBy(asc(modules.orderIndex))
+    const currentIds = new Set(currentModules.map((module) => module.id))
+
+    if (
+      currentIds.size !== input.moduleIds.length ||
+      input.moduleIds.some((moduleId) => !currentIds.has(moduleId))
+    ) {
+      throw new ServiceError(
+        'forbidden',
+        'The module list does not match this course.'
+      )
+    }
+
+    for (const [orderIndex, moduleId] of input.moduleIds.entries()) {
+      await tx
+        .update(modules)
+        .set({ orderIndex })
+        .where(eq(modules.id, moduleId))
+    }
+
+    return tx
+      .select()
+      .from(modules)
+      .where(eq(modules.courseId, existing.id))
+      .orderBy(asc(modules.orderIndex))
+      .then((rows) => rows.map((row) => toModuleSummary(row)))
+  })
+}
+
+/** Records one pending-course decision and updates publication status atomically. */
+export async function reviewCourse(
+  courseId: string,
+  input: ReviewCourseValues,
+  reviewerId: string
+): Promise<CourseSummary> {
+  return useDb().transaction(async (tx) => {
+    const [course] = await tx
+      .select()
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .for('update')
+      .limit(1)
+
+    if (!course) throw new ServiceError('not_found')
+    if (course.status !== 'pending') {
+      throw new ServiceError(
+        'conflict',
+        'Only pending courses can be reviewed.'
+      )
+    }
+
+    const [updatedCourse] = await tx
+      .update(courses)
+      .set({ status: input.decision, updatedAt: new Date() })
+      .where(eq(courses.id, courseId))
+      .returning()
+
+    await tx.insert(courseApprovals).values({
+      courseId,
+      reviewedBy: reviewerId,
+      decision: input.decision,
+      comment: input.comment ?? null
+    })
+
+    return toCourseSummary(updatedCourse!)
+  })
 }
 
 /** Returns the next contiguous module position for a course. */

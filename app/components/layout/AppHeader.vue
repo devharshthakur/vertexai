@@ -1,6 +1,12 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
-import { LogOutIcon, UserCogIcon, UserRoundIcon } from '@lucide/vue'
+import {
+  BookOpenCheckIcon,
+  LogOutIcon,
+  ShieldCheckIcon,
+  UserCogIcon,
+  UserRoundIcon
+} from '@lucide/vue'
 import { cn } from 'cn'
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +22,7 @@ import AppContainer from '@/components/layout/AppContainer.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
 import { useAuthSessionState } from '@/composables/useAuthSession'
 import { useSignOut } from '@/composables/useSignOut'
+import { APP_ROLES } from '#shared/types/auth'
 
 const props = withDefaults(
   defineProps<{
@@ -27,6 +34,12 @@ const props = withDefaults(
 
 const session = useAuthSessionState()
 const { signOut } = useSignOut()
+const canTeach = computed(
+  () =>
+    session.value?.user.role === APP_ROLES.INSTRUCTOR ||
+    session.value?.user.role === APP_ROLES.ADMIN
+)
+const isAdmin = computed(() => session.value?.user.role === APP_ROLES.ADMIN)
 </script>
 
 <template>
@@ -49,6 +62,23 @@ const { signOut } = useSignOut()
                 {{ session.user.email }}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuGroup v-if="canTeach">
+                <DropdownMenuItem as-child>
+                  <NuxtLink to="/instructor">
+                    <BookOpenCheckIcon data-icon="inline-start" />
+                    Instructor workspace
+                  </NuxtLink>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuGroup v-if="isAdmin">
+                <DropdownMenuItem as-child>
+                  <NuxtLink to="/admin/approvals">
+                    <ShieldCheckIcon data-icon="inline-start" />
+                    Course approvals
+                  </NuxtLink>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator v-if="canTeach" />
               <DropdownMenuGroup>
                 <DropdownMenuItem as-child>
                   <NuxtLink to="/account/settings">

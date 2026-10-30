@@ -1,4 +1,3 @@
-import type { Ref } from 'vue'
 import { authClient, type AuthSession } from '@/lib/auth-client'
 
 /**

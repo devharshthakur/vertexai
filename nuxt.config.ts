@@ -53,7 +53,8 @@ export default defineNuxtConfig({
         '../drizzle.config.ts',
         '../eslint.config.mjs',
         '../prettier.config.js',
-        '../.nano-staged.mjs'
+        '../.nano-staged.mjs',
+        '../scripts/*.ts'
       ],
       compilerOptions: {
         types: ['node'],

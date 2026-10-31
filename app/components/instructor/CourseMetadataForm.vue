@@ -3,10 +3,7 @@ import { useForm } from '@tanstack/vue-form'
 import DifficultySelect from '@/components/instructor/DifficultySelect.vue'
 import type { CourseSummary } from '#shared/types/courses'
 import { createCourseSchema } from '#shared/validation/courses'
-import type {
-  CourseDifficulty,
-  CreateCourseValues
-} from '#shared/validation/courses'
+import type { CreateCourseValues } from '#shared/validation/courses'
 import { Button } from '@/components/ui/button'
 import {
   Field,
@@ -47,25 +44,27 @@ const form = useForm({
 })
 
 const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
-const difficulty = shallowRef<CourseDifficulty | null>(
-  defaults.difficulty ?? null
-)
-const thumbnailUrl = shallowRef(defaults.thumbnailUrl ?? '')
-const price = shallowRef(defaults.price ?? 0)
-
-watch(difficulty, (value) => {
-  form.setFieldValue('difficulty', value)
-})
-watch(thumbnailUrl, (value) => {
-  form.setFieldValue('thumbnailUrl', value || null)
-})
-watch(price, (value) => {
-  form.setFieldValue('price', value)
-})
 
 function isInvalid(state: { meta: { isValid: boolean } }) {
   return hasSubmitted.value && !state.meta.isValid
 }
+
+/** Number inputs emit text, and the schema expects a number. */
+function toPrice(value: string | number) {
+  const price = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(price) ? price : 0
+}
+
+/** An empty thumbnail input should clear the value, not store an empty string. */
+function toThumbnail(value: string | number) {
+  return String(value) || null
+}
+
+/**
+ * Bound rather than written inline: a `//` inside a scoped-slot attribute
+ * value drops the slot scope in vue-tsc's generated code.
+ */
+const thumbnailPlaceholder = 'https://…'
 </script>
 
 <template>
@@ -141,30 +140,49 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
           </template>
         </form.Field>
 
-        <DifficultySelect v-model="difficulty" />
+        <form.Field name="difficulty">
+          <template #default="{ field }">
+            <DifficultySelect
+              :model-value="field.state.value ?? null"
+              @update:model-value="field.handleChange"
+            />
+          </template>
+        </form.Field>
       </div>
 
       <div class="grid gap-6 sm:grid-cols-2">
-        <Field>
-          <FieldLabel for="thumbnail-url">Thumbnail URL</FieldLabel>
-          <Input
-            id="thumbnail-url"
-            v-model="thumbnailUrl"
-            type="url"
-            placeholder="https://…"
-          />
-        </Field>
+        <form.Field name="thumbnailUrl">
+          <template #default="{ field }">
+            <Field>
+              <FieldLabel for="thumbnail-url">Thumbnail URL</FieldLabel>
+              <Input
+                id="thumbnail-url"
+                :model-value="field.state.value ?? ''"
+                type="url"
+                :placeholder="thumbnailPlaceholder"
+                @update:model-value="(v) => field.handleChange(toThumbnail(v))"
+                @blur="field.handleBlur"
+              />
+            </Field>
+          </template>
+        </form.Field>
 
-        <Field>
-          <FieldLabel for="course-price">Price</FieldLabel>
-          <Input
-            id="course-price"
-            v-model.number="price"
-            type="number"
-            min="0"
-            step="0.01"
-          />
-        </Field>
+        <form.Field name="price">
+          <template #default="{ field }">
+            <Field>
+              <FieldLabel for="course-price">Price</FieldLabel>
+              <Input
+                id="course-price"
+                :model-value="field.state.value ?? 0"
+                type="number"
+                min="0"
+                step="0.01"
+                @update:model-value="(v) => field.handleChange(toPrice(v))"
+                @blur="field.handleBlur"
+              />
+            </Field>
+          </template>
+        </form.Field>
       </div>
 
       <form.Subscribe v-slot="{ isSubmitting }">

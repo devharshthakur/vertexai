@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useForm } from '@tanstack/vue-form'
 import DifficultySelect from '@/components/instructor/DifficultySelect.vue'
 import type { CourseSummary } from '#shared/types/courses'
 import { createCourseSchema } from '#shared/validation/courses'
@@ -14,6 +13,7 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { revalidateLogic, useForm } from '@tanstack/vue-form'
 
 const props = defineProps<{
   course?: CourseSummary | null
@@ -32,7 +32,8 @@ const defaults: CreateCourseValues = {
 
 const form = useForm({
   defaultValues: defaults,
-  validators: { onChange: createCourseSchema },
+  validationLogic: revalidateLogic(),
+  validators: { onDynamic: createCourseSchema },
   onSubmit: async ({ value }) => {
     await props.onSave({
       ...value,
@@ -43,20 +44,14 @@ const form = useForm({
   }
 })
 
-const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
-
-function isInvalid(state: { meta: { isValid: boolean } }) {
-  return hasSubmitted.value && !state.meta.isValid
-}
-
 /** Number inputs emit text, and the schema expects a number. */
 function toPrice(value: string | number) {
   const price = typeof value === 'number' ? value : Number(value)
   return Number.isFinite(price) ? price : 0
 }
 
-/** An empty thumbnail input should clear the value, not store an empty string. */
-function toThumbnail(value: string | number) {
+/** Nullable text inputs clear back to `null` instead of storing `""`. */
+function toNullableText(value: string | number) {
   return String(value) || null
 }
 
@@ -76,18 +71,18 @@ const thumbnailPlaceholder = 'https://…'
     <FieldGroup>
       <form.Field name="title">
         <template #default="{ field }">
-          <Field :data-invalid="isInvalid(field.state)">
+          <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name">Course title</FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="isInvalid(field.state)"
+              :aria-invalid="!field.state.meta.isValid"
               placeholder="Introduction to…"
               @update:model-value="(value) => field.handleChange(String(value))"
               @blur="field.handleBlur"
             />
             <FieldError
-              v-if="isInvalid(field.state)"
+              v-if="!field.state.meta.isValid"
               :errors="field.state.meta.errors"
             />
           </Field>
@@ -96,21 +91,23 @@ const thumbnailPlaceholder = 'https://…'
 
       <form.Field name="description">
         <template #default="{ field }">
-          <Field :data-invalid="isInvalid(field.state)">
+          <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name">Description</FieldLabel>
             <Textarea
               :id="field.name"
               :model-value="field.state.value ?? ''"
-              :aria-invalid="isInvalid(field.state)"
+              :aria-invalid="!field.state.meta.isValid"
               placeholder="What will students learn?"
-              @update:model-value="(value) => field.handleChange(String(value))"
+              @update:model-value="
+                (value) => field.handleChange(toNullableText(value))
+              "
               @blur="field.handleBlur"
             />
             <FieldDescription
               >Describe the course and its learning outcomes.</FieldDescription
             >
             <FieldError
-              v-if="isInvalid(field.state)"
+              v-if="!field.state.meta.isValid"
               :errors="field.state.meta.errors"
             />
           </Field>
@@ -120,20 +117,20 @@ const thumbnailPlaceholder = 'https://…'
       <div class="grid gap-6 sm:grid-cols-2">
         <form.Field name="category">
           <template #default="{ field }">
-            <Field :data-invalid="isInvalid(field.state)">
+            <Field :data-invalid="!field.state.meta.isValid">
               <FieldLabel :for="field.name">Category</FieldLabel>
               <Input
                 :id="field.name"
                 :model-value="field.state.value ?? ''"
-                :aria-invalid="isInvalid(field.state)"
+                :aria-invalid="!field.state.meta.isValid"
                 placeholder="Design, science, business…"
                 @update:model-value="
-                  (value) => field.handleChange(String(value))
+                  (value) => field.handleChange(toNullableText(value))
                 "
                 @blur="field.handleBlur"
               />
               <FieldError
-                v-if="isInvalid(field.state)"
+                v-if="!field.state.meta.isValid"
                 :errors="field.state.meta.errors"
               />
             </Field>
@@ -153,15 +150,22 @@ const thumbnailPlaceholder = 'https://…'
       <div class="grid gap-6 sm:grid-cols-2">
         <form.Field name="thumbnailUrl">
           <template #default="{ field }">
-            <Field>
-              <FieldLabel for="thumbnail-url">Thumbnail URL</FieldLabel>
+            <Field :data-invalid="!field.state.meta.isValid">
+              <FieldLabel :for="field.name">Thumbnail URL</FieldLabel>
               <Input
-                id="thumbnail-url"
+                :id="field.name"
                 :model-value="field.state.value ?? ''"
+                :aria-invalid="!field.state.meta.isValid"
                 type="url"
                 :placeholder="thumbnailPlaceholder"
-                @update:model-value="(v) => field.handleChange(toThumbnail(v))"
+                @update:model-value="
+                  (value) => field.handleChange(toNullableText(value))
+                "
                 @blur="field.handleBlur"
+              />
+              <FieldError
+                v-if="!field.state.meta.isValid"
+                :errors="field.state.meta.errors"
               />
             </Field>
           </template>
@@ -169,16 +173,23 @@ const thumbnailPlaceholder = 'https://…'
 
         <form.Field name="price">
           <template #default="{ field }">
-            <Field>
-              <FieldLabel for="course-price">Price</FieldLabel>
+            <Field :data-invalid="!field.state.meta.isValid">
+              <FieldLabel :for="field.name">Price</FieldLabel>
               <Input
-                id="course-price"
+                :id="field.name"
                 :model-value="field.state.value ?? 0"
+                :aria-invalid="!field.state.meta.isValid"
                 type="number"
                 min="0"
                 step="0.01"
-                @update:model-value="(v) => field.handleChange(toPrice(v))"
+                @update:model-value="
+                  (value) => field.handleChange(toPrice(value))
+                "
                 @blur="field.handleBlur"
+              />
+              <FieldError
+                v-if="!field.state.meta.isValid"
+                :errors="field.state.meta.errors"
               />
             </Field>
           </template>

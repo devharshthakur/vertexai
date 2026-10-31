@@ -28,6 +28,19 @@ const DEMO_USERS = [
 ] as const
 const DEMO_COURSE_TITLE = 'VertexAI Demo: Foundations of Learning'
 
+/**
+ * Keeps the demo accounts on the shared password from `DEMO_SEED_PASSWORD`
+ * even when they were created by an earlier run, and drops their sessions so
+ * nobody keeps an old credential signed in.
+ */
+async function syncDemoPassword(userId: string): Promise<void> {
+  const ctx = await auth.$context
+  const passwordHash = await ctx.password.hash(DEMO_PASSWORD)
+
+  await ctx.internalAdapter.updatePassword(userId, passwordHash)
+  await useDb().delete(sessions).where(eq(sessions.userId, userId))
+}
+
 async function ensureUser(
   demoUser: (typeof DEMO_USERS)[number]
 ): Promise<string> {
@@ -52,6 +65,8 @@ async function ensureUser(
     // This is a setup script, not an interactive sign-in. Remove the session
     // created by Better Auth's configured autoSignIn option.
     await db.delete(sessions).where(eq(sessions.userId, userId))
+  } else {
+    await syncDemoPassword(userId)
   }
 
   await db

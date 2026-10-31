@@ -25,3 +25,6 @@ logs
 
 # Externally installed agent skills
 .agents/
+
+#Temp plan file
+PLAN.md

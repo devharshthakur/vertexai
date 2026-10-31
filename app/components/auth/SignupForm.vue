@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { GalleryVerticalEnd } from '@lucide/vue'
-import { useForm } from '@tanstack/vue-form'
+import { revalidateLogic, useForm } from '@tanstack/vue-form'
 import { Button } from '@/components/ui/button'
 import {
   Field,
@@ -12,26 +12,20 @@ import {
 import { Input } from '@/components/ui/input'
 import { refreshAuthSession } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
+import { resolveSafeRedirect } from '@/lib/redirect'
 import { signupSchema } from '#shared/validation/auth'
 import type { SignupValues } from '#shared/validation/auth'
 
 const route = useRoute()
 
-/** Accept only same-origin paths to prevent an open redirect. */
-const redirectTo = computed(() => {
-  const target = route.query.redirect
-  return typeof target === 'string' &&
-    target.startsWith('/') &&
-    !target.startsWith('//')
-    ? target
-    : '/dashboard'
-})
+const redirectTo = computed(() => resolveSafeRedirect(route.query.redirect))
 
-const serverError = ref('')
+const serverError = shallowRef('')
 
 const form = useForm({
   defaultValues: { name: '', email: '', password: '' } satisfies SignupValues,
-  validators: { onChange: signupSchema },
+  validationLogic: revalidateLogic(),
+  validators: { onDynamic: signupSchema },
   onSubmit: async ({ value }) => {
     serverError.value = ''
 
@@ -50,20 +44,13 @@ const form = useForm({
     await navigateTo(redirectTo.value)
   }
 })
-
-const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
-
-/** Do not show field errors before the first submission attempt. */
-function isInvalid(state: { meta: { isValid: boolean } }) {
-  return hasSubmitted.value && !state.meta.isValid
-}
 </script>
 
 <template>
   <form
     class="flex flex-col gap-6"
     novalidate
-    @submit.prevent.stop="form.handleSubmit()"
+    @submit.prevent="form.handleSubmit()"
   >
     <FieldGroup>
       <div class="flex flex-col items-center gap-2 text-center">
@@ -83,12 +70,12 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
       </div>
       <form.Field name="name">
         <template #default="{ field }">
-          <Field :data-invalid="isInvalid(field.state)">
+          <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Name </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="isInvalid(field.state)"
+              :aria-invalid="!field.state.meta.isValid"
               type="text"
               placeholder="Ada Lovelace"
               autocomplete="name"
@@ -96,7 +83,7 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
               @blur="field.handleBlur"
             />
             <FieldError
-              v-if="isInvalid(field.state)"
+              v-if="!field.state.meta.isValid"
               :errors="field.state.meta.errors"
             />
           </Field>
@@ -104,12 +91,12 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
       </form.Field>
       <form.Field name="email">
         <template #default="{ field }">
-          <Field :data-invalid="isInvalid(field.state)">
+          <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Email </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="isInvalid(field.state)"
+              :aria-invalid="!field.state.meta.isValid"
               type="email"
               placeholder="m@example.com"
               autocomplete="email"
@@ -117,7 +104,7 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
               @blur="field.handleBlur"
             />
             <FieldError
-              v-if="isInvalid(field.state)"
+              v-if="!field.state.meta.isValid"
               :errors="field.state.meta.errors"
             />
           </Field>
@@ -125,12 +112,12 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
       </form.Field>
       <form.Field name="password">
         <template #default="{ field }">
-          <Field :data-invalid="isInvalid(field.state)">
+          <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Password </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="isInvalid(field.state)"
+              :aria-invalid="!field.state.meta.isValid"
               type="password"
               placeholder="At least 8 characters"
               autocomplete="new-password"
@@ -138,7 +125,7 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
               @blur="field.handleBlur"
             />
             <FieldError
-              v-if="isInvalid(field.state)"
+              v-if="!field.state.meta.isValid"
               :errors="field.state.meta.errors"
             />
           </Field>
@@ -151,9 +138,7 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
           </Button>
         </Field>
       </form.Subscribe>
-      <p v-if="serverError" class="text-sm text-destructive" role="alert">
-        {{ serverError }}
-      </p>
+      <FieldError v-if="serverError">{{ serverError }}</FieldError>
     </FieldGroup>
   </form>
 </template>

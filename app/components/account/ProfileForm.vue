@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@tanstack/vue-form'
+import { revalidateLogic, useForm } from '@tanstack/vue-form'
 import { Button } from '@/components/ui/button'
 import {
   Field,
@@ -19,12 +19,13 @@ const props = defineProps<{
   email: string
 }>()
 
-const serverError = ref('')
-const saved = ref(false)
+const serverError = shallowRef('')
+const saved = shallowRef(false)
 
 const form = useForm({
   defaultValues: { name: props.name } satisfies ProfileValues,
-  validators: { onChange: profileSchema },
+  validationLogic: revalidateLogic(),
+  validators: { onDynamic: profileSchema },
   onSubmit: async ({ value }) => {
     serverError.value = ''
     saved.value = false
@@ -40,13 +41,6 @@ const form = useForm({
     saved.value = true
   }
 })
-
-const hasSubmitted = form.useSelector((state) => state.submissionAttempts > 0)
-
-/** Do not show field errors before the first submission attempt. */
-function isInvalid(state: { meta: { isValid: boolean } }) {
-  return hasSubmitted.value && !state.meta.isValid
-}
 </script>
 
 <template>
@@ -54,17 +48,17 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
     id="profile-settings-form"
     class="flex flex-col gap-6"
     novalidate
-    @submit.prevent.stop="form.handleSubmit()"
+    @submit.prevent="form.handleSubmit()"
   >
     <FieldGroup>
       <form.Field name="name">
         <template #default="{ field }">
-          <Field :data-invalid="isInvalid(field.state)">
+          <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Name </FieldLabel>
             <Input
               :id="field.name"
               :model-value="field.state.value"
-              :aria-invalid="isInvalid(field.state)"
+              :aria-invalid="!field.state.meta.isValid"
               type="text"
               placeholder="Ada Lovelace"
               autocomplete="name"
@@ -72,13 +66,13 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
               @blur="field.handleBlur"
             />
             <FieldError
-              v-if="isInvalid(field.state)"
+              v-if="!field.state.meta.isValid"
               :errors="field.state.meta.errors"
             />
           </Field>
         </template>
       </form.Field>
-      <Field>
+      <Field data-disabled="true">
         <FieldLabel for="email"> Email </FieldLabel>
         <Input
           id="email"
@@ -97,12 +91,10 @@ function isInvalid(state: { meta: { isValid: boolean } }) {
             {{ isSubmitting ? 'Saving…' : 'Save changes' }}
           </Button>
         </form.Subscribe>
-        <p v-if="serverError" class="text-sm text-destructive" role="alert">
-          {{ serverError }}
-        </p>
-        <p v-if="saved" class="text-sm text-muted-foreground" role="status">
+        <FieldError v-if="serverError">{{ serverError }}</FieldError>
+        <FieldDescription v-if="saved" role="status">
           Your profile has been updated.
-        </p>
+        </FieldDescription>
       </Field>
     </FieldGroup>
   </form>

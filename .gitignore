@@ -27,4 +27,4 @@ logs
 .agents/
 
 #Temp plan file
-PLAN.md
+/PLAN.md

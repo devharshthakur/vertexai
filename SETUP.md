@@ -9,6 +9,7 @@ Local development setup for VertexAI.
 - [Environment](#environment)
 - [Database](#database)
 - [Migrations](#migrations)
+- [Seed data](#seed-data)
 - [Authentication](#authentication)
 - [Run the app](#run-the-app)
 - [Scripts](#scripts)
@@ -77,6 +78,22 @@ pnpm db:studio   # browse the database
 ```
 
 `GET /api/health` reports whether the database is reachable: `200` with `{ "status": "ok", "database": "up" }` when it is, `503` with `{ "status": "error", "database": "down" }` when the probe fails.
+
+## Seed data
+
+Create the demo accounts, plus a seeded approved course with a module and lecture:
+
+```bash
+pnpm db:seed
+```
+
+| Role       | Email                      |
+| ---------- | -------------------------- |
+| Admin      | `admin@vertexai.test`      |
+| Instructor | `instructor@vertexai.test` |
+| Student    | `student@vertexai.test`    |
+
+Every demo account uses the password `VertexAI-Demo-Only-123!`, unless `.env` sets `DEMO_SEED_PASSWORD` (at least 12 characters). Re-running the seed re-applies that password and signs the accounts out. The script only makes sense locally, so it refuses to run when `NODE_ENV=production`.
 
 ## Authentication
 

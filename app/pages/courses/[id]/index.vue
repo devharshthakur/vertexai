@@ -2,6 +2,7 @@
   import { BookOpenIcon } from '@lucide/vue'
   import CourseBadges from '@/components/course/CourseBadges.vue'
   import EnrollButton from '@/components/course/EnrollButton.vue'
+  import YouTubePlayer from '@/components/course/YouTubePlayer.vue'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
@@ -81,8 +82,9 @@
           </CardHeader>
           <CardContent>
             <ol class="flex flex-col gap-2">
-              <li v-for="lecture in module.lectures" :key="lecture.id" class="text-sm text-muted-foreground">
-                {{ lecture.title }}
+              <li v-for="lecture in module.lectures" :key="lecture.id" class="flex flex-col gap-3">
+                <h3 class="text-sm font-medium">{{ lecture.title }}</h3>
+                <YouTubePlayer v-if="lecture.videoUrl" :video-url="lecture.videoUrl" :title="lecture.title" />
               </li>
             </ol>
           </CardContent>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import CourseBadges from '@/components/course/CourseBadges.vue'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import type { CourseSummary } from '#shared/types/courses'
+  import CourseBadges from '@/components/course/CourseBadges.vue'
+  import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+  import type { CourseSummary } from '#shared/types/courses'
 
-const { course } = defineProps<{ course: CourseSummary }>()
+  const { course } = defineProps<{ course: CourseSummary }>()
 </script>
 
 <template>

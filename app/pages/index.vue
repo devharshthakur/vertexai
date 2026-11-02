@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import { ArrowRightIcon, BookOpenIcon, BrainCircuitIcon, ChartNoAxesColumnIncreasingIcon } from '@lucide/vue'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { ArrowRightIcon, BookOpenIcon, BrainCircuitIcon, ChartNoAxesColumnIncreasingIcon } from '@lucide/vue'
+  import { Badge } from '@/components/ui/badge'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+  import { useAuthSessionState } from '@/composables/useAuthSession'
 
-useSeoMeta({
-  title: 'VertexAI · Learn with focus',
-  description: 'Explore courses and build a focused learning habit with VertexAI.'
-})
+  useSeoMeta({
+    title: 'VertexAI · Learn with focus',
+    description: 'Explore courses and build a focused learning habit with VertexAI.'
+  })
 
-definePageMeta({ layout: 'marketing' })
+  definePageMeta({ layout: 'marketing' })
 
-const session = useAuthSessionState()
+  const session = useAuthSessionState()
 
-const upcomingFeatures = [
-  {
-    title: 'Learn with context',
-    description: 'Get explanations grounded in the course material you are studying.',
-    icon: BrainCircuitIcon
-  },
-  {
-    title: 'See your progress',
-    description: 'Pick up where you left off and understand what you have mastered.',
-    icon: ChartNoAxesColumnIncreasingIcon
-  }
-]
+  const upcomingFeatures = [
+    {
+      title: 'Learn with context',
+      description: 'Get explanations grounded in the course material you are studying.',
+      icon: BrainCircuitIcon
+    },
+    {
+      title: 'See your progress',
+      description: 'Pick up where you left off and understand what you have mastered.',
+      icon: ChartNoAxesColumnIncreasingIcon
+    }
+  ]
 </script>
 
 <template>

@@ -1,56 +1,56 @@
 <script setup lang="ts">
-import { GalleryVerticalEnd } from '@lucide/vue'
-import { revalidateLogic, useForm } from '@tanstack/vue-form'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { refreshAuthSession } from '@/composables/useAuthSession'
-import { authClient } from '@/lib/auth-client'
-import { resolveSafeRedirect } from '@/lib/redirect'
-import type { AuthProvidersResponse } from '#shared/types/auth'
-import { loginSchema } from '#shared/validation/auth'
-import type { LoginValues } from '#shared/validation/auth'
+  import { GalleryVerticalEnd } from '@lucide/vue'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { Button } from '@/components/ui/button'
+  import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { refreshAuthSession } from '@/composables/useAuthSession'
+  import { authClient } from '@/lib/auth-client'
+  import { resolveSafeRedirect } from '@/lib/redirect'
+  import type { AuthProvidersResponse } from '#shared/types/auth'
+  import { loginSchema } from '#shared/validation/auth'
+  import type { LoginValues } from '#shared/validation/auth'
 
-const route = useRoute()
+  const route = useRoute()
 
-const redirectTo = computed(() => resolveSafeRedirect(route.query.redirect))
+  const redirectTo = computed(() => resolveSafeRedirect(route.query.redirect))
 
-const serverError = shallowRef('')
+  const serverError = shallowRef('')
 
-// Create the form before awaiting provider data so its lifecycle hooks register in setup.
-const form = useForm({
-  defaultValues: { email: '', password: '' } satisfies LoginValues,
-  validationLogic: revalidateLogic(),
-  validators: { onDynamic: loginSchema },
-  onSubmit: async ({ value }) => {
+  // Create the form before awaiting provider data so its lifecycle hooks register in setup.
+  const form = useForm({
+    defaultValues: { email: '', password: '' } satisfies LoginValues,
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: loginSchema },
+    onSubmit: async ({ value }) => {
+      serverError.value = ''
+
+      const { error } = await authClient.signIn.email({
+        email: value.email,
+        password: value.password
+      })
+
+      if (error) {
+        serverError.value = error.message ?? 'Unable to sign in.'
+        return
+      }
+
+      await refreshAuthSession()
+      await navigateTo(redirectTo.value)
+    }
+  })
+
+  const { data: providers } = await useFetch<AuthProvidersResponse>('/api/auth-providers', { key: 'auth:providers' })
+  const githubEnabled = computed(() => providers.value?.providers.includes('github') ?? false)
+
+  async function signInWithGitHub() {
     serverError.value = ''
 
-    const { error } = await authClient.signIn.email({
-      email: value.email,
-      password: value.password
+    await authClient.signIn.social({
+      provider: 'github',
+      callbackURL: redirectTo.value
     })
-
-    if (error) {
-      serverError.value = error.message ?? 'Unable to sign in.'
-      return
-    }
-
-    await refreshAuthSession()
-    await navigateTo(redirectTo.value)
   }
-})
-
-const { data: providers } = await useFetch<AuthProvidersResponse>('/api/auth-providers', { key: 'auth:providers' })
-const githubEnabled = computed(() => providers.value?.providers.includes('github') ?? false)
-
-async function signInWithGitHub() {
-  serverError.value = ''
-
-  await authClient.signIn.social({
-    provider: 'github',
-    callbackURL: redirectTo.value
-  })
-}
 </script>
 
 <template>

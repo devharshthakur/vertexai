@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import CourseBadges from '@/components/course/CourseBadges.vue'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import type { EnrollmentSummary } from '#shared/types/courses'
+  import CourseBadges from '@/components/course/CourseBadges.vue'
+  import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Progress } from '@/components/ui/progress'
+  import type { EnrollmentSummary } from '#shared/types/courses'
 
-const { enrollment } = defineProps<{ enrollment: EnrollmentSummary }>()
+  const { enrollment } = defineProps<{ enrollment: EnrollmentSummary }>()
 
-const displayProgress = computed(() => {
-  const value = enrollment.progressPercent
+  const displayProgress = computed(() => {
+    const value = enrollment.progressPercent
 
-  if (!Number.isFinite(value)) {
-    return 0
-  }
+    if (!Number.isFinite(value)) {
+      return 0
+    }
 
-  return Math.round(Math.min(100, Math.max(0, value)))
-})
+    return Math.round(Math.min(100, Math.max(0, value)))
+  })
 </script>
 
 <template>

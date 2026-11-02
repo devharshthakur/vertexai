@@ -1,58 +1,58 @@
 <script setup lang="ts">
-import DifficultySelect from '@/components/instructor/DifficultySelect.vue'
-import type { CourseSummary } from '#shared/types/courses'
-import { createCourseSchema } from '#shared/validation/courses'
-import type { CreateCourseValues } from '#shared/validation/courses'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import DifficultySelect from '@/components/instructor/DifficultySelect.vue'
+  import type { CourseSummary } from '#shared/types/courses'
+  import { createCourseSchema } from '#shared/validation/courses'
+  import type { CreateCourseValues } from '#shared/validation/courses'
+  import { Button } from '@/components/ui/button'
+  import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { Textarea } from '@/components/ui/textarea'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
 
-const props = defineProps<{
-  course?: CourseSummary | null
-  onSave: (values: CreateCourseValues) => Promise<void>
-}>()
+  const props = defineProps<{
+    course?: CourseSummary | null
+    onSave: (values: CreateCourseValues) => Promise<void>
+  }>()
 
-const defaults: CreateCourseValues = {
-  title: props.course?.title ?? '',
-  description: props.course?.description ?? null,
-  category: props.course?.category ?? null,
-  difficulty: (props.course?.difficulty as CreateCourseValues['difficulty']) ?? null,
-  thumbnailUrl: props.course?.thumbnailUrl ?? null,
-  price: props.course?.price ?? 0
-}
-
-const form = useForm({
-  defaultValues: defaults,
-  validationLogic: revalidateLogic(),
-  validators: { onDynamic: createCourseSchema },
-  onSubmit: async ({ value }) => {
-    await props.onSave({
-      ...value,
-      description: value.description || null,
-      category: value.category || null,
-      thumbnailUrl: value.thumbnailUrl || null
-    })
+  const defaults: CreateCourseValues = {
+    title: props.course?.title ?? '',
+    description: props.course?.description ?? null,
+    category: props.course?.category ?? null,
+    difficulty: (props.course?.difficulty as CreateCourseValues['difficulty']) ?? null,
+    thumbnailUrl: props.course?.thumbnailUrl ?? null,
+    price: props.course?.price ?? 0
   }
-})
 
-/** Number inputs emit text, and the schema expects a number. */
-function toPrice(value: string | number) {
-  const price = typeof value === 'number' ? value : Number(value)
-  return Number.isFinite(price) ? price : 0
-}
+  const form = useForm({
+    defaultValues: defaults,
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: createCourseSchema },
+    onSubmit: async ({ value }) => {
+      await props.onSave({
+        ...value,
+        description: value.description || null,
+        category: value.category || null,
+        thumbnailUrl: value.thumbnailUrl || null
+      })
+    }
+  })
 
-/** Nullable text inputs clear back to `null` instead of storing `""`. */
-function toNullableText(value: string | number) {
-  return String(value) || null
-}
+  /** Number inputs emit text, and the schema expects a number. */
+  function toPrice(value: string | number) {
+    const price = typeof value === 'number' ? value : Number(value)
+    return Number.isFinite(price) ? price : 0
+  }
 
-/**
- * Bound rather than written inline: a `//` inside a scoped-slot attribute
- * value drops the slot scope in vue-tsc's generated code.
- */
-const thumbnailPlaceholder = 'https://…'
+  /** Nullable text inputs clear back to `null` instead of storing `""`. */
+  function toNullableText(value: string | number) {
+    return String(value) || null
+  }
+
+  /**
+   * Bound rather than written inline: a `//` inside a scoped-slot attribute
+   * value drops the slot scope in vue-tsc's generated code.
+   */
+  const thumbnailPlaceholder = 'https://…'
 </script>
 
 <template>
@@ -121,7 +121,11 @@ const thumbnailPlaceholder = 'https://…'
 
       <form.Subscribe v-slot="{ isSubmitting }">
         <Button type="submit" :disabled="isSubmitting">
-          {{ isSubmitting ? 'Saving…' : course ? 'Save changes' : 'Create course' }}
+          {{
+            isSubmitting ? 'Saving…'
+            : course ? 'Save changes'
+            : 'Create course'
+          }}
         </Button>
       </form.Subscribe>
     </FieldGroup>

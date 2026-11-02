@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AppContainer from '@/components/layout/AppContainer.vue'
-import AppHeader from '@/components/layout/AppHeader.vue'
+  import AppContainer from '@/components/layout/AppContainer.vue'
+  import AppHeader from '@/components/layout/AppHeader.vue'
 </script>
 
 <template>

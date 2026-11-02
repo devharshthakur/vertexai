@@ -1,44 +1,44 @@
 <script setup lang="ts">
-import { BookOpenIcon } from '@lucide/vue'
-import CatalogFilters from '@/components/course/CatalogFilters.vue'
-import CourseCard from '@/components/course/CourseCard.vue'
-import { Button } from '@/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Skeleton } from '@/components/ui/skeleton'
-import { CATALOG_PAGE_SIZE, DEFAULT_CATALOG_FILTERS } from '@/lib/catalog'
-import type { CatalogFilterState } from '@/lib/catalog'
-import { pluralize } from '@/lib/pluralize'
-import type { CourseListResult } from '#shared/types/courses'
+  import { BookOpenIcon } from '@lucide/vue'
+  import CatalogFilters from '@/components/course/CatalogFilters.vue'
+  import CourseCard from '@/components/course/CourseCard.vue'
+  import { Button } from '@/components/ui/button'
+  import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+  import { Skeleton } from '@/components/ui/skeleton'
+  import { CATALOG_PAGE_SIZE, DEFAULT_CATALOG_FILTERS } from '@/lib/catalog'
+  import type { CatalogFilterState } from '@/lib/catalog'
+  import { pluralize } from '@/lib/pluralize'
+  import type { CourseListResult } from '#shared/types/courses'
 
-useSeoMeta({
-  title: 'Courses · VertexAI',
-  description: 'Browse the published course catalog.'
-})
+  useSeoMeta({
+    title: 'Courses · VertexAI',
+    description: 'Browse the published course catalog.'
+  })
 
-const filters = ref<CatalogFilterState>({ ...DEFAULT_CATALOG_FILTERS })
+  const filters = ref<CatalogFilterState>({ ...DEFAULT_CATALOG_FILTERS })
 
-const query = computed(() => ({
-  q: filters.value.q || undefined,
-  category: filters.value.category || undefined,
-  difficulty: filters.value.difficulty || undefined,
-  page: filters.value.page,
-  limit: CATALOG_PAGE_SIZE
-}))
+  const query = computed(() => ({
+    q: filters.value.q || undefined,
+    category: filters.value.category || undefined,
+    difficulty: filters.value.difficulty || undefined,
+    page: filters.value.page,
+    limit: CATALOG_PAGE_SIZE
+  }))
 
-const { data: courses, pending, error } = useFetch<CourseListResult>('/api/courses', { query })
+  const { data: courses, pending, error } = useFetch<CourseListResult>('/api/courses', { query })
 
-const { data: categories } = useFetch<string[]>('/api/courses/categories', {
-  default: () => []
-})
+  const { data: categories } = useFetch<string[]>('/api/courses/categories', {
+    default: () => []
+  })
 
-/** Return to page one when filters change so the current page cannot hide matches. */
-function updateFilters(patch: Partial<CatalogFilterState>) {
-  filters.value = {
-    ...filters.value,
-    ...patch,
-    page: patch.page ?? 1
+  /** Return to page one when filters change so the current page cannot hide matches. */
+  function updateFilters(patch: Partial<CatalogFilterState>) {
+    filters.value = {
+      ...filters.value,
+      ...patch,
+      page: patch.page ?? 1
+    }
   }
-}
 </script>
 
 <template>

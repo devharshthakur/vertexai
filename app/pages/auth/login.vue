@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import LoginForm from '@/components/auth/LoginForm.vue'
-import { Card, CardContent } from '@/components/ui/card'
+  import LoginForm from '@/components/auth/LoginForm.vue'
+  import { Card, CardContent } from '@/components/ui/card'
 
-definePageMeta({ layout: 'auth', middleware: 'guest' })
+  definePageMeta({ layout: 'auth', middleware: 'guest' })
 </script>
 
 <template>

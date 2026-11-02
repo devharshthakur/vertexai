@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { CheckIcon } from '@lucide/vue'
-import { Button } from '@/components/ui/button'
-import { Spinner } from '@/components/ui/spinner'
-import { useEnroll } from '@/composables/useEnrollment'
+  import { CheckIcon } from '@lucide/vue'
+  import { Button } from '@/components/ui/button'
+  import { Spinner } from '@/components/ui/spinner'
+  import { useEnroll } from '@/composables/useEnrollment'
 
-const { courseId } = defineProps<{ courseId: string }>()
+  const { courseId } = defineProps<{ courseId: string }>()
 
-const { enroll, isPending, errorMessage, isSignedIn, isEnrolled } = useEnroll(() => courseId)
+  const { enroll, isPending, errorMessage, isSignedIn, isEnrolled } = useEnroll(() => courseId)
 </script>
 
 <template>

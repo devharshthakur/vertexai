@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { Badge } from '@/components/ui/badge'
+  import { Badge } from '@/components/ui/badge'
 
-const { category, difficulty } = defineProps<{
-  category: string | null
-  difficulty: string | null
-}>()
+  const { category, difficulty } = defineProps<{
+    category: string | null
+    difficulty: string | null
+  }>()
 </script>
 
 <template>

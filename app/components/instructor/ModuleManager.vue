@@ -1,81 +1,81 @@
 <script setup lang="ts">
-import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from '@lucide/vue'
-import type { ModuleSummary } from '#shared/types/courses'
-import { addModuleSchema } from '#shared/validation/courses'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
+  import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from '@lucide/vue'
+  import type { ModuleSummary } from '#shared/types/courses'
+  import { addModuleSchema } from '#shared/validation/courses'
+  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Field, FieldLabel } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { Separator } from '@/components/ui/separator'
 
-const props = defineProps<{
-  courseId: string
-  modules: ModuleSummary[]
-}>()
-const emit = defineEmits<{ 'update:modules': [modules: ModuleSummary[]] }>()
+  const props = defineProps<{
+    courseId: string
+    modules: ModuleSummary[]
+  }>()
+  const emit = defineEmits<{ 'update:modules': [modules: ModuleSummary[]] }>()
 
-const modules = ref([...props.modules])
-const title = ref('')
-const saving = ref(false)
-const errorMessage = ref('')
+  const modules = ref([...props.modules])
+  const title = ref('')
+  const saving = ref(false)
+  const errorMessage = ref('')
 
-watch(
-  () => props.modules,
-  (nextModules) => {
-    modules.value = [...nextModules]
+  watch(
+    () => props.modules,
+    (nextModules) => {
+      modules.value = [...nextModules]
+    }
+  )
+
+  async function addModule() {
+    errorMessage.value = ''
+    const result = addModuleSchema.safeParse({ title: title.value })
+    if (!result.success) {
+      errorMessage.value = result.error.issues[0]?.message ?? 'Enter a valid module title.'
+      return
+    }
+
+    saving.value = true
+    try {
+      const module = await $fetch<ModuleSummary>(`/api/courses/${props.courseId}/modules`, {
+        method: 'POST',
+        body: result.data
+      })
+      modules.value = [...modules.value, module]
+      emit('update:modules', modules.value)
+      title.value = ''
+    } catch {
+      errorMessage.value = 'We could not add this module. Please try again.'
+    } finally {
+      saving.value = false
+    }
   }
-)
 
-async function addModule() {
-  errorMessage.value = ''
-  const result = addModuleSchema.safeParse({ title: title.value })
-  if (!result.success) {
-    errorMessage.value = result.error.issues[0]?.message ?? 'Enter a valid module title.'
-    return
+  async function moveModule(index: number, offset: -1 | 1) {
+    const target = index + offset
+    if (target < 0 || target >= modules.value.length || saving.value) return
+
+    const previous = [...modules.value]
+    const reordered = [...modules.value]
+    ;[reordered[index], reordered[target]] = [reordered[target]!, reordered[index]!]
+    modules.value = reordered
+    saving.value = true
+    errorMessage.value = ''
+
+    try {
+      const saved = await $fetch<ModuleSummary[]>(`/api/courses/${props.courseId}/modules/reorder`, {
+        method: 'PUT',
+        body: { moduleIds: reordered.map((module) => module.id) }
+      })
+      modules.value = saved
+      emit('update:modules', saved)
+    } catch {
+      modules.value = previous
+      errorMessage.value = 'The module order was not saved. Please try again.'
+    } finally {
+      saving.value = false
+    }
   }
-
-  saving.value = true
-  try {
-    const module = await $fetch<ModuleSummary>(`/api/courses/${props.courseId}/modules`, {
-      method: 'POST',
-      body: result.data
-    })
-    modules.value = [...modules.value, module]
-    emit('update:modules', modules.value)
-    title.value = ''
-  } catch {
-    errorMessage.value = 'We could not add this module. Please try again.'
-  } finally {
-    saving.value = false
-  }
-}
-
-async function moveModule(index: number, offset: -1 | 1) {
-  const target = index + offset
-  if (target < 0 || target >= modules.value.length || saving.value) return
-
-  const previous = [...modules.value]
-  const reordered = [...modules.value]
-  ;[reordered[index], reordered[target]] = [reordered[target]!, reordered[index]!]
-  modules.value = reordered
-  saving.value = true
-  errorMessage.value = ''
-
-  try {
-    const saved = await $fetch<ModuleSummary[]>(`/api/courses/${props.courseId}/modules/reorder`, {
-      method: 'PUT',
-      body: { moduleIds: reordered.map((module) => module.id) }
-    })
-    modules.value = saved
-    emit('update:modules', saved)
-  } catch {
-    modules.value = previous
-    errorMessage.value = 'The module order was not saved. Please try again.'
-  } finally {
-    saving.value = false
-  }
-}
 </script>
 
 <template>

@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import { KeyRoundIcon, LogOutIcon, UserRoundIcon } from '@lucide/vue'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import PasswordForm from '@/components/account/PasswordForm.vue'
-import ProfileForm from '@/components/account/ProfileForm.vue'
-import { useAuthSessionState } from '@/composables/useAuthSession'
-import { useSignOut } from '@/composables/useSignOut'
+  import { KeyRoundIcon, LogOutIcon, UserRoundIcon } from '@lucide/vue'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+  import PasswordForm from '@/components/account/PasswordForm.vue'
+  import ProfileForm from '@/components/account/ProfileForm.vue'
+  import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { useSignOut } from '@/composables/useSignOut'
 
-definePageMeta({ middleware: 'auth' })
+  definePageMeta({ middleware: 'auth' })
 
-useSeoMeta({
-  title: 'Account settings · VertexAI',
-  description: 'Update your profile details and password.'
-})
+  useSeoMeta({
+    title: 'Account settings · VertexAI',
+    description: 'Update your profile details and password.'
+  })
 
-const session = useAuthSessionState()
-const { signOut } = useSignOut()
+  const session = useAuthSessionState()
+  const { signOut } = useSignOut()
 </script>
 
 <template>

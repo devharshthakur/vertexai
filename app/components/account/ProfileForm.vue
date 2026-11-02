@@ -1,40 +1,40 @@
 <script setup lang="ts">
-import { revalidateLogic, useForm } from '@tanstack/vue-form'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { refreshAuthSession } from '@/composables/useAuthSession'
-import { authClient } from '@/lib/auth-client'
-import { profileSchema } from '#shared/validation/auth'
-import type { ProfileValues } from '#shared/validation/auth'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { Button } from '@/components/ui/button'
+  import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { refreshAuthSession } from '@/composables/useAuthSession'
+  import { authClient } from '@/lib/auth-client'
+  import { profileSchema } from '#shared/validation/auth'
+  import type { ProfileValues } from '#shared/validation/auth'
 
-const props = defineProps<{
-  name: string
-  email: string
-}>()
+  const props = defineProps<{
+    name: string
+    email: string
+  }>()
 
-const serverError = shallowRef('')
-const saved = shallowRef(false)
+  const serverError = shallowRef('')
+  const saved = shallowRef(false)
 
-const form = useForm({
-  defaultValues: { name: props.name } satisfies ProfileValues,
-  validationLogic: revalidateLogic(),
-  validators: { onDynamic: profileSchema },
-  onSubmit: async ({ value }) => {
-    serverError.value = ''
-    saved.value = false
+  const form = useForm({
+    defaultValues: { name: props.name } satisfies ProfileValues,
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: profileSchema },
+    onSubmit: async ({ value }) => {
+      serverError.value = ''
+      saved.value = false
 
-    const { error } = await authClient.updateUser({ name: value.name })
+      const { error } = await authClient.updateUser({ name: value.name })
 
-    if (error) {
-      serverError.value = error.message ?? 'Unable to update your profile.'
-      return
+      if (error) {
+        serverError.value = error.message ?? 'Unable to update your profile.'
+        return
+      }
+
+      await refreshAuthSession()
+      saved.value = true
     }
-
-    await refreshAuthSession()
-    saved.value = true
-  }
-})
+  })
 </script>
 
 <template>

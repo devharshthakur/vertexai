@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
-import ModuleManager from '@/components/instructor/ModuleManager.vue'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
-import type { CourseWithCurriculum, ModuleSummary } from '#shared/types/courses'
-import type { CreateCourseValues } from '#shared/validation/courses'
+  import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
+  import ModuleManager from '@/components/instructor/ModuleManager.vue'
+  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+  import { Badge } from '@/components/ui/badge'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Skeleton } from '@/components/ui/skeleton'
+  import type { CourseWithCurriculum, ModuleSummary } from '#shared/types/courses'
+  import type { CreateCourseValues } from '#shared/validation/courses'
 
-definePageMeta({ layout: 'workspace', middleware: 'instructor' })
+  definePageMeta({ layout: 'workspace', middleware: 'instructor' })
 
-const route = useRoute()
-const courseId = computed(() => String(route.params.id))
-useSeoMeta({ title: 'Edit course · VertexAI' })
+  const route = useRoute()
+  const courseId = computed(() => String(route.params.id))
+  useSeoMeta({ title: 'Edit course · VertexAI' })
 
-const { data: courseData, pending, error, refresh } = await useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`)
-const course = computed(() => courseData.value?.course ?? null)
-const errorMessage = ref('')
+  const { data: courseData, pending, error, refresh } = await useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`)
+  const course = computed(() => courseData.value?.course ?? null)
+  const errorMessage = ref('')
 
-async function updateCourse(values: CreateCourseValues) {
-  errorMessage.value = ''
+  async function updateCourse(values: CreateCourseValues) {
+    errorMessage.value = ''
 
-  try {
-    await $fetch(`/api/courses/${courseId.value}`, {
-      method: 'PUT',
-      body: values
-    })
-    await refresh()
-  } catch {
-    errorMessage.value = 'We could not save course details. Please try again.'
+    try {
+      await $fetch(`/api/courses/${courseId.value}`, {
+        method: 'PUT',
+        body: values
+      })
+      await refresh()
+    } catch {
+      errorMessage.value = 'We could not save course details. Please try again.'
+    }
   }
-}
 
-function updateModules(modules: ModuleSummary[]) {
-  if (courseData.value) {
-    courseData.value.modules = modules
+  function updateModules(modules: ModuleSummary[]) {
+    if (courseData.value) {
+      courseData.value.modules = modules
+    }
   }
-}
 </script>
 
 <template>

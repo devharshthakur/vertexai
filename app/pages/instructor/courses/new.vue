@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { CreateCourseValues } from '#shared/validation/courses'
+  import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
+  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+  import type { CreateCourseValues } from '#shared/validation/courses'
 
-definePageMeta({ layout: 'workspace', middleware: 'instructor' })
-useSeoMeta({ title: 'Create a course · VertexAI' })
+  definePageMeta({ layout: 'workspace', middleware: 'instructor' })
+  useSeoMeta({ title: 'Create a course · VertexAI' })
 
-const errorMessage = ref('')
+  const errorMessage = ref('')
 
-async function createCourse(values: CreateCourseValues) {
-  errorMessage.value = ''
+  async function createCourse(values: CreateCourseValues) {
+    errorMessage.value = ''
 
-  try {
-    const course = await $fetch<{ id: string }>('/api/courses', {
-      method: 'POST',
-      body: values
-    })
-    await navigateTo(`/instructor/courses/${course.id}`)
-  } catch {
-    errorMessage.value = 'We could not create this course. Please try again.'
+    try {
+      const course = await $fetch<{ id: string }>('/api/courses', {
+        method: 'POST',
+        body: values
+      })
+      await navigateTo(`/instructor/courses/${course.id}`)
+    } catch {
+      errorMessage.value = 'We could not create this course. Please try again.'
+    }
   }
-}
 </script>
 
 <template>

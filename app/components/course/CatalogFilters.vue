@@ -1,49 +1,49 @@
 <script setup lang="ts">
-import { SearchIcon } from '@lucide/vue'
-import { Button } from '@/components/ui/button'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { COURSE_DIFFICULTIES } from '#shared/validation/courses'
-import type { CatalogFilterState } from '@/lib/catalog'
+  import { SearchIcon } from '@lucide/vue'
+  import { Button } from '@/components/ui/button'
+  import { Field, FieldLabel } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+  import { COURSE_DIFFICULTIES } from '#shared/validation/courses'
+  import type { CatalogFilterState } from '@/lib/catalog'
 
-const { filters, categories } = defineProps<{
-  filters: CatalogFilterState
-  categories: string[]
-}>()
+  const { filters, categories } = defineProps<{
+    filters: CatalogFilterState
+    categories: string[]
+  }>()
 
-const emit = defineEmits<{
-  (e: 'update:filters', patch: Partial<CatalogFilterState>): void
-}>()
+  const emit = defineEmits<{
+    (e: 'update:filters', patch: Partial<CatalogFilterState>): void
+  }>()
 
-/** Keep draft text locally so requests fire on submit, not on every keystroke. */
-const search = ref(filters.q)
+  /** Keep draft text locally so requests fire on submit, not on every keystroke. */
+  const search = ref(filters.q)
 
-watch(
-  () => filters.q,
-  (value) => {
-    search.value = value
+  watch(
+    () => filters.q,
+    (value) => {
+      search.value = value
+    }
+  )
+
+  function applySearch() {
+    emit('update:filters', { q: search.value.trim() })
   }
-)
 
-function applySearch() {
-  emit('update:filters', { q: search.value.trim() })
-}
+  function applyDifficulty(value: unknown) {
+    emit('update:filters', { difficulty: toFilterValue(value) })
+  }
 
-function applyDifficulty(value: unknown) {
-  emit('update:filters', { difficulty: toFilterValue(value) })
-}
+  function applyCategory(value: unknown) {
+    emit('update:filters', { category: toFilterValue(value) })
+  }
 
-function applyCategory(value: unknown) {
-  emit('update:filters', { category: toFilterValue(value) })
-}
+  /** The "All …" entries map to an empty API filter value. */
+  function toFilterValue(value: unknown) {
+    const selected = typeof value === 'string' ? value : ''
 
-/** The "All …" entries map to an empty API filter value. */
-function toFilterValue(value: unknown) {
-  const selected = typeof value === 'string' ? value : ''
-
-  return selected === 'all' ? '' : selected
-}
+    return selected === 'all' ? '' : selected
+  }
 </script>
 
 <template>

@@ -1,42 +1,42 @@
 <script setup lang="ts">
-import { revalidateLogic, useForm } from '@tanstack/vue-form'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { authClient } from '@/lib/auth-client'
-import { passwordSchema } from '#shared/validation/auth'
-import type { PasswordValues } from '#shared/validation/auth'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { Button } from '@/components/ui/button'
+  import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { authClient } from '@/lib/auth-client'
+  import { passwordSchema } from '#shared/validation/auth'
+  import type { PasswordValues } from '#shared/validation/auth'
 
-const serverError = shallowRef('')
-const saved = shallowRef(false)
+  const serverError = shallowRef('')
+  const saved = shallowRef(false)
 
-const form = useForm({
-  defaultValues: {
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: ''
-  } satisfies PasswordValues,
-  validationLogic: revalidateLogic(),
-  validators: { onDynamic: passwordSchema },
-  onSubmit: async ({ value }) => {
-    serverError.value = ''
-    saved.value = false
+  const form = useForm({
+    defaultValues: {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    } satisfies PasswordValues,
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: passwordSchema },
+    onSubmit: async ({ value }) => {
+      serverError.value = ''
+      saved.value = false
 
-    const { error } = await authClient.changePassword({
-      currentPassword: value.currentPassword,
-      newPassword: value.newPassword,
-      revokeOtherSessions: true
-    })
+      const { error } = await authClient.changePassword({
+        currentPassword: value.currentPassword,
+        newPassword: value.newPassword,
+        revokeOtherSessions: true
+      })
 
-    if (error) {
-      serverError.value = error.message ?? 'Unable to change your password.'
-      return
+      if (error) {
+        serverError.value = error.message ?? 'Unable to change your password.'
+        return
+      }
+
+      form.reset()
+      saved.value = true
     }
-
-    form.reset()
-    saved.value = true
-  }
-})
+  })
 </script>
 
 <template>

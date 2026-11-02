@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { COURSE_DIFFICULTIES, type CourseDifficulty } from '#shared/validation/courses'
-import { Field, FieldLabel } from '@/components/ui/field'
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+  import { COURSE_DIFFICULTIES, type CourseDifficulty } from '#shared/validation/courses'
+  import { Field, FieldLabel } from '@/components/ui/field'
+  import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-const difficulty = defineModel<CourseDifficulty | null>({ default: null })
+  const difficulty = defineModel<CourseDifficulty | null>({ default: null })
 </script>
 
 <template>

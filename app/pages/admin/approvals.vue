@@ -1,51 +1,51 @@
 <script setup lang="ts">
-import { CheckIcon, ExternalLinkIcon, XIcon } from '@lucide/vue'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Textarea } from '@/components/ui/textarea'
-import type { CourseListResult } from '#shared/types/courses'
-import { reviewCourseSchema } from '#shared/validation/courses'
+  import { CheckIcon, ExternalLinkIcon, XIcon } from '@lucide/vue'
+  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+  import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Skeleton } from '@/components/ui/skeleton'
+  import { Textarea } from '@/components/ui/textarea'
+  import type { CourseListResult } from '#shared/types/courses'
+  import { reviewCourseSchema } from '#shared/validation/courses'
 
-definePageMeta({ layout: 'workspace', middleware: 'admin' })
-useSeoMeta({ title: 'Course approvals · VertexAI' })
+  definePageMeta({ layout: 'workspace', middleware: 'admin' })
+  useSeoMeta({ title: 'Course approvals · VertexAI' })
 
-const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/admin/courses/pending', {
-  query: { limit: 50 }
-})
-const comments = ref<Record<string, string>>({})
-const busyCourseId = ref<string | null>(null)
-const pageError = ref('')
-
-async function decide(courseId: string, decision: 'approved' | 'rejected') {
-  pageError.value = ''
-  const result = reviewCourseSchema.safeParse({
-    decision,
-    comment: comments.value[courseId] || null
+  const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/admin/courses/pending', {
+    query: { limit: 50 }
   })
+  const comments = ref<Record<string, string>>({})
+  const busyCourseId = ref<string | null>(null)
+  const pageError = ref('')
 
-  if (!result.success) {
-    pageError.value = result.error.issues[0]?.message ?? 'Enter a valid review comment.'
-    return
-  }
-
-  busyCourseId.value = courseId
-  try {
-    await $fetch(`/api/admin/courses/${courseId}/decision`, {
-      method: 'POST',
-      body: result.data
+  async function decide(courseId: string, decision: 'approved' | 'rejected') {
+    pageError.value = ''
+    const result = reviewCourseSchema.safeParse({
+      decision,
+      comment: comments.value[courseId] || null
     })
-    await refresh()
-  } catch {
-    pageError.value = 'The review could not be saved. The course may already have been reviewed.'
-    await refresh()
-  } finally {
-    busyCourseId.value = null
+
+    if (!result.success) {
+      pageError.value = result.error.issues[0]?.message ?? 'Enter a valid review comment.'
+      return
+    }
+
+    busyCourseId.value = courseId
+    try {
+      await $fetch(`/api/admin/courses/${courseId}/decision`, {
+        method: 'POST',
+        body: result.data
+      })
+      await refresh()
+    } catch {
+      pageError.value = 'The review could not be saved. The course may already have been reviewed.'
+      await refresh()
+    } finally {
+      busyCourseId.value = null
+    }
   }
-}
 </script>
 
 <template>

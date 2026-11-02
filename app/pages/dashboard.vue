@@ -1,51 +1,51 @@
 <script setup lang="ts">
-import { BookOpenIcon, CircleAlertIcon } from '@lucide/vue'
-import EnrolledCourseCard from '@/components/course/EnrolledCourseCard.vue'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { useAuthSessionState } from '@/composables/useAuthSession'
-import { useMyEnrollments } from '@/composables/useEnrollment'
+  import { BookOpenIcon, CircleAlertIcon } from '@lucide/vue'
+  import EnrolledCourseCard from '@/components/course/EnrolledCourseCard.vue'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+  import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+  import { Separator } from '@/components/ui/separator'
+  import { Skeleton } from '@/components/ui/skeleton'
+  import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { useMyEnrollments } from '@/composables/useEnrollment'
 
-definePageMeta({ middleware: 'auth' })
+  definePageMeta({ middleware: 'auth' })
 
-useSeoMeta({
-  title: 'Your dashboard · VertexAI',
-  description: 'Your learning space on VertexAI.'
-})
+  useSeoMeta({
+    title: 'Your dashboard · VertexAI',
+    description: 'Your learning space on VertexAI.'
+  })
 
-const session = useAuthSessionState()
-const { enrollments, hasData, isPending, isError, isRefetchError, refetch } = useMyEnrollments()
+  const session = useAuthSessionState()
+  const { enrollments, hasData, isPending, isError, isRefetchError, refetch } = useMyEnrollments()
 
-defineExpose({ enrollments, isPending, isError, refetch })
+  defineExpose({ enrollments, isPending, isError, refetch })
 
-const firstName = computed(() => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there')
+  const firstName = computed(() => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there')
 
-/**
- * A disabled query is pending too, so a cold client load shows skeletons while
- * the session resolves instead of flashing the empty state.
- */
-const coursesDescription = computed(() => {
-  if (isPending.value) {
-    return 'Loading your courses…'
-  }
+  /**
+   * A disabled query is pending too, so a cold client load shows skeletons while
+   * the session resolves instead of flashing the empty state.
+   */
+  const coursesDescription = computed(() => {
+    if (isPending.value) {
+      return 'Loading your courses…'
+    }
 
-  if (isError.value && !hasData.value) {
-    return 'We could not load your courses.'
-  }
+    if (isError.value && !hasData.value) {
+      return 'We could not load your courses.'
+    }
 
-  if (isRefetchError.value) {
-    return 'We could not refresh your courses. Showing your last known progress.'
-  }
+    if (isRefetchError.value) {
+      return 'We could not refresh your courses. Showing your last known progress.'
+    }
 
-  if (enrollments.value.length === 0) {
-    return 'Courses you join will appear here.'
-  }
+    if (enrollments.value.length === 0) {
+      return 'Courses you join will appear here.'
+    }
 
-  return 'Pick up where you left off.'
-})
+    return 'Pick up where you left off.'
+  })
 </script>
 
 <template>

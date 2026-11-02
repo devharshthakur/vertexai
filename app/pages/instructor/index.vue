@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { PlusIcon } from '@lucide/vue'
-import CourseBadges from '@/components/course/CourseBadges.vue'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import { Skeleton } from '@/components/ui/skeleton'
-import type { CourseListResult } from '#shared/types/courses'
+  import { PlusIcon } from '@lucide/vue'
+  import CourseBadges from '@/components/course/CourseBadges.vue'
+  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+  import { Badge } from '@/components/ui/badge'
+  import { Button } from '@/components/ui/button'
+  import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+  import { Skeleton } from '@/components/ui/skeleton'
+  import type { CourseListResult } from '#shared/types/courses'
 
-definePageMeta({ layout: 'workspace', middleware: 'instructor' })
-useSeoMeta({ title: 'Instructor workspace · VertexAI' })
+  definePageMeta({ layout: 'workspace', middleware: 'instructor' })
+  useSeoMeta({ title: 'Instructor workspace · VertexAI' })
 
-const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/courses/mine')
+  const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/courses/mine')
 </script>
 
 <template>

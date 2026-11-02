@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { BookOpenCheckIcon, ShieldCheckIcon } from '@lucide/vue'
-import AppContainer from '@/components/layout/AppContainer.vue'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { BookOpenCheckIcon, ShieldCheckIcon } from '@lucide/vue'
+  import AppContainer from '@/components/layout/AppContainer.vue'
+  import AppHeader from '@/components/layout/AppHeader.vue'
+  import { Button } from '@/components/ui/button'
+  import { Separator } from '@/components/ui/separator'
+  import { useAuthSessionState } from '@/composables/useAuthSession'
 
-const session = useAuthSessionState()
-const isAdmin = computed(() => session.value?.user.role === 'admin')
+  const session = useAuthSessionState()
+  const isAdmin = computed(() => session.value?.user.role === 'admin')
 </script>
 
 <template>

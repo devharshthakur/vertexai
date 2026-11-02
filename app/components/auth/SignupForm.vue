@@ -1,43 +1,43 @@
 <script setup lang="ts">
-import { GalleryVerticalEnd } from '@lucide/vue'
-import { revalidateLogic, useForm } from '@tanstack/vue-form'
-import { Button } from '@/components/ui/button'
-import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
-import { refreshAuthSession } from '@/composables/useAuthSession'
-import { authClient } from '@/lib/auth-client'
-import { resolveSafeRedirect } from '@/lib/redirect'
-import { signupSchema } from '#shared/validation/auth'
-import type { SignupValues } from '#shared/validation/auth'
+  import { GalleryVerticalEnd } from '@lucide/vue'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { Button } from '@/components/ui/button'
+  import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Input } from '@/components/ui/input'
+  import { refreshAuthSession } from '@/composables/useAuthSession'
+  import { authClient } from '@/lib/auth-client'
+  import { resolveSafeRedirect } from '@/lib/redirect'
+  import { signupSchema } from '#shared/validation/auth'
+  import type { SignupValues } from '#shared/validation/auth'
 
-const route = useRoute()
+  const route = useRoute()
 
-const redirectTo = computed(() => resolveSafeRedirect(route.query.redirect))
+  const redirectTo = computed(() => resolveSafeRedirect(route.query.redirect))
 
-const serverError = shallowRef('')
+  const serverError = shallowRef('')
 
-const form = useForm({
-  defaultValues: { name: '', email: '', password: '' } satisfies SignupValues,
-  validationLogic: revalidateLogic(),
-  validators: { onDynamic: signupSchema },
-  onSubmit: async ({ value }) => {
-    serverError.value = ''
+  const form = useForm({
+    defaultValues: { name: '', email: '', password: '' } satisfies SignupValues,
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: signupSchema },
+    onSubmit: async ({ value }) => {
+      serverError.value = ''
 
-    const { error } = await authClient.signUp.email({
-      name: value.name,
-      email: value.email,
-      password: value.password
-    })
+      const { error } = await authClient.signUp.email({
+        name: value.name,
+        email: value.email,
+        password: value.password
+      })
 
-    if (error) {
-      serverError.value = error.message ?? 'Unable to create the account.'
-      return
+      if (error) {
+        serverError.value = error.message ?? 'Unable to create the account.'
+        return
+      }
+
+      await refreshAuthSession()
+      await navigateTo(redirectTo.value)
     }
-
-    await refreshAuthSession()
-    await navigateTo(redirectTo.value)
-  }
-})
+  })
 </script>
 
 <template>

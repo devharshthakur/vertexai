@@ -5,7 +5,7 @@ import { auth } from '../utils/auth'
 import { useDb } from './index'
 import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from './schema'
 
-const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD ?? 'VertexAI-Demo-Only-123!'
+const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD ?? 'password@123'
 const DEMO_USERS = [
   { name: 'VertexAI Demo Admin', email: 'admin@vertexai.test', role: 'admin' },
   {

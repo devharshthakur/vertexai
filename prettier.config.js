@@ -8,6 +8,8 @@ const config = {
   semi: false,
   singleQuote: true,
   trailingComma: 'none',
+  printWidth: 300,
+  singleAttributePerLine: false,
   plugins: ['prettier-plugin-tailwindcss'],
   tailwindStylesheet: './app/assets/css/main.css'
 }

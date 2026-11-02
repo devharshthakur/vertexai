@@ -42,10 +42,12 @@ export default defineNuxtConfig({
   },
   typescript: {
     nodeTsConfig: {
-      include: ['../drizzle.config.ts', '../eslint.config.mjs', '../prettier.config.js', '../.nano-staged.mjs', '../scripts/*.ts'],
+      include: ['../drizzle.config.ts', '../eslint.config.mjs', '../prettier.config.js', '../.nano-staged.mjs', '../scripts/*.ts', '../seed/*.ts'],
       compilerOptions: {
         types: ['node'],
-        checkJs: true
+        checkJs: true,
+        module: 'ESNext',
+        moduleResolution: 'Bundler'
       }
     }
   },

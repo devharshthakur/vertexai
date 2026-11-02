@@ -28,7 +28,7 @@ export interface DemoCourse {
 export const DEMO_COURSES: DemoCourse[] = [
   {
     title: 'Learning TypeScript',
-    description: 'A beginner-friendly, full-length TypeScript course by John Smilga on freeCodeCamp.org.',
+    description: 'A concise, beginner-friendly TypeScript crash course by Brad Traversy on Traversy Media.',
     category: 'Web Development',
     difficulty: 'beginner',
     status: 'approved',
@@ -37,9 +37,9 @@ export const DEMO_COURSES: DemoCourse[] = [
         title: 'Learn TypeScript',
         lectures: [
           {
-            title: 'Learn TypeScript for Practical Projects — John Smilga',
-            videoUrl: 'https://www.youtube.com/watch?v=JHEB7RhJG1Y',
-            durationSeconds: 36000,
+            title: 'TypeScript Crash Course — Traversy Media',
+            videoUrl: 'https://www.youtube.com/watch?v=BCg4U1FzODs',
+            durationSeconds: 3147,
             transcript: null
           }
         ]
@@ -50,7 +50,7 @@ export const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Learning React',
-    description: 'Learn modern React through hands-on projects with Bob Ziroll on freeCodeCamp.org.',
+    description: 'A concise introduction to modern React with Web Dev Simplified.',
     category: 'Web Development',
     difficulty: 'beginner',
     status: 'approved',
@@ -59,9 +59,9 @@ export const DEMO_COURSES: DemoCourse[] = [
         title: 'Learn React',
         lectures: [
           {
-            title: 'Learn React — Bob Ziroll',
-            videoUrl: 'https://www.youtube.com/watch?v=x4rFhThSX04',
-            durationSeconds: 56454,
+            title: 'Learn React in 30 Minutes — Web Dev Simplified',
+            videoUrl: 'https://www.youtube.com/watch?v=hQAHSlTtcmY',
+            durationSeconds: 1635,
             transcript: null
           }
         ]
@@ -72,7 +72,7 @@ export const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Learning Tailwind CSS',
-    description: 'An introduction to Tailwind CSS fundamentals with Guillaume on freeCodeCamp.org.',
+    description: 'A beginner-friendly Tailwind CSS v4 course with JavaScript Mastery.',
     category: 'Web Development',
     difficulty: 'beginner',
     status: 'approved',
@@ -81,9 +81,9 @@ export const DEMO_COURSES: DemoCourse[] = [
         title: 'Learn Tailwind CSS',
         lectures: [
           {
-            title: 'Learn Tailwind CSS — Guillaume',
-            videoUrl: 'https://www.youtube.com/watch?v=ft30zcMlFao',
-            durationSeconds: 15138,
+            title: 'Tailwind CSS v4 Full Course — JavaScript Mastery',
+            videoUrl: 'https://www.youtube.com/watch?v=6biMWgD6_JY',
+            durationSeconds: 3260,
             transcript: null
           }
         ]

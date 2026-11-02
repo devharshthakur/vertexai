@@ -47,7 +47,7 @@
       "source": "unovue/shadcn-vue",
       "sourceType": "github",
       "skillPath": "skills/shadcn-vue/SKILL.md",
-      "computedHash": "02e09dcd144b3d1f821153a7ef7cece8b2cde4390010e69e03855f1056cf8848"
+      "computedHash": "8f889bee4622048473cab8272b5bbcdf3e0e83929afb1b444adf572fa9c252a3"
     },
     "vite": {
       "source": "antfu/skills",

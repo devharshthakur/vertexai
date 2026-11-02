@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { getYouTubeVideoId } from '../utils/youtube'
 
 /**
  * Schemas for the course catalog and the instructor course builder.
@@ -41,6 +42,29 @@ export const addModuleSchema = z.object({
   orderIndex: z.number().int().min(0).optional()
 })
 
+const youtubeVideoUrlSchema = z
+  .string()
+  .trim()
+  .url('Enter a valid YouTube URL.')
+  .refine((value) => getYouTubeVideoId(value) !== null, 'Use a valid HTTPS YouTube video link.')
+
+export const createLectureSchema = z.object({
+  title: z.string().trim().min(1, 'Enter a lecture title.').max(200, 'Keep the title under 200 characters.'),
+  videoUrl: youtubeVideoUrlSchema,
+  transcript: z.string().max(500_000, 'Transcript must be 500,000 characters or fewer.').nullable(),
+  durationSeconds: z.number().int().min(1).max(86_400).nullable()
+})
+
+export const updateLectureSchema = createLectureSchema.partial().refine((values) => Object.keys(values).length > 0, 'Provide at least one field to update.')
+
+export const reorderLecturesSchema = z.object({
+  lectureIds: z
+    .array(courseIdSchema)
+    .min(1)
+    .max(100)
+    .refine((lectureIds) => new Set(lectureIds).size === lectureIds.length, 'Each lecture may appear only once.')
+})
+
 export const reviewCourseSchema = z.object({
   decision: z.enum(['approved', 'rejected']),
   comment: z.string().trim().max(2000).nullable().optional()
@@ -79,6 +103,9 @@ export type CourseStatus = (typeof COURSE_STATUSES)[number]
 export type CreateCourseValues = z.input<typeof createCourseSchema>
 export type UpdateCourseValues = z.input<typeof updateCourseSchema>
 export type AddModuleValues = z.input<typeof addModuleSchema>
+export type CreateLectureValues = z.input<typeof createLectureSchema>
+export type UpdateLectureValues = z.input<typeof updateLectureSchema>
+export type ReorderLecturesValues = z.output<typeof reorderLecturesSchema>
 export type ReviewCourseValues = z.output<typeof reviewCourseSchema>
 export type ReorderModulesValues = z.output<typeof reorderModulesSchema>
 export type CourseQueryValues = z.output<typeof courseQuerySchema>

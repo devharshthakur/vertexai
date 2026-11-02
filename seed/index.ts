@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { and, eq, inArray } from 'drizzle-orm'
 import { DEMO_COURSES, LEGACY_DEMO_COURSE_TITLES } from './courses'
+import { loadSeedTranscript } from './load-transcript'
 import { useDb } from '../server/db'
 import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from '../server/db/schema'
 import { auth } from '../server/utils/auth'
@@ -143,16 +144,18 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
           })
           .returning({ id: modules.id })
 
-        await tx.insert(lectures).values(
-          demoModule.lectures.map((lecture, lectureIndex) => ({
+        const lectureValues = await Promise.all(
+          demoModule.lectures.map(async (lecture, lectureIndex) => ({
             moduleId: insertedModule!.id,
             title: lecture.title,
             videoUrl: lecture.videoUrl,
-            transcript: lecture.transcript,
+            transcript: lecture.transcript ?? (await loadSeedTranscript(lecture.videoUrl)),
             durationSeconds: lecture.durationSeconds,
             orderIndex: lectureIndex
           }))
         )
+
+        await tx.insert(lectures).values(lectureValues)
       }
 
       if (demoCourse.approval) {

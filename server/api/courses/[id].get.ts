@@ -17,9 +17,6 @@ export default defineEventHandler(async (event) => {
   const session = await optionalSession(event)
 
   return withServiceErrors(async () => {
-    return await getCourse(
-      courseId,
-      session ? { id: session.user.id, role: session.user.role } : null
-    )
+    return await getCourse(courseId, session ? { id: session.user.id, role: session.user.role } : null)
   })
 })

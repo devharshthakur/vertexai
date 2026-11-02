@@ -1,13 +1,5 @@
 import { relations } from 'drizzle-orm'
-import {
-  index,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uniqueIndex,
-  uuid
-} from 'drizzle-orm/pg-core'
+import { index, numeric, pgTable, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core'
 import { courses } from './courses'
 import { users } from './auth'
 
@@ -32,18 +24,9 @@ export const enrollments = pgTable(
       .notNull()
       .references(() => courses.id, { onDelete: 'cascade' }),
     enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
-    progressPercent: numeric('progress_percent', { precision: 5, scale: 2 })
-      .default('0')
-      .notNull()
+    progressPercent: numeric('progress_percent', { precision: 5, scale: 2 }).default('0').notNull()
   },
-  (table) => [
-    uniqueIndex('enrollments_userId_courseId_uidx').on(
-      table.userId,
-      table.courseId
-    ),
-    index('enrollments_userId_idx').on(table.userId),
-    index('enrollments_courseId_idx').on(table.courseId)
-  ]
+  (table) => [uniqueIndex('enrollments_userId_courseId_uidx').on(table.userId, table.courseId), index('enrollments_userId_idx').on(table.userId), index('enrollments_courseId_idx').on(table.courseId)]
 )
 
 export const enrollmentsRelations = relations(enrollments, ({ one }) => ({

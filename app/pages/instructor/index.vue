@@ -4,45 +4,24 @@ import CourseBadges from '@/components/course/CourseBadges.vue'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle
-} from '@/components/ui/empty'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CourseListResult } from '#shared/types/courses'
 
 definePageMeta({ layout: 'workspace', middleware: 'instructor' })
 useSeoMeta({ title: 'Instructor workspace · VertexAI' })
 
-const { data, pending, error, refresh } =
-  await useFetch<CourseListResult>('/api/courses/mine')
+const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/courses/mine')
 </script>
 
 <template>
   <div class="flex flex-col gap-8">
-    <header
-      class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"
-    >
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div class="flex flex-col gap-2">
-        <p class="text-sm font-medium text-muted-foreground">
-          Instructor workspace
-        </p>
-        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Your courses
-        </h1>
-        <p class="max-w-2xl text-muted-foreground">
-          Create courses, build a curriculum, and track review status.
-        </p>
+        <p class="text-sm font-medium text-muted-foreground">Instructor workspace</p>
+        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Your courses</h1>
+        <p class="max-w-2xl text-muted-foreground">Create courses, build a curriculum, and track review status.</p>
       </div>
       <Button as-child>
         <NuxtLink to="/instructor/courses/new">
@@ -62,11 +41,7 @@ const { data, pending, error, refresh } =
       </AlertDescription>
     </Alert>
 
-    <div
-      v-if="pending"
-      class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
-      aria-busy="true"
-    >
+    <div v-if="pending" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
       <Card v-for="index in 3" :key="index">
         <CardHeader>
           <div class="flex flex-col gap-3">
@@ -82,17 +57,10 @@ const { data, pending, error, refresh } =
     <Empty v-else-if="!error && data?.items.length === 0">
       <EmptyHeader>
         <EmptyTitle>Your first course starts here</EmptyTitle>
-        <EmptyDescription>
-          Courses you create will appear here. New courses are submitted for
-          admin review.
-        </EmptyDescription>
+        <EmptyDescription> Courses you create will appear here. New courses are submitted for admin review. </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button as-child
-          ><NuxtLink to="/instructor/courses/new"
-            >Create a course</NuxtLink
-          ></Button
-        >
+        <Button as-child><NuxtLink to="/instructor/courses/new">Create a course</NuxtLink></Button>
       </EmptyContent>
     </Empty>
 
@@ -101,46 +69,26 @@ const { data, pending, error, refresh } =
         <CardHeader>
           <div class="flex flex-col gap-3">
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <CourseBadges
-                :category="course.category"
-                :difficulty="course.difficulty"
-              />
-              <Badge
-                :variant="
-                  course.status === 'approved' ? 'default' : 'secondary'
-                "
-              >
+              <CourseBadges :category="course.category" :difficulty="course.difficulty" />
+              <Badge :variant="course.status === 'approved' ? 'default' : 'secondary'">
                 {{ course.status }}
               </Badge>
             </div>
             <CardTitle>
-              <NuxtLink
-                :to="`/instructor/courses/${course.id}`"
-                class="hover:underline"
-              >
+              <NuxtLink :to="`/instructor/courses/${course.id}`" class="hover:underline">
                 {{ course.title }}
               </NuxtLink>
             </CardTitle>
           </div>
         </CardHeader>
         <CardContent class="mt-auto">
-          <p
-            v-if="course.description"
-            class="line-clamp-3 text-sm text-muted-foreground"
-          >
+          <p v-if="course.description" class="line-clamp-3 text-sm text-muted-foreground">
             {{ course.description }}
           </p>
-          <p v-else class="text-sm text-muted-foreground">
-            No description yet.
-          </p>
+          <p v-else class="text-sm text-muted-foreground">No description yet.</p>
         </CardContent>
         <CardFooter>
-          <NuxtLink
-            :to="`/instructor/courses/${course.id}`"
-            class="text-sm font-medium underline-offset-4 hover:underline"
-          >
-            Edit course
-          </NuxtLink>
+          <NuxtLink :to="`/instructor/courses/${course.id}`" class="text-sm font-medium underline-offset-4 hover:underline"> Edit course </NuxtLink>
         </CardFooter>
       </Card>
     </div>

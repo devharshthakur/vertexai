@@ -1,11 +1,4 @@
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar
-} from 'drizzle-orm/pg-core'
+import { index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { courses } from './courses'
 import { users } from './auth'
 
@@ -26,8 +19,5 @@ export const courseApprovals = pgTable(
     comment: text('comment'),
     reviewedAt: timestamp('reviewed_at').defaultNow().notNull()
   },
-  (table) => [
-    index('course_approvals_courseId_idx').on(table.courseId),
-    index('course_approvals_reviewedBy_idx').on(table.reviewedBy)
-  ]
+  (table) => [index('course_approvals_courseId_idx').on(table.courseId), index('course_approvals_reviewedBy_idx').on(table.reviewedBy)]
 )

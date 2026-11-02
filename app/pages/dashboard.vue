@@ -3,14 +3,7 @@ import { BookOpenIcon, CircleAlertIcon } from '@lucide/vue'
 import EnrolledCourseCard from '@/components/course/EnrolledCourseCard.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle
-} from '@/components/ui/empty'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuthSessionState } from '@/composables/useAuthSession'
@@ -24,14 +17,11 @@ useSeoMeta({
 })
 
 const session = useAuthSessionState()
-const { enrollments, hasData, isPending, isError, isRefetchError, refetch } =
-  useMyEnrollments()
+const { enrollments, hasData, isPending, isError, isRefetchError, refetch } = useMyEnrollments()
 
 defineExpose({ enrollments, isPending, isError, refetch })
 
-const firstName = computed(
-  () => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there'
-)
+const firstName = computed(() => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there')
 
 /**
  * A disabled query is pending too, so a cold client load shows skeletons while
@@ -60,17 +50,11 @@ const coursesDescription = computed(() => {
 
 <template>
   <div class="flex flex-col gap-10">
-    <header
-      class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between"
-    >
+    <header class="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
       <div class="flex flex-col gap-2">
         <p class="text-sm font-medium text-muted-foreground">Your dashboard</p>
-        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-          Welcome back, {{ firstName }}.
-        </h1>
-        <p class="max-w-2xl text-muted-foreground">
-          Your learning home is ready. Find a course to get started.
-        </p>
+        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Welcome back, {{ firstName }}.</h1>
+        <p class="max-w-2xl text-muted-foreground">Your learning home is ready. Find a course to get started.</p>
       </div>
 
       <Button variant="outline" as-child>
@@ -82,17 +66,11 @@ const coursesDescription = computed(() => {
 
     <section class="flex flex-col gap-4" aria-labelledby="courses-heading">
       <div class="flex flex-col gap-1">
-        <h2 id="courses-heading" class="text-xl font-semibold tracking-tight">
-          Your courses
-        </h2>
+        <h2 id="courses-heading" class="text-xl font-semibold tracking-tight">Your courses</h2>
         <p class="text-sm text-muted-foreground">{{ coursesDescription }}</p>
       </div>
 
-      <div
-        v-if="isPending"
-        class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-        aria-busy="true"
-      >
+      <div v-if="isPending" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
         <Card v-for="index in 3" :key="index">
           <CardHeader>
             <div class="flex items-center gap-2">
@@ -122,9 +100,7 @@ const coursesDescription = computed(() => {
             <CircleAlertIcon />
           </EmptyMedia>
           <EmptyTitle>We couldn't load your courses</EmptyTitle>
-          <EmptyDescription>
-            Something went wrong while loading your dashboard. Please try again.
-          </EmptyDescription>
+          <EmptyDescription> Something went wrong while loading your dashboard. Please try again. </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button variant="outline" @click="refetch()">Try again</Button>
@@ -137,10 +113,7 @@ const coursesDescription = computed(() => {
             <BookOpenIcon />
           </EmptyMedia>
           <EmptyTitle>Your learning starts with a course</EmptyTitle>
-          <EmptyDescription>
-            Enrolled courses and learning progress will show up here. Browse the
-            catalog and choose what you would like to learn next.
-          </EmptyDescription>
+          <EmptyDescription> Enrolled courses and learning progress will show up here. Browse the catalog and choose what you would like to learn next. </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <Button as-child>
@@ -150,11 +123,7 @@ const coursesDescription = computed(() => {
       </Empty>
 
       <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <EnrolledCourseCard
-          v-for="enrollment in enrollments"
-          :key="enrollment.id"
-          :enrollment="enrollment"
-        />
+        <EnrolledCourseCard v-for="enrollment in enrollments" :key="enrollment.id" :enrollment="enrollment" />
       </div>
     </section>
   </div>

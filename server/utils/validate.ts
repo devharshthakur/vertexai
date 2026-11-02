@@ -1,10 +1,4 @@
-import {
-  createError,
-  getQuery,
-  getRouterParam,
-  readBody,
-  type RequestEvent
-} from 'nuxt/server'
+import { createError, getQuery, getRouterParam, readBody, type RequestEvent } from 'nuxt/server'
 import type { ZodType } from 'zod'
 
 /**
@@ -47,11 +41,7 @@ export function parseQuery<T>(event: RequestEvent, schema: Validator<T>) {
 }
 
 /** Validates a route parameter, such as a course id. */
-export function parseParam<T>(
-  event: RequestEvent,
-  name: string,
-  schema: Validator<T>
-): T {
+export function parseParam<T>(event: RequestEvent, name: string, schema: Validator<T>): T {
   const result = schema.safeParse(getRouterParam(event, name))
 
   if (!result.success) {

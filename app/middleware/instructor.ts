@@ -8,10 +8,7 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo({ path: '/auth/login', query: { redirect: to.fullPath } })
   }
 
-  if (
-    session.value.user.role !== APP_ROLES.INSTRUCTOR &&
-    session.value.user.role !== APP_ROLES.ADMIN
-  ) {
+  if (session.value.user.role !== APP_ROLES.INSTRUCTOR && session.value.user.role !== APP_ROLES.ADMIN) {
     return navigateTo('/dashboard')
   }
 })

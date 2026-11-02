@@ -58,8 +58,5 @@ export interface EnrollmentSummary {
   courseId: string
   enrolledAt: string
   progressPercent: number
-  course: Pick<
-    CourseSummary,
-    'id' | 'title' | 'thumbnailUrl' | 'category' | 'difficulty' | 'status'
-  >
+  course: Pick<CourseSummary, 'id' | 'title' | 'thumbnailUrl' | 'category' | 'difficulty' | 'status'>
 }

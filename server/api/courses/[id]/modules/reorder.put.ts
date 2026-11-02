@@ -3,10 +3,7 @@ import { reorderModules } from '#server/services/courses/commands'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireRole } from '#server/utils/require-session'
 import { parseBody, parseParam } from '#server/utils/validate'
-import {
-  courseIdSchema,
-  reorderModulesSchema
-} from '#shared/validation/courses'
+import { courseIdSchema, reorderModulesSchema } from '#shared/validation/courses'
 
 export default defineEventHandler(async (event) => {
   const session = await requireRole(event, 'instructor', 'admin')

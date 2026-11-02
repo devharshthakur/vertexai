@@ -2,14 +2,7 @@
 import { GalleryVerticalEnd } from '@lucide/vue'
 import { revalidateLogic, useForm } from '@tanstack/vue-form'
 import { Button } from '@/components/ui/button'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator
-} from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { refreshAuthSession } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
@@ -47,13 +40,8 @@ const form = useForm({
   }
 })
 
-const { data: providers } = await useFetch<AuthProvidersResponse>(
-  '/api/auth-providers',
-  { key: 'auth:providers' }
-)
-const githubEnabled = computed(
-  () => providers.value?.providers.includes('github') ?? false
-)
+const { data: providers } = await useFetch<AuthProvidersResponse>('/api/auth-providers', { key: 'auth:providers' })
+const githubEnabled = computed(() => providers.value?.providers.includes('github') ?? false)
 
 async function signInWithGitHub() {
   serverError.value = ''
@@ -66,11 +54,7 @@ async function signInWithGitHub() {
 </script>
 
 <template>
-  <form
-    class="flex flex-col gap-6"
-    novalidate
-    @submit.prevent="form.handleSubmit()"
-  >
+  <form class="flex flex-col gap-6" novalidate @submit.prevent="form.handleSubmit()">
     <FieldGroup>
       <div class="flex flex-col items-center gap-2 text-center">
         <NuxtLink to="/" class="flex flex-col items-center gap-2 font-medium">
@@ -82,29 +66,15 @@ async function signInWithGitHub() {
         <h1 class="text-xl font-bold">Welcome back</h1>
         <FieldDescription>
           Don't have an account?
-          <NuxtLink to="/auth/signup" class="underline underline-offset-4">
-            Sign up
-          </NuxtLink>
+          <NuxtLink to="/auth/signup" class="underline underline-offset-4"> Sign up </NuxtLink>
         </FieldDescription>
       </div>
       <form.Field name="email">
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Email </FieldLabel>
-            <Input
-              :id="field.name"
-              :model-value="field.state.value"
-              :aria-invalid="!field.state.meta.isValid"
-              type="email"
-              placeholder="m@example.com"
-              autocomplete="email"
-              @update:model-value="(value) => field.handleChange(String(value))"
-              @blur="field.handleBlur"
-            />
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Input :id="field.name" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="email" placeholder="m@example.com" autocomplete="email" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -112,20 +82,8 @@ async function signInWithGitHub() {
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Password </FieldLabel>
-            <Input
-              :id="field.name"
-              :model-value="field.state.value"
-              :aria-invalid="!field.state.meta.isValid"
-              type="password"
-              placeholder="••••••••"
-              autocomplete="current-password"
-              @update:model-value="(value) => field.handleChange(String(value))"
-              @blur="field.handleBlur"
-            />
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Input :id="field.name" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="password" placeholder="••••••••" autocomplete="current-password" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -140,17 +98,8 @@ async function signInWithGitHub() {
       <template v-if="githubEnabled">
         <FieldSeparator>Or</FieldSeparator>
         <Field>
-          <Button
-            variant="outline"
-            type="button"
-            class="w-full"
-            @click="signInWithGitHub"
-          >
-            <Icon
-              name="simple-icons:github"
-              data-icon="inline-start"
-              aria-hidden="true"
-            />
+          <Button variant="outline" type="button" class="w-full" @click="signInWithGitHub">
+            <Icon name="simple-icons:github" data-icon="inline-start" aria-hidden="true" />
             Continue with GitHub
           </Button>
         </Field>

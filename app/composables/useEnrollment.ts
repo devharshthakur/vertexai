@@ -1,10 +1,5 @@
 import type { EnrollmentSummary } from '#shared/types/courses'
-import {
-  queryOptions,
-  useMutation,
-  useQuery,
-  useQueryClient
-} from '@tanstack/vue-query'
+import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { useAuthSessionState } from './useAuthSession'
 
 /**
@@ -57,8 +52,7 @@ export function useMyEnrollments() {
   const query = useQuery(
     queryOptions({
       queryKey: computed(() => enrollmentKeys.mine(userId.value)),
-      queryFn: ({ signal }) =>
-        requestFetch<EnrollmentSummary[]>('/api/enrollments/me', { signal }),
+      queryFn: ({ signal }) => requestFetch<EnrollmentSummary[]>('/api/enrollments/me', { signal }),
       enabled: signedIn
     })
   )
@@ -109,13 +103,7 @@ export function useEnroll(courseId: MaybeRefOrGetter<string>) {
     onMutate: () => queryClient.cancelQueries({ queryKey: enrollmentKeys.all }),
     onSuccess: (enrollment) => {
       // Newest enrollment first, matching `listMyEnrollments`.
-      queryClient.setQueryData<EnrollmentSummary[]>(
-        enrollmentKeys.mine(userId.value),
-        (current = []) =>
-          current.some((item) => item.courseId === enrollment.courseId)
-            ? current
-            : [enrollment, ...current]
-      )
+      queryClient.setQueryData<EnrollmentSummary[]>(enrollmentKeys.mine(userId.value), (current = []) => (current.some((item) => item.courseId === enrollment.courseId) ? current : [enrollment, ...current]))
 
       void queryClient.invalidateQueries({
         queryKey: enrollmentKeys.all,
@@ -125,17 +113,9 @@ export function useEnroll(courseId: MaybeRefOrGetter<string>) {
   })
 
   const isSignedIn = computed(() => Boolean(session.value))
-  const isEnrolled = computed(() =>
-    enrollments.value.some(
-      (enrollment) => enrollment.courseId === toValue(courseId)
-    )
-  )
-  const error = computed(() =>
-    mutation.isError.value ? mutation.error.value : null
-  )
-  const errorMessage = computed(() =>
-    mutation.isError.value ? getEnrollErrorMessage(mutation.error.value) : null
-  )
+  const isEnrolled = computed(() => enrollments.value.some((enrollment) => enrollment.courseId === toValue(courseId)))
+  const error = computed(() => (mutation.isError.value ? mutation.error.value : null))
+  const errorMessage = computed(() => (mutation.isError.value ? getEnrollErrorMessage(mutation.error.value) : null))
 
   function enroll() {
     mutation.mutate(toValue(courseId))

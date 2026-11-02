@@ -3,21 +3,8 @@ import { BookOpenIcon } from '@lucide/vue'
 import CourseBadges from '@/components/course/CourseBadges.vue'
 import EnrollButton from '@/components/course/EnrollButton.vue'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle
-} from '@/components/ui/empty'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { pluralize } from '@/lib/pluralize'
@@ -26,25 +13,12 @@ import type { CourseWithCurriculum } from '#shared/types/courses'
 const route = useRoute()
 const courseId = computed(() => String(route.params.id))
 
-const {
-  data: course,
-  pending,
-  error
-} = useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`)
+const { data: course, pending, error } = useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`)
 
-const lectureCount = computed(
-  () =>
-    course.value?.modules.reduce(
-      (total, module) => total + module.lectures.length,
-      0
-    ) ?? 0
-)
+const lectureCount = computed(() => course.value?.modules.reduce((total, module) => total + module.lectures.length, 0) ?? 0)
 
 useSeoMeta({
-  title: () =>
-    course.value
-      ? `${course.value.course.title} · VertexAI`
-      : 'Course · VertexAI',
+  title: () => (course.value ? `${course.value.course.title} · VertexAI` : 'Course · VertexAI'),
   description: () => course.value?.course.description ?? 'Course details.'
 })
 </script>
@@ -62,9 +36,7 @@ useSeoMeta({
           <BookOpenIcon />
         </EmptyMedia>
         <EmptyTitle>Course not found</EmptyTitle>
-        <EmptyDescription>
-          This course does not exist or is not published yet.
-        </EmptyDescription>
+        <EmptyDescription> This course does not exist or is not published yet. </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <Button variant="outline" as-child>
@@ -75,10 +47,7 @@ useSeoMeta({
 
     <div v-else class="flex flex-col gap-8">
       <header class="flex flex-col gap-4">
-        <CourseBadges
-          :category="course.course.category"
-          :difficulty="course.course.difficulty"
-        />
+        <CourseBadges :category="course.course.category" :difficulty="course.course.difficulty" />
 
         <h1 class="text-3xl font-semibold tracking-tight">
           {{ course.course.title }}
@@ -99,9 +68,7 @@ useSeoMeta({
         <Card v-if="course.modules.length === 0">
           <CardHeader>
             <CardTitle>No modules yet</CardTitle>
-            <CardDescription>
-              The instructor is still building this course.
-            </CardDescription>
+            <CardDescription> The instructor is still building this course. </CardDescription>
           </CardHeader>
         </Card>
 
@@ -114,23 +81,14 @@ useSeoMeta({
           </CardHeader>
           <CardContent>
             <ol class="flex flex-col gap-2">
-              <li
-                v-for="lecture in module.lectures"
-                :key="lecture.id"
-                class="text-sm text-muted-foreground"
-              >
+              <li v-for="lecture in module.lectures" :key="lecture.id" class="text-sm text-muted-foreground">
                 {{ lecture.title }}
               </li>
             </ol>
           </CardContent>
         </Card>
 
-        <p
-          v-if="course.modules.length > 0"
-          class="text-sm text-muted-foreground"
-        >
-          {{ pluralize(lectureCount, 'lecture') }} in total.
-        </p>
+        <p v-if="course.modules.length > 0" class="text-sm text-muted-foreground">{{ pluralize(lectureCount, 'lecture') }} in total.</p>
       </section>
     </div>
   </div>

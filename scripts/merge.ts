@@ -99,9 +99,7 @@ if (!git('diff', '--quiet').ok || !git('diff', '--cached', '--quiet').ok) {
 }
 
 if (!git('merge-base', '--is-ancestor', target, feature).ok) {
-  die(
-    `'${target}' has commits that '${feature}' does not; rebase onto '${target}' first`
-  )
+  die(`'${target}' has commits that '${feature}' does not; rebase onto '${target}' first`)
 }
 
 if (git('merge-base', '--is-ancestor', feature, target).ok) {
@@ -114,9 +112,7 @@ const from = git('rev-parse', '--short', target).out
 const to = git('rev-parse', '--short', feature).out
 
 if (dryRun) {
-  note(
-    `dry run: '${target}' would fast-forward ${from} -> ${to} ('${feature}') and leave you on '${target}'; no merge commit, no push`
-  )
+  note(`dry run: '${target}' would fast-forward ${from} -> ${to} ('${feature}') and leave you on '${target}'; no merge commit, no push`)
   process.exit(0)
 }
 

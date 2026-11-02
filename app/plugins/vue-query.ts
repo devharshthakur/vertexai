@@ -1,13 +1,5 @@
-import type {
-  DehydratedState,
-  VueQueryPluginOptions
-} from '@tanstack/vue-query'
-import {
-  dehydrate,
-  hydrate,
-  QueryClient,
-  VueQueryPlugin
-} from '@tanstack/vue-query'
+import type { DehydratedState, VueQueryPluginOptions } from '@tanstack/vue-query'
+import { dehydrate, hydrate, QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 
 /**
  * Installs Vue Query and transfers its cache from the server render to the

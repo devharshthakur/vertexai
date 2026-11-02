@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { revalidateLogic, useForm } from '@tanstack/vue-form'
 import { Button } from '@/components/ui/button'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel
-} from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { authClient } from '@/lib/auth-client'
 import { passwordSchema } from '#shared/validation/auth'
@@ -46,29 +40,14 @@ const form = useForm({
 </script>
 
 <template>
-  <form
-    class="flex flex-col gap-6"
-    novalidate
-    @submit.prevent="form.handleSubmit()"
-  >
+  <form class="flex flex-col gap-6" novalidate @submit.prevent="form.handleSubmit()">
     <FieldGroup>
       <form.Field name="currentPassword">
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Current password </FieldLabel>
-            <Input
-              :id="field.name"
-              :model-value="field.state.value"
-              :aria-invalid="!field.state.meta.isValid"
-              type="password"
-              autocomplete="current-password"
-              @update:model-value="(value) => field.handleChange(String(value))"
-              @blur="field.handleBlur"
-            />
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Input :id="field.name" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="password" autocomplete="current-password" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -76,19 +55,8 @@ const form = useForm({
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> New password </FieldLabel>
-            <Input
-              :id="field.name"
-              :model-value="field.state.value"
-              :aria-invalid="!field.state.meta.isValid"
-              type="password"
-              autocomplete="new-password"
-              @update:model-value="(value) => field.handleChange(String(value))"
-              @blur="field.handleBlur"
-            />
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Input :id="field.name" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="password" autocomplete="new-password" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -96,19 +64,8 @@ const form = useForm({
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name"> Confirm new password </FieldLabel>
-            <Input
-              :id="field.name"
-              :model-value="field.state.value"
-              :aria-invalid="!field.state.meta.isValid"
-              type="password"
-              autocomplete="new-password"
-              @update:model-value="(value) => field.handleChange(String(value))"
-              @blur="field.handleBlur"
-            />
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Input :id="field.name" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="password" autocomplete="new-password" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -119,9 +76,7 @@ const form = useForm({
           </Button>
         </form.Subscribe>
         <FieldError v-if="serverError">{{ serverError }}</FieldError>
-        <FieldDescription v-if="saved" role="status">
-          Your password has been changed.
-        </FieldDescription>
+        <FieldDescription v-if="saved" role="status"> Your password has been changed. </FieldDescription>
       </Field>
     </FieldGroup>
   </form>

@@ -17,10 +17,4 @@ const designSystem = {
   }
 }
 
-export default withNuxt(
-  { ignores: ['.agents/**'] },
-  { ignores: ['app/components/ui/**'] },
-  ...pluginQuery.configs['flat/recommended-strict'],
-  designSystem,
-  prettier
-)
+export default withNuxt({ ignores: ['.agents/**'] }, { ignores: ['app/components/ui/**'] }, ...pluginQuery.configs['flat/recommended-strict'], designSystem, prettier)

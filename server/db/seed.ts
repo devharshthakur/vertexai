@@ -1,23 +1,11 @@
 import 'dotenv/config'
 import { and, eq, notInArray } from 'drizzle-orm'
-import type {
-  CourseDifficulty,
-  CourseStatus
-} from '../../shared/validation/courses'
+import type { CourseDifficulty, CourseStatus } from '../../shared/validation/courses'
 import { auth } from '../utils/auth'
 import { useDb } from './index'
-import {
-  courseApprovals,
-  courses,
-  enrollments,
-  lectures,
-  modules,
-  sessions,
-  users
-} from './schema'
+import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from './schema'
 
-const DEMO_PASSWORD =
-  process.env.DEMO_SEED_PASSWORD ?? 'VertexAI-Demo-Only-123!'
+const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD ?? 'VertexAI-Demo-Only-123!'
 const DEMO_USERS = [
   { name: 'VertexAI Demo Admin', email: 'admin@vertexai.test', role: 'admin' },
   {
@@ -58,8 +46,7 @@ interface DemoCourse {
 const DEMO_COURSES: DemoCourse[] = [
   {
     title: 'VertexAI Demo: Foundations of Learning',
-    description:
-      'A seeded course for trying the student catalog, curriculum preview, and enrollment flow.',
+    description: 'A seeded course for trying the student catalog, curriculum preview, and enrollment flow.',
     category: 'Learning',
     difficulty: 'beginner',
     status: 'approved',
@@ -70,14 +57,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Welcome to the demo course',
             durationSeconds: 120,
-            transcript:
-              'Welcome. This demo lecture introduces the course structure and learning goals.'
+            transcript: 'Welcome. This demo lecture introduces the course structure and learning goals.'
           },
           {
             title: 'How the learning flow works',
             durationSeconds: 180,
-            transcript:
-              'Walk through the catalog, the curriculum, and the player before starting the first lesson.'
+            transcript: 'Walk through the catalog, the curriculum, and the player before starting the first lesson.'
           }
         ]
       },
@@ -87,14 +72,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Spaced repetition in practice',
             durationSeconds: 240,
-            transcript:
-              'Spacing study sessions over time improves long-term retention more than cramming.'
+            transcript: 'Spacing study sessions over time improves long-term retention more than cramming.'
           },
           {
             title: 'Retrieval practice that sticks',
             durationSeconds: 300,
-            transcript:
-              'Testing yourself is a learning strategy, not only a measurement of what you know.'
+            transcript: 'Testing yourself is a learning strategy, not only a measurement of what you know.'
           }
         ]
       },
@@ -104,14 +87,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Building a weekly study plan',
             durationSeconds: 300,
-            transcript:
-              'Turn course goals into a realistic weekly schedule with short, focused sessions.'
+            transcript: 'Turn course goals into a realistic weekly schedule with short, focused sessions.'
           },
           {
             title: 'Reviewing progress with analytics',
             durationSeconds: 240,
-            transcript:
-              'Use the progress view to spot stalled courses and adjust your plan.'
+            transcript: 'Use the progress view to spot stalled courses and adjust your plan.'
           }
         ]
       }
@@ -124,8 +105,7 @@ const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Full-Stack TypeScript with Nuxt & Drizzle',
-    description:
-      'Build a typed full-stack application with Nuxt, Nitro server routes, Drizzle, and PostgreSQL.',
+    description: 'Build a typed full-stack application with Nuxt, Nitro server routes, Drizzle, and PostgreSQL.',
     category: 'Web Development',
     difficulty: 'intermediate',
     status: 'approved',
@@ -136,14 +116,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Scaffolding a Nuxt 4 app',
             durationSeconds: 300,
-            transcript:
-              'Create the application shell and review the directory layout Nuxt expects.'
+            transcript: 'Create the application shell and review the directory layout Nuxt expects.'
           },
           {
             title: 'Configuring TypeScript and tooling',
             durationSeconds: 240,
-            transcript:
-              'Enable strict type checking, formatting, and linting before writing features.'
+            transcript: 'Enable strict type checking, formatting, and linting before writing features.'
           }
         ]
       },
@@ -153,14 +131,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Defining the schema',
             durationSeconds: 360,
-            transcript:
-              'Model tables, relations, and constraints as typed Drizzle schema modules.'
+            transcript: 'Model tables, relations, and constraints as typed Drizzle schema modules.'
           },
           {
             title: 'Writing migrations',
             durationSeconds: 300,
-            transcript:
-              'Generate migrations from the schema and apply them to a local PostgreSQL database.'
+            transcript: 'Generate migrations from the schema and apply them to a local PostgreSQL database.'
           }
         ]
       },
@@ -170,14 +146,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Building Nitro API routes',
             durationSeconds: 300,
-            transcript:
-              'Keep routes thin and move business logic into services that the rest of the app can reuse.'
+            transcript: 'Keep routes thin and move business logic into services that the rest of the app can reuse.'
           },
           {
             title: 'Validating input with Zod',
             durationSeconds: 240,
-            transcript:
-              'Share request schemas between the client and the server for consistent validation.'
+            transcript: 'Share request schemas between the client and the server for consistent validation.'
           }
         ]
       }
@@ -190,8 +164,7 @@ const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Course-Grounded RAG Systems in Practice',
-    description:
-      'Design retrieval-augmented generation systems that answer questions from course material.',
+    description: 'Design retrieval-augmented generation systems that answer questions from course material.',
     category: 'AI Engineering',
     difficulty: 'advanced',
     status: 'approved',
@@ -202,14 +175,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Chunking course material',
             durationSeconds: 360,
-            transcript:
-              'Choose chunk sizes and overlap that preserve the meaning of each lecture.'
+            transcript: 'Choose chunk sizes and overlap that preserve the meaning of each lecture.'
           },
           {
             title: 'Embedding and indexing lectures',
             durationSeconds: 420,
-            transcript:
-              'Store embeddings alongside source metadata so answers can cite their context.'
+            transcript: 'Store embeddings alongside source metadata so answers can cite their context.'
           }
         ]
       },
@@ -219,14 +190,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Retrieval-augmented generation pipeline',
             durationSeconds: 480,
-            transcript:
-              'Combine retrieved context with clear instructions so the model stays grounded.'
+            transcript: 'Combine retrieved context with clear instructions so the model stays grounded.'
           },
           {
             title: 'Evaluating answer quality',
             durationSeconds: 360,
-            transcript:
-              'Measure faithfulness, relevance, and citation accuracy with a small evaluation set.'
+            transcript: 'Measure faithfulness, relevance, and citation accuracy with a small evaluation set.'
           }
         ]
       }
@@ -239,8 +208,7 @@ const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Practical Prompt Engineering for Educators',
-    description:
-      'Write clearer prompts for lesson planning, feedback, and classroom material.',
+    description: 'Write clearer prompts for lesson planning, feedback, and classroom material.',
     category: 'AI Engineering',
     difficulty: 'beginner',
     status: 'pending',
@@ -251,14 +219,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Anatomy of an effective prompt',
             durationSeconds: 240,
-            transcript:
-              'Separate context, instructions, examples, and output format in every prompt.'
+            transcript: 'Separate context, instructions, examples, and output format in every prompt.'
           },
           {
             title: 'Iterating with examples',
             durationSeconds: 300,
-            transcript:
-              'Use a few representative examples to steer tone and structure.'
+            transcript: 'Use a few representative examples to steer tone and structure.'
           }
         ]
       },
@@ -268,14 +234,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Designing rubric-aligned prompts',
             durationSeconds: 300,
-            transcript:
-              'Translate rubric criteria into explicit instructions the model can follow.'
+            transcript: 'Translate rubric criteria into explicit instructions the model can follow.'
           },
           {
             title: 'Reviewing AI output responsibly',
             durationSeconds: 240,
-            transcript:
-              'Check generated material for accuracy and bias before sharing it with learners.'
+            transcript: 'Check generated material for accuracy and bias before sharing it with learners.'
           }
         ]
       }
@@ -285,8 +249,7 @@ const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Modern UI Architecture with Design Systems',
-    description:
-      'Structure a component library with design tokens, accessible primitives, and clear contracts.',
+    description: 'Structure a component library with design tokens, accessible primitives, and clear contracts.',
     category: 'Web Development',
     difficulty: 'intermediate',
     status: 'pending',
@@ -297,8 +260,7 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Token architecture that scales',
             durationSeconds: 300,
-            transcript:
-              'Name and layer tokens so themes can change without rewriting components.'
+            transcript: 'Name and layer tokens so themes can change without rewriting components.'
           }
         ]
       },
@@ -308,14 +270,12 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Composing accessible primitives',
             durationSeconds: 300,
-            transcript:
-              'Build complex widgets from accessible base components instead of custom markup.'
+            transcript: 'Build complex widgets from accessible base components instead of custom markup.'
           },
           {
             title: 'Documenting component APIs',
             durationSeconds: 240,
-            transcript:
-              'Publish props, slots, and usage examples so teams adopt the system consistently.'
+            transcript: 'Publish props, slots, and usage examples so teams adopt the system consistently.'
           }
         ]
       }
@@ -325,8 +285,7 @@ const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Intro to Quantum Computing (Draft)',
-    description:
-      'An early draft covering qubits, superposition, and the road to quantum algorithms.',
+    description: 'An early draft covering qubits, superposition, and the road to quantum algorithms.',
     category: 'Computer Science',
     difficulty: 'advanced',
     status: 'rejected',
@@ -337,16 +296,14 @@ const DEMO_COURSES: DemoCourse[] = [
           {
             title: 'Qubits and superposition',
             durationSeconds: 300,
-            transcript:
-              'A qubit can hold a superposition of basis states until it is measured.'
+            transcript: 'A qubit can hold a superposition of basis states until it is measured.'
           }
         ]
       }
     ],
     approval: {
       decision: 'rejected',
-      comment:
-        'Please add the remaining modules and a knowledge check before resubmitting.'
+      comment: 'Please add the remaining modules and a knowledge check before resubmitting.'
     },
     enrollmentProgress: null
   }
@@ -365,15 +322,9 @@ async function syncDemoPassword(userId: string): Promise<void> {
   await useDb().delete(sessions).where(eq(sessions.userId, userId))
 }
 
-async function ensureUser(
-  demoUser: (typeof DEMO_USERS)[number]
-): Promise<string> {
+async function ensureUser(demoUser: (typeof DEMO_USERS)[number]): Promise<string> {
   const db = useDb()
-  const [existing] = await db
-    .select({ id: users.id })
-    .from(users)
-    .where(eq(users.email, demoUser.email))
-    .limit(1)
+  const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, demoUser.email)).limit(1)
   let userId = existing?.id
 
   if (!userId) {
@@ -412,35 +363,19 @@ async function ensureUser(
  * across runs; everything below a course is re-inserted, which keeps the
  * curriculum deterministic.
  */
-async function seedDemoCourses(
-  instructorId: string,
-  adminId: string,
-  studentId: string
-): Promise<void> {
+async function seedDemoCourses(instructorId: string, adminId: string, studentId: string): Promise<void> {
   const db = useDb()
   const demoCourseTitles = DEMO_COURSES.map(({ title }) => title)
 
   await db.transaction(async (tx) => {
-    await tx
-      .delete(courses)
-      .where(
-        and(
-          eq(courses.instructorId, instructorId),
-          notInArray(courses.title, demoCourseTitles)
-        )
-      )
+    await tx.delete(courses).where(and(eq(courses.instructorId, instructorId), notInArray(courses.title, demoCourseTitles)))
     await tx.delete(enrollments).where(eq(enrollments.userId, studentId))
 
     for (const demoCourse of DEMO_COURSES) {
       const [existing] = await tx
         .select({ id: courses.id })
         .from(courses)
-        .where(
-          and(
-            eq(courses.instructorId, instructorId),
-            eq(courses.title, demoCourse.title)
-          )
-        )
+        .where(and(eq(courses.instructorId, instructorId), eq(courses.title, demoCourse.title)))
         .limit(1)
       let courseId = existing?.id
 
@@ -472,9 +407,7 @@ async function seedDemoCourses(
       }
 
       await tx.delete(modules).where(eq(modules.courseId, courseId))
-      await tx
-        .delete(courseApprovals)
-        .where(eq(courseApprovals.courseId, courseId))
+      await tx.delete(courseApprovals).where(eq(courseApprovals.courseId, courseId))
 
       for (const [moduleIndex, demoModule] of demoCourse.modules.entries()) {
         const [insertedModule] = await tx
@@ -530,25 +463,13 @@ async function seed() {
     userIds.set(demoUser.role, await ensureUser(demoUser))
   }
 
-  await seedDemoCourses(
-    userIds.get('instructor')!,
-    userIds.get('admin')!,
-    userIds.get('student')!
-  )
+  await seedDemoCourses(userIds.get('instructor')!, userIds.get('admin')!, userIds.get('student')!)
 
-  const approvedCourses = DEMO_COURSES.filter(
-    ({ status }) => status === 'approved'
-  ).length
-  const enrollmentsCreated = DEMO_COURSES.filter(
-    ({ enrollmentProgress }) => enrollmentProgress !== null
-  ).length
+  const approvedCourses = DEMO_COURSES.filter(({ status }) => status === 'approved').length
+  const enrollmentsCreated = DEMO_COURSES.filter(({ enrollmentProgress }) => enrollmentProgress !== null).length
 
-  console.info(
-    `Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`
-  )
-  console.info(
-    `Seeded ${DEMO_COURSES.length} demo courses (${approvedCourses} approved, ${enrollmentsCreated} student enrollments).`
-  )
+  console.info(`Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`)
+  console.info(`Seeded ${DEMO_COURSES.length} demo courses (${approvedCourses} approved, ${enrollmentsCreated} student enrollments).`)
   console.info('Set DEMO_SEED_PASSWORD to choose the shared password.')
 }
 

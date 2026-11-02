@@ -9,42 +9,25 @@ import { z } from 'zod'
  */
 
 /** Explanation depth a course is pitched at (PRD §7 `courses.difficulty`). */
-export const COURSE_DIFFICULTIES = [
-  'beginner',
-  'intermediate',
-  'advanced'
-] as const
+export const COURSE_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as const
 
 /**
  * Publication state of a course. Only `approved` courses are listed in the
  * public catalog; the transition is driven by the admin approval queue.
  */
-export const COURSE_STATUSES = [
-  'pending',
-  'approved',
-  'rejected',
-  'archived'
-] as const
+export const COURSE_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
 
 export const courseDifficultySchema = z.enum(COURSE_DIFFICULTIES)
 export const courseStatusSchema = z.enum(COURSE_STATUSES)
 export const courseIdSchema = z.uuid('Invalid course id.')
 
 export const createCourseSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(3, 'Use at least 3 characters.')
-    .max(200, 'Keep the title under 200 characters.'),
+  title: z.string().trim().min(3, 'Use at least 3 characters.').max(200, 'Keep the title under 200 characters.'),
   description: z.string().trim().max(5000).nullable().optional(),
   category: z.string().trim().max(80).nullable().optional(),
   difficulty: courseDifficultySchema.nullable().optional(),
   thumbnailUrl: z.url('Enter a valid URL.').nullable().optional(),
-  price: z
-    .number()
-    .min(0, 'The price cannot be negative.')
-    .max(100_000)
-    .optional()
+  price: z.number().min(0, 'The price cannot be negative.').max(100_000).optional()
 })
 
 /**
@@ -54,11 +37,7 @@ export const createCourseSchema = z.object({
 export const updateCourseSchema = createCourseSchema.partial()
 
 export const addModuleSchema = z.object({
-  title: z
-    .string()
-    .trim()
-    .min(1, 'Enter a module title.')
-    .max(200, 'Keep the title under 200 characters.'),
+  title: z.string().trim().min(1, 'Enter a module title.').max(200, 'Keep the title under 200 characters.'),
   orderIndex: z.number().int().min(0).optional()
 })
 
@@ -72,10 +51,7 @@ export const reorderModulesSchema = z.object({
     .array(courseIdSchema)
     .min(1)
     .max(100)
-    .refine(
-      (moduleIds) => new Set(moduleIds).size === moduleIds.length,
-      'Each module may appear only once.'
-    )
+    .refine((moduleIds) => new Set(moduleIds).size === moduleIds.length, 'Each module may appear only once.')
 })
 
 /**

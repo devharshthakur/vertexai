@@ -1,24 +1,13 @@
 <script setup lang="ts">
-import {
-  ArrowRightIcon,
-  BookOpenIcon,
-  BrainCircuitIcon,
-  ChartNoAxesColumnIncreasingIcon
-} from '@lucide/vue'
+import { ArrowRightIcon, BookOpenIcon, BrainCircuitIcon, ChartNoAxesColumnIncreasingIcon } from '@lucide/vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuthSessionState } from '@/composables/useAuthSession'
 
 useSeoMeta({
   title: 'VertexAI · Learn with focus',
-  description:
-    'Explore courses and build a focused learning habit with VertexAI.'
+  description: 'Explore courses and build a focused learning habit with VertexAI.'
 })
 
 definePageMeta({ layout: 'marketing' })
@@ -28,14 +17,12 @@ const session = useAuthSessionState()
 const upcomingFeatures = [
   {
     title: 'Learn with context',
-    description:
-      'Get explanations grounded in the course material you are studying.',
+    description: 'Get explanations grounded in the course material you are studying.',
     icon: BrainCircuitIcon
   },
   {
     title: 'See your progress',
-    description:
-      'Pick up where you left off and understand what you have mastered.',
+    description: 'Pick up where you left off and understand what you have mastered.',
     icon: ChartNoAxesColumnIncreasingIcon
   }
 ]
@@ -43,22 +30,11 @@ const upcomingFeatures = [
 
 <template>
   <div class="flex flex-col gap-8">
-    <section
-      class="mx-auto flex w-full max-w-3xl flex-col items-center gap-5 text-center sm:gap-6"
-    >
+    <section class="mx-auto flex w-full max-w-3xl flex-col items-center gap-5 text-center sm:gap-6">
       <Badge variant="secondary">A more focused way to learn</Badge>
       <div class="flex flex-col gap-3 sm:gap-4">
-        <h1
-          class="text-4xl font-semibold tracking-tight text-balance sm:text-6xl"
-        >
-          Make every lesson <span class="text-primary">count.</span>
-        </h1>
-        <p
-          class="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground"
-        >
-          Find a course worth learning, understand it deeply, and keep your
-          momentum — all in one learning space.
-        </p>
+        <h1 class="text-4xl font-semibold tracking-tight text-balance sm:text-6xl">Make every lesson <span class="text-primary">count.</span></h1>
+        <p class="mx-auto max-w-2xl text-lg leading-relaxed text-muted-foreground">Find a course worth learning, understand it deeply, and keep your momentum — all in one learning space.</p>
       </div>
 
       <div class="flex flex-wrap items-center justify-center gap-3">
@@ -83,16 +59,8 @@ const upcomingFeatures = [
     <section class="flex flex-col gap-5" aria-labelledby="platform-heading">
       <div class="flex flex-col gap-2 text-center">
         <p class="text-sm font-medium text-primary">The learning space</p>
-        <h2
-          id="platform-heading"
-          class="text-2xl font-semibold tracking-tight sm:text-3xl"
-        >
-          Start with a course. Grow from there.
-        </h2>
-        <p class="mx-auto max-w-xl text-balance text-muted-foreground">
-          Browse the catalog today. More tools for learning and tracking your
-          progress are taking shape.
-        </p>
+        <h2 id="platform-heading" class="text-2xl font-semibold tracking-tight sm:text-3xl">Start with a course. Grow from there.</h2>
+        <p class="mx-auto max-w-xl text-balance text-muted-foreground">Browse the catalog today. More tools for learning and tracking your progress are taking shape.</p>
       </div>
 
       <div class="grid gap-4 md:grid-cols-3">
@@ -103,9 +71,7 @@ const upcomingFeatures = [
               <Badge>Available</Badge>
             </div>
             <CardTitle>Courses to explore</CardTitle>
-            <CardDescription>
-              Browse published courses and find a topic that moves you forward.
-            </CardDescription>
+            <CardDescription> Browse published courses and find a topic that moves you forward. </CardDescription>
           </CardHeader>
         </Card>
 

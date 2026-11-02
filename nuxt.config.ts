@@ -2,13 +2,7 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
-  modules: [
-    '@nuxt/eslint',
-    '@nuxt/fonts',
-    'shadcn-nuxt',
-    '@nuxt/icon',
-    '@nuxtjs/color-mode'
-  ],
+  modules: ['@nuxt/eslint', '@nuxt/fonts', 'shadcn-nuxt', '@nuxt/icon', '@nuxtjs/color-mode'],
   components: {
     dirs: []
   },
@@ -28,8 +22,7 @@ export default defineNuxtConfig({
       meta: [
         {
           name: 'description',
-          content:
-            'An AI-augmented learning management system with a tutor that knows your course.'
+          content: 'An AI-augmented learning management system with a tutor that knows your course.'
         }
       ]
     }
@@ -49,13 +42,7 @@ export default defineNuxtConfig({
   },
   typescript: {
     nodeTsConfig: {
-      include: [
-        '../drizzle.config.ts',
-        '../eslint.config.mjs',
-        '../prettier.config.js',
-        '../.nano-staged.mjs',
-        '../scripts/*.ts'
-      ],
+      include: ['../drizzle.config.ts', '../eslint.config.mjs', '../prettier.config.js', '../.nano-staged.mjs', '../scripts/*.ts'],
       compilerOptions: {
         types: ['node'],
         checkJs: true
@@ -68,18 +55,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      include: [
-        '@lucide/vue',
-        '@tanstack/vue-form',
-        '@tanstack/vue-query',
-        '@vueuse/core',
-        'better-auth/client/plugins',
-        'better-auth/vue',
-        'class-variance-authority',
-        'cn',
-        'reka-ui',
-        'zod'
-      ]
+      include: ['@lucide/vue', '@tanstack/vue-form', '@tanstack/vue-query', '@vueuse/core', 'better-auth/client/plugins', 'better-auth/vue', 'class-variance-authority', 'cn', 'reka-ui', 'zod']
     }
   }
 })

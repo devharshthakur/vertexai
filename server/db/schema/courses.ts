@@ -1,14 +1,5 @@
 import { relations, sql } from 'drizzle-orm'
-import {
-  index,
-  integer,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-  varchar
-} from 'drizzle-orm/pg-core'
+import { index, integer, numeric, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 import { COURSE_STATUSES } from '../../../shared/validation/courses'
 
@@ -36,21 +27,14 @@ export const courses = pgTable(
     difficulty: varchar('difficulty', { length: 20 }),
     thumbnailUrl: text('thumbnail_url'),
     price: numeric('price', { precision: 10, scale: 2 }).default('0').notNull(),
-    status: varchar('status', { length: 20, enum: COURSE_STATUSES })
-      .default('pending')
-      .notNull(),
+    status: varchar('status', { length: 20, enum: COURSE_STATUSES }).default('pending').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at')
       .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull()
   },
-  (table) => [
-    index('courses_instructorId_idx').on(table.instructorId),
-    index('courses_status_idx').on(table.status),
-    index('courses_category_idx').on(table.category),
-    index('courses_difficulty_idx').on(table.difficulty)
-  ]
+  (table) => [index('courses_instructorId_idx').on(table.instructorId), index('courses_status_idx').on(table.status), index('courses_category_idx').on(table.category), index('courses_difficulty_idx').on(table.difficulty)]
 )
 
 export const modules = pgTable(

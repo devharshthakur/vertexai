@@ -9,7 +9,4 @@
 const githubClientId = process.env.GITHUB_CLIENT_ID
 const githubClientSecret = process.env.GITHUB_CLIENT_SECRET
 
-export const githubCredentials =
-  githubClientId && githubClientSecret
-    ? { clientId: githubClientId, clientSecret: githubClientSecret }
-    : undefined
+export const githubCredentials = githubClientId && githubClientSecret ? { clientId: githubClientId, clientSecret: githubClientSecret } : undefined

@@ -2,20 +2,8 @@
 import { CheckIcon, ExternalLinkIcon, XIcon } from '@lucide/vue'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card'
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyTitle
-} from '@/components/ui/empty'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
@@ -25,10 +13,9 @@ import { reviewCourseSchema } from '#shared/validation/courses'
 definePageMeta({ layout: 'workspace', middleware: 'admin' })
 useSeoMeta({ title: 'Course approvals · VertexAI' })
 
-const { data, pending, error, refresh } = await useFetch<CourseListResult>(
-  '/api/admin/courses/pending',
-  { query: { limit: 50 } }
-)
+const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/admin/courses/pending', {
+  query: { limit: 50 }
+})
 const comments = ref<Record<string, string>>({})
 const busyCourseId = ref<string | null>(null)
 const pageError = ref('')
@@ -41,8 +28,7 @@ async function decide(courseId: string, decision: 'approved' | 'rejected') {
   })
 
   if (!result.success) {
-    pageError.value =
-      result.error.issues[0]?.message ?? 'Enter a valid review comment.'
+    pageError.value = result.error.issues[0]?.message ?? 'Enter a valid review comment.'
     return
   }
 
@@ -54,8 +40,7 @@ async function decide(courseId: string, decision: 'approved' | 'rejected') {
     })
     await refresh()
   } catch {
-    pageError.value =
-      'The review could not be saved. The course may already have been reviewed.'
+    pageError.value = 'The review could not be saved. The course may already have been reviewed.'
     await refresh()
   } finally {
     busyCourseId.value = null
@@ -67,31 +52,15 @@ async function decide(courseId: string, decision: 'approved' | 'rejected') {
   <div class="flex flex-col gap-8">
     <header class="flex flex-col gap-2">
       <p class="text-sm font-medium text-muted-foreground">Admin workspace</p>
-      <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">
-        Course approvals
-      </h1>
-      <p class="max-w-2xl text-muted-foreground">
-        Review pending course details and curriculum before publication.
-      </p>
+      <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Course approvals</h1>
+      <p class="max-w-2xl text-muted-foreground">Review pending course details and curriculum before publication.</p>
     </header>
 
     <Alert v-if="error || pageError" variant="destructive">
-      <AlertTitle>{{
-        error ? 'Approval queue unavailable' : 'Review not saved'
-      }}</AlertTitle>
+      <AlertTitle>{{ error ? 'Approval queue unavailable' : 'Review not saved' }}</AlertTitle>
       <AlertDescription>
-        {{
-          pageError || 'We could not load pending courses. Please try again.'
-        }}
-        <Button
-          v-if="error"
-          size="sm"
-          variant="outline"
-          class="mt-3"
-          @click="refresh()"
-        >
-          Retry
-        </Button>
+        {{ pageError || 'We could not load pending courses. Please try again.' }}
+        <Button v-if="error" size="sm" variant="outline" class="mt-3" @click="refresh()"> Retry </Button>
       </AlertDescription>
     </Alert>
 
@@ -121,9 +90,7 @@ async function decide(courseId: string, decision: 'approved' | 'rejected') {
     <Empty v-else-if="!error && data?.items.length === 0">
       <EmptyHeader>
         <EmptyTitle>All caught up</EmptyTitle>
-        <EmptyDescription
-          >There are no pending courses to review.</EmptyDescription
-        >
+        <EmptyDescription>There are no pending courses to review.</EmptyDescription>
       </EmptyHeader>
     </Empty>
 
@@ -141,42 +108,25 @@ async function decide(courseId: string, decision: 'approved' | 'rejected') {
             <p class="text-sm whitespace-pre-line text-muted-foreground">
               {{ course.description || 'No course description provided.' }}
             </p>
-            <NuxtLink
-              :to="`/courses/${course.id}`"
-              class="inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline"
-            >
+            <NuxtLink :to="`/courses/${course.id}`" class="inline-flex items-center gap-2 text-sm font-medium underline-offset-4 hover:underline">
               Preview course and curriculum
               <ExternalLinkIcon data-icon="inline-end" />
             </NuxtLink>
             <FieldGroup>
               <Field>
-                <FieldLabel :for="`review-${course.id}`"
-                  >Review comment (optional)</FieldLabel
-                >
-                <Textarea
-                  :id="`review-${course.id}`"
-                  v-model="comments[course.id]"
-                  maxlength="2000"
-                  placeholder="Add context for the instructor…"
-                />
+                <FieldLabel :for="`review-${course.id}`">Review comment (optional)</FieldLabel>
+                <Textarea :id="`review-${course.id}`" v-model="comments[course.id]" maxlength="2000" placeholder="Add context for the instructor…" />
               </Field>
             </FieldGroup>
           </div>
         </CardContent>
         <CardFooter>
           <div class="flex flex-wrap gap-3">
-            <Button
-              :disabled="busyCourseId !== null"
-              @click="decide(course.id, 'approved')"
-            >
+            <Button :disabled="busyCourseId !== null" @click="decide(course.id, 'approved')">
               <CheckIcon data-icon="inline-start" />
               {{ busyCourseId === course.id ? 'Saving…' : 'Approve course' }}
             </Button>
-            <Button
-              variant="outline"
-              :disabled="busyCourseId !== null"
-              @click="decide(course.id, 'rejected')"
-            >
+            <Button variant="outline" :disabled="busyCourseId !== null" @click="decide(course.id, 'rejected')">
               <XIcon data-icon="inline-start" />
               Reject
             </Button>

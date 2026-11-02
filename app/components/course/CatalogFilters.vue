@@ -3,14 +3,7 @@ import { SearchIcon } from '@lucide/vue'
 import { Button } from '@/components/ui/button'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { COURSE_DIFFICULTIES } from '#shared/validation/courses'
 import type { CatalogFilterState } from '@/lib/catalog'
 
@@ -54,37 +47,22 @@ function toFilterValue(value: unknown) {
 </script>
 
 <template>
-  <form
-    class="grid gap-4 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end"
-    @submit.prevent="applySearch"
-  >
+  <form class="grid gap-4 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end" @submit.prevent="applySearch">
     <Field>
       <FieldLabel for="catalog-search">Search</FieldLabel>
-      <Input
-        id="catalog-search"
-        v-model="search"
-        type="search"
-        placeholder="Search courses"
-      />
+      <Input id="catalog-search" v-model="search" type="search" placeholder="Search courses" />
     </Field>
 
     <Field class="sm:w-44">
       <FieldLabel for="catalog-category">Category</FieldLabel>
-      <Select
-        :model-value="filters.category || undefined"
-        @update:model-value="applyCategory"
-      >
+      <Select :model-value="filters.category || undefined" @update:model-value="applyCategory">
         <SelectTrigger id="catalog-category" class="w-full">
           <SelectValue placeholder="All categories" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectItem value="all">All categories</SelectItem>
-            <SelectItem
-              v-for="category in categories"
-              :key="category"
-              :value="category"
-            >
+            <SelectItem v-for="category in categories" :key="category" :value="category">
               {{ category }}
             </SelectItem>
           </SelectGroup>
@@ -94,21 +72,14 @@ function toFilterValue(value: unknown) {
 
     <Field class="sm:w-44">
       <FieldLabel for="catalog-difficulty">Difficulty</FieldLabel>
-      <Select
-        :model-value="filters.difficulty || undefined"
-        @update:model-value="applyDifficulty"
-      >
+      <Select :model-value="filters.difficulty || undefined" @update:model-value="applyDifficulty">
         <SelectTrigger id="catalog-difficulty" class="w-full">
           <SelectValue placeholder="All levels" />
         </SelectTrigger>
         <SelectContent>
           <SelectGroup>
             <SelectItem value="all">All levels</SelectItem>
-            <SelectItem
-              v-for="difficulty in COURSE_DIFFICULTIES"
-              :key="difficulty"
-              :value="difficulty"
-            >
+            <SelectItem v-for="difficulty in COURSE_DIFFICULTIES" :key="difficulty" :value="difficulty">
               {{ difficulty }}
             </SelectItem>
           </SelectGroup>

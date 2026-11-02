@@ -1,17 +1,7 @@
 <script setup lang="ts">
-import {
-  COURSE_DIFFICULTIES,
-  type CourseDifficulty
-} from '#shared/validation/courses'
+import { COURSE_DIFFICULTIES, type CourseDifficulty } from '#shared/validation/courses'
 import { Field, FieldLabel } from '@/components/ui/field'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 const difficulty = defineModel<CourseDifficulty | null>({ default: null })
 </script>
@@ -25,13 +15,7 @@ const difficulty = defineModel<CourseDifficulty | null>({ default: null })
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem
-            v-for="option in COURSE_DIFFICULTIES"
-            :key="option"
-            :value="option"
-          >
-            {{ option[0]?.toUpperCase() }}{{ option.slice(1) }}
-          </SelectItem>
+          <SelectItem v-for="option in COURSE_DIFFICULTIES" :key="option" :value="option"> {{ option[0]?.toUpperCase() }}{{ option.slice(1) }} </SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>

@@ -4,13 +4,7 @@ import type { CourseSummary } from '#shared/types/courses'
 import { createCourseSchema } from '#shared/validation/courses'
 import type { CreateCourseValues } from '#shared/validation/courses'
 import { Button } from '@/components/ui/button'
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel
-} from '@/components/ui/field'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { revalidateLogic, useForm } from '@tanstack/vue-form'
@@ -24,8 +18,7 @@ const defaults: CreateCourseValues = {
   title: props.course?.title ?? '',
   description: props.course?.description ?? null,
   category: props.course?.category ?? null,
-  difficulty:
-    (props.course?.difficulty as CreateCourseValues['difficulty']) ?? null,
+  difficulty: (props.course?.difficulty as CreateCourseValues['difficulty']) ?? null,
   thumbnailUrl: props.course?.thumbnailUrl ?? null,
   price: props.course?.price ?? 0
 }
@@ -63,28 +56,14 @@ const thumbnailPlaceholder = 'https://…'
 </script>
 
 <template>
-  <form
-    class="flex flex-col gap-6"
-    novalidate
-    @submit.prevent="form.handleSubmit()"
-  >
+  <form class="flex flex-col gap-6" novalidate @submit.prevent="form.handleSubmit()">
     <FieldGroup>
       <form.Field name="title">
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name">Course title</FieldLabel>
-            <Input
-              :id="field.name"
-              :model-value="field.state.value"
-              :aria-invalid="!field.state.meta.isValid"
-              placeholder="Introduction to…"
-              @update:model-value="(value) => field.handleChange(String(value))"
-              @blur="field.handleBlur"
-            />
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Input :id="field.name" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" placeholder="Introduction to…" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -93,23 +72,9 @@ const thumbnailPlaceholder = 'https://…'
         <template #default="{ field }">
           <Field :data-invalid="!field.state.meta.isValid">
             <FieldLabel :for="field.name">Description</FieldLabel>
-            <Textarea
-              :id="field.name"
-              :model-value="field.state.value ?? ''"
-              :aria-invalid="!field.state.meta.isValid"
-              placeholder="What will students learn?"
-              @update:model-value="
-                (value) => field.handleChange(toNullableText(value))
-              "
-              @blur="field.handleBlur"
-            />
-            <FieldDescription
-              >Describe the course and its learning outcomes.</FieldDescription
-            >
-            <FieldError
-              v-if="!field.state.meta.isValid"
-              :errors="field.state.meta.errors"
-            />
+            <Textarea :id="field.name" :model-value="field.state.value ?? ''" :aria-invalid="!field.state.meta.isValid" placeholder="What will students learn?" @update:model-value="(value) => field.handleChange(toNullableText(value))" @blur="field.handleBlur" />
+            <FieldDescription>Describe the course and its learning outcomes.</FieldDescription>
+            <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
           </Field>
         </template>
       </form.Field>
@@ -119,30 +84,15 @@ const thumbnailPlaceholder = 'https://…'
           <template #default="{ field }">
             <Field :data-invalid="!field.state.meta.isValid">
               <FieldLabel :for="field.name">Category</FieldLabel>
-              <Input
-                :id="field.name"
-                :model-value="field.state.value ?? ''"
-                :aria-invalid="!field.state.meta.isValid"
-                placeholder="Design, science, business…"
-                @update:model-value="
-                  (value) => field.handleChange(toNullableText(value))
-                "
-                @blur="field.handleBlur"
-              />
-              <FieldError
-                v-if="!field.state.meta.isValid"
-                :errors="field.state.meta.errors"
-              />
+              <Input :id="field.name" :model-value="field.state.value ?? ''" :aria-invalid="!field.state.meta.isValid" placeholder="Design, science, business…" @update:model-value="(value) => field.handleChange(toNullableText(value))" @blur="field.handleBlur" />
+              <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
             </Field>
           </template>
         </form.Field>
 
         <form.Field name="difficulty">
           <template #default="{ field }">
-            <DifficultySelect
-              :model-value="field.state.value ?? null"
-              @update:model-value="field.handleChange"
-            />
+            <DifficultySelect :model-value="field.state.value ?? null" @update:model-value="field.handleChange" />
           </template>
         </form.Field>
       </div>
@@ -152,21 +102,8 @@ const thumbnailPlaceholder = 'https://…'
           <template #default="{ field }">
             <Field :data-invalid="!field.state.meta.isValid">
               <FieldLabel :for="field.name">Thumbnail URL</FieldLabel>
-              <Input
-                :id="field.name"
-                :model-value="field.state.value ?? ''"
-                :aria-invalid="!field.state.meta.isValid"
-                type="url"
-                :placeholder="thumbnailPlaceholder"
-                @update:model-value="
-                  (value) => field.handleChange(toNullableText(value))
-                "
-                @blur="field.handleBlur"
-              />
-              <FieldError
-                v-if="!field.state.meta.isValid"
-                :errors="field.state.meta.errors"
-              />
+              <Input :id="field.name" :model-value="field.state.value ?? ''" :aria-invalid="!field.state.meta.isValid" type="url" :placeholder="thumbnailPlaceholder" @update:model-value="(value) => field.handleChange(toNullableText(value))" @blur="field.handleBlur" />
+              <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
             </Field>
           </template>
         </form.Field>
@@ -175,22 +112,8 @@ const thumbnailPlaceholder = 'https://…'
           <template #default="{ field }">
             <Field :data-invalid="!field.state.meta.isValid">
               <FieldLabel :for="field.name">Price</FieldLabel>
-              <Input
-                :id="field.name"
-                :model-value="field.state.value ?? 0"
-                :aria-invalid="!field.state.meta.isValid"
-                type="number"
-                min="0"
-                step="0.01"
-                @update:model-value="
-                  (value) => field.handleChange(toPrice(value))
-                "
-                @blur="field.handleBlur"
-              />
-              <FieldError
-                v-if="!field.state.meta.isValid"
-                :errors="field.state.meta.errors"
-              />
+              <Input :id="field.name" :model-value="field.state.value ?? 0" :aria-invalid="!field.state.meta.isValid" type="number" min="0" step="0.01" @update:model-value="(value) => field.handleChange(toPrice(value))" @blur="field.handleBlur" />
+              <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
             </Field>
           </template>
         </form.Field>
@@ -198,9 +121,7 @@ const thumbnailPlaceholder = 'https://…'
 
       <form.Subscribe v-slot="{ isSubmitting }">
         <Button type="submit" :disabled="isSubmitting">
-          {{
-            isSubmitting ? 'Saving…' : course ? 'Save changes' : 'Create course'
-          }}
+          {{ isSubmitting ? 'Saving…' : course ? 'Save changes' : 'Create course' }}
         </Button>
       </form.Subscribe>
     </FieldGroup>

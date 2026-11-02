@@ -1,14 +1,8 @@
 import type { courses, lectures, modules } from '#server/db/schema'
-import type {
-  CourseSummary,
-  LectureSummary,
-  ModuleSummary
-} from '#shared/types/courses'
+import type { CourseSummary, LectureSummary, ModuleSummary } from '#shared/types/courses'
 
 /** Converts a course row to its public API shape. */
-export function toCourseSummary(
-  row: typeof courses.$inferSelect
-): CourseSummary {
+export function toCourseSummary(row: typeof courses.$inferSelect): CourseSummary {
   return {
     id: row.id,
     instructorId: row.instructorId,
@@ -25,10 +19,7 @@ export function toCourseSummary(
 }
 
 /** Converts a module row and its lectures to the API shape. */
-export function toModuleSummary(
-  row: typeof modules.$inferSelect,
-  lectures: LectureSummary[] = []
-): ModuleSummary {
+export function toModuleSummary(row: typeof modules.$inferSelect, lectures: LectureSummary[] = []): ModuleSummary {
   return {
     id: row.id,
     courseId: row.courseId,
@@ -39,9 +30,7 @@ export function toModuleSummary(
 }
 
 /** Converts a lecture row to the API shape. */
-export function toLectureSummary(
-  row: typeof lectures.$inferSelect
-): LectureSummary {
+export function toLectureSummary(row: typeof lectures.$inferSelect): LectureSummary {
   return {
     id: row.id,
     moduleId: row.moduleId,

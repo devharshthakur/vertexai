@@ -15,10 +15,7 @@ import { ServiceError } from '#server/utils/service-error'
 type EnrollmentRow = typeof enrollments.$inferSelect
 type CourseRow = typeof courses.$inferSelect
 
-function toEnrollmentSummary(
-  enrollment: EnrollmentRow,
-  course: CourseRow
-): EnrollmentSummary {
+function toEnrollmentSummary(enrollment: EnrollmentRow, course: CourseRow): EnrollmentSummary {
   return {
     id: enrollment.id,
     courseId: enrollment.courseId,
@@ -41,17 +38,10 @@ function toEnrollmentSummary(
  * Enrolling twice is not an error: the existing enrollment is returned, so a
  * double-clicked button does not fail.
  */
-export async function enrollStudent(
-  courseId: string,
-  userId: string
-): Promise<EnrollmentSummary> {
+export async function enrollStudent(courseId: string, userId: string): Promise<EnrollmentSummary> {
   const db = useDb()
 
-  const [course] = await db
-    .select()
-    .from(courses)
-    .where(eq(courses.id, courseId))
-    .limit(1)
+  const [course] = await db.select().from(courses).where(eq(courses.id, courseId)).limit(1)
 
   if (!course) {
     throw new ServiceError('not_found')
@@ -63,17 +53,12 @@ export async function enrollStudent(
     throw new ServiceError('forbidden')
   }
 
-  await db
-    .insert(enrollments)
-    .values({ userId, courseId })
-    .onConflictDoNothing()
+  await db.insert(enrollments).values({ userId, courseId }).onConflictDoNothing()
 
   const [enrollment] = await db
     .select()
     .from(enrollments)
-    .where(
-      and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId))
-    )
+    .where(and(eq(enrollments.userId, userId), eq(enrollments.courseId, courseId)))
     .limit(1)
 
   if (!enrollment) {
@@ -84,17 +69,10 @@ export async function enrollStudent(
 }
 
 /** The courses the student is enrolled in, newest enrollment first. */
-export async function listMyEnrollments(
-  userId: string
-): Promise<EnrollmentSummary[]> {
+export async function listMyEnrollments(userId: string): Promise<EnrollmentSummary[]> {
   const db = useDb()
 
-  const rows = await db
-    .select({ enrollment: enrollments, course: courses })
-    .from(enrollments)
-    .innerJoin(courses, eq(enrollments.courseId, courses.id))
-    .where(eq(enrollments.userId, userId))
-    .orderBy(desc(enrollments.enrolledAt))
+  const rows = await db.select({ enrollment: enrollments, course: courses }).from(enrollments).innerJoin(courses, eq(enrollments.courseId, courses.id)).where(eq(enrollments.userId, userId)).orderBy(desc(enrollments.enrolledAt))
 
   return rows.map((row) => toEnrollmentSummary(row.enrollment, row.course))
 }

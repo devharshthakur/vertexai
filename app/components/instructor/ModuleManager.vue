@@ -9,23 +9,12 @@
   import { Input } from '@/components/ui/input'
   import { Separator } from '@/components/ui/separator'
 
-  const props = defineProps<{
-    courseId: string
-    modules: ModuleSummary[]
-  }>()
-  const emit = defineEmits<{ 'update:modules': [modules: ModuleSummary[]] }>()
+  const props = defineProps<{ courseId: string }>()
+  const modules = defineModel<ModuleSummary[]>('modules', { required: true })
 
-  const modules = ref([...props.modules])
-  const title = ref('')
-  const saving = ref(false)
-  const errorMessage = ref('')
-
-  watch(
-    () => props.modules,
-    (nextModules) => {
-      modules.value = [...nextModules]
-    }
-  )
+  const title = shallowRef('')
+  const saving = shallowRef(false)
+  const errorMessage = shallowRef('')
 
   async function addModule() {
     errorMessage.value = ''
@@ -42,7 +31,6 @@
         body: result.data
       })
       modules.value = [...modules.value, module]
-      emit('update:modules', modules.value)
       title.value = ''
     } catch {
       errorMessage.value = 'We could not add this module. Please try again.'
@@ -68,7 +56,6 @@
         body: { moduleIds: reordered.map((module) => module.id) }
       })
       modules.value = saved
-      emit('update:modules', saved)
     } catch {
       modules.value = previous
       errorMessage.value = 'The module order was not saved. Please try again.'

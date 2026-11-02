@@ -17,7 +17,7 @@
   }>()
 
   /** Keep draft text locally so requests fire on submit, not on every keystroke. */
-  const search = ref(filters.q)
+  const search = shallowRef(filters.q)
 
   watch(
     () => filters.q,

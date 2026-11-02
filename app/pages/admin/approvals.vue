@@ -17,8 +17,8 @@
     query: { limit: 50 }
   })
   const comments = ref<Record<string, string>>({})
-  const busyCourseId = ref<string | null>(null)
-  const pageError = ref('')
+  const busyCourseId = shallowRef<string | null>(null)
+  const pageError = shallowRef('')
 
   async function decide(courseId: string, decision: 'approved' | 'rejected') {
     pageError.value = ''

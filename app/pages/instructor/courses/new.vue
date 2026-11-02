@@ -7,7 +7,7 @@
   definePageMeta({ layout: 'workspace', middleware: 'instructor' })
   useSeoMeta({ title: 'Create a course · VertexAI' })
 
-  const errorMessage = ref('')
+  const errorMessage = shallowRef('')
 
   async function createCourse(values: CreateCourseValues) {
     errorMessage.value = ''

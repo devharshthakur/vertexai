@@ -10,6 +10,8 @@ const config = {
   trailingComma: 'none',
   printWidth: 300,
   singleAttributePerLine: false,
+  vueIndentScriptAndStyle: true,
+  experimentalTernaries: true,
   plugins: ['prettier-plugin-tailwindcss'],
   tailwindStylesheet: './app/assets/css/main.css'
 }

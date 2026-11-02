@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from '@lucide/vue'
   import type { ModuleSummary } from '#shared/types/courses'
+  import LectureManager from '@/components/instructor/LectureManager.vue'
   import { addModuleSchema } from '#shared/validation/courses'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
@@ -55,7 +56,13 @@
         method: 'PUT',
         body: { moduleIds: reordered.map((module) => module.id) }
       })
-      modules.value = saved
+      // The reorder endpoint returns module summaries without their lecture
+      // lists, so keep the lectures already loaded instead of clearing them.
+      const lecturesByModule = new Map(modules.value.map((module) => [module.id, module.lectures]))
+      modules.value = saved.map((module) => ({
+        ...module,
+        lectures: lecturesByModule.get(module.id) ?? module.lectures
+      }))
     } catch {
       modules.value = previous
       errorMessage.value = 'The module order was not saved. Please try again.'
@@ -94,19 +101,23 @@
           <li v-for="(module, index) in modules" :key="module.id">
             <Card>
               <CardContent>
-                <div class="flex items-center justify-between gap-4">
-                  <div class="flex min-w-0 items-center gap-3">
-                    <span class="text-sm text-muted-foreground">{{ index + 1 }}.</span>
-                    <span class="truncate font-medium">{{ module.title }}</span>
+                <div class="flex flex-col gap-5">
+                  <div class="flex items-center justify-between gap-4">
+                    <div class="flex min-w-0 items-center gap-3">
+                      <span class="text-sm text-muted-foreground">{{ index + 1 }}.</span>
+                      <span class="truncate font-medium">{{ module.title }}</span>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-1">
+                      <Button variant="ghost" size="icon" :aria-label="`Move ${module.title} up`" :disabled="index === 0 || saving" @click="moveModule(index, -1)">
+                        <ArrowUpIcon />
+                      </Button>
+                      <Button variant="ghost" size="icon" :aria-label="`Move ${module.title} down`" :disabled="index === modules.length - 1 || saving" @click="moveModule(index, 1)">
+                        <ArrowDownIcon />
+                      </Button>
+                    </div>
                   </div>
-                  <div class="flex shrink-0 items-center gap-1">
-                    <Button variant="ghost" size="icon" :aria-label="`Move ${module.title} up`" :disabled="index === 0 || saving" @click="moveModule(index, -1)">
-                      <ArrowUpIcon />
-                    </Button>
-                    <Button variant="ghost" size="icon" :aria-label="`Move ${module.title} down`" :disabled="index === modules.length - 1 || saving" @click="moveModule(index, 1)">
-                      <ArrowDownIcon />
-                    </Button>
-                  </div>
+                  <Separator />
+                  <LectureManager v-model:lectures="module.lectures" :course-id="props.courseId" :module-id="module.id" />
                 </div>
               </CardContent>
             </Card>

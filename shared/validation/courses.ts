@@ -43,9 +43,8 @@ export const addModuleSchema = z.object({
 })
 
 const youtubeVideoUrlSchema = z
-  .string()
-  .trim()
   .url('Enter a valid YouTube URL.')
+  .trim()
   .refine((value) => getYouTubeVideoId(value) !== null, 'Use a valid HTTPS YouTube video link.')
 
 export const createLectureSchema = z.object({
@@ -83,7 +82,7 @@ export const reorderModulesSchema = z.object({
  * session. The schema exists so the route validates its body like every other
  * mutation, and rejects fields it does not know.
  */
-export const enrollCourseSchema = z.object({}).strict().optional()
+export const enrollCourseSchema = z.strictObject({}).optional()
 
 /**
  * Catalog query parameters. Values arrive as strings, so the numbers are

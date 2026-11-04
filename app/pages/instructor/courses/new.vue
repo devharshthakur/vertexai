@@ -1,7 +1,6 @@
 <script setup lang="ts">
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import type { CreateCourseValues } from '#shared/validation/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'instructor' })
@@ -25,11 +24,11 @@
 </script>
 
 <template>
-  <div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
-    <header class="flex flex-col gap-2">
-      <p class="text-sm font-medium text-muted-foreground">Instructor workspace</p>
-      <h1 class="text-3xl font-semibold tracking-tight">Create a course</h1>
-      <p class="text-muted-foreground">New courses start as pending and remain private until an admin approves them.</p>
+  <div class="mx-auto flex w-full max-w-4xl flex-col gap-10 py-4">
+    <header class="flex flex-col gap-3 border-b pb-8">
+      <p class="text-sm font-medium text-muted-foreground">INSTRUCTOR WORKSPACE</p>
+      <h1 class="text-4xl font-semibold tracking-tight">Create a course</h1>
+      <p class="max-w-2xl text-muted-foreground">Share your expertise with students. Add the essential details below to get started.</p>
     </header>
 
     <Alert v-if="errorMessage" variant="destructive">
@@ -37,14 +36,12 @@
       <AlertDescription>{{ errorMessage }}</AlertDescription>
     </Alert>
 
-    <Card>
-      <CardHeader>
-        <CardTitle>Course details</CardTitle>
-        <CardDescription>Provide the information students will see in the catalog.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <CourseMetadataForm :on-save="createCourse" />
-      </CardContent>
-    </Card>
+    <section class="flex flex-col gap-2">
+      <h2 class="text-xl font-semibold tracking-tight">Course details</h2>
+      <p class="text-sm text-muted-foreground">This information will appear on your course listing.</p>
+      <CourseMetadataForm class="mt-4" :on-save="createCourse" />
+    </section>
+
+    <p class="border-t pt-5 text-sm text-muted-foreground">Your course will remain private while it is pending admin approval.</p>
   </div>
 </template>

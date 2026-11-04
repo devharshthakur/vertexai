@@ -25,6 +25,7 @@
     "typescript"
   ],
   "scripts": {
+    "setup": "tsx seed/setup.ts",
     "build": "nuxt build",
     "dev": "nuxt dev --port 5173",
     "typecheck": "nuxt typecheck",

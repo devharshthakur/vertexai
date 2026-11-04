@@ -2,6 +2,7 @@ import 'dotenv/config'
 import { and, eq, inArray } from 'drizzle-orm'
 import { DEMO_COURSES, LEGACY_DEMO_COURSE_TITLES } from './courses'
 import { loadSeedTranscript } from './load-transcript'
+import { validateDemoSeedPassword } from './password'
 import { useDb } from '../server/db'
 import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from '../server/db/schema'
 import { auth } from '../server/utils/auth'
@@ -182,9 +183,7 @@ async function seed() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('The demo seed is disabled in production.')
   }
-  if (DEMO_PASSWORD.length < 12) {
-    throw new Error('DEMO_SEED_PASSWORD must contain at least 12 characters.')
-  }
+  validateDemoSeedPassword(DEMO_PASSWORD)
 
   const userIds = new Map<string, string>()
   for (const demoUser of DEMO_USERS) {

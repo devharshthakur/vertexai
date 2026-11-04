@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import { spawnSync } from 'node:child_process'
 import { createInterface } from 'node:readline/promises'
+import { validateDemoSeedPassword } from './password'
 
 const COMPOSE_PROJECT = 'vertexai'
 const POSTGRES_USER = process.env.POSTGRES_USER ?? 'vertexai'
@@ -53,6 +54,7 @@ async function setupDemo(): Promise<void> {
     throw new Error('demo:setup is disabled in production.')
   }
 
+  validateDemoSeedPassword()
   const databaseUrl = getLocalDatabaseUrl()
   if (!(await confirmReset())) {
     console.info('Demo setup cancelled; the database was not changed.')

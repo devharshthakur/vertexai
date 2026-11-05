@@ -1,27 +1,19 @@
-# Agent instructions
+# Repository guidance
 
-Load `defaults` at the start of every repository task.
+Load the `defaults` skill at the start of every repository task.
 
-## Project and architecture
+## Architecture
 
-- Read `docs/PRD/PRD.md` for product scope, roles, data model, and API requirements. Its React/Express stack and deployment sections are suggestions, not the current architecture; this repository intentionally uses Nuxt 4/Vue 3, Nitro, Better Auth, Drizzle, and PostgreSQL. Do not introduce PRD-suggested infrastructure as if it already exists.
-- `app/` contains the SSR Vue client, `server/api/` contains thin Nitro routes, `server/services/` owns business logic, and `shared/` contains Zod schemas and types used on both sides. Validate request input with `server/utils/validate.ts`; keep HTTP error mapping in routes rather than services.
-- App component and composable auto-import scanning is disabled in `nuxt.config.ts`. Explicitly import them through `@/`; use `#server/` and `#shared/` for those respective trees.
-- Client route middleware does not protect APIs. Each protected server route must call `requireSession`, `requireRole`, or `optionalSession` as appropriate; a global Nitro auth middleware would also intercept Better Auth and public routes.
+- The PRD describes product requirements, not the implemented stack: read `docs/PRD/PRD.md` for scope, but use the repository's Nuxt/Vue/Nitro stack rather than the PRD's suggested technologies.
+- `server/api/` contains Nitro routes, `server/services/` business logic, and `shared/` schemas and types used on both sides. Validate route inputs with `server/utils/validate.ts` and map service errors at the route boundary.
+- Nuxt component and composable auto-import scanning is disabled. Explicitly import app components and composables; server and shared code use `#server/` and `#shared/` aliases.
+- Client route middleware does not protect APIs. Protected routes must explicitly use `requireSession` or `requireRole`; use `optionalSession` for public routes that vary by session. Global auth middleware would also intercept public and Better Auth routes.
 
-## Local workflow and verification
+## Workflow
 
-- First run: `pnpm install`, copy `.env.example` to `.env` and fill it in, then `pnpm db:up`, `pnpm db:migrate`, and `pnpm dev`. The app uses port 5173 and local PostgreSQL defaults to host port 5433, not 5432.
-- After changing code, run `pnpm validate` (Prettier check, ESLint, then Nuxt typecheck) and fix every failure. Do not use a production build as routine validation unless explicitly requested.
-- For focused checks, use `pnpm exec eslint <files>` or `pnpm exec prettier --check <files>`. No automated test runner or test script is currently configured.
-
-## Database and generated auth schema
-
-- Export every Drizzle table module from `server/db/schema/index.ts`. After schema changes, run `pnpm db:generate`, inspect the migration under `server/db/migrations/`, then apply it with `pnpm db:migrate`; Drizzle commands require `DATABASE_URL`.
-- `server/db/schema/auth.ts` is generated from `server/utils/auth.ts`. After changing auth config or plugins, regenerate it with `pnpm dlx auth@1.7.13 generate --config server/utils/auth.ts --output server/db/schema/auth.ts -y`, then generate and apply a Drizzle migration.
-
-## UI and editing constraints
-
-- Build UI with shadcn-vue, adding missing primitives with `pnpm dlx shadcn-vue@latest add <component>`. Generated primitives live in `app/components/ui/`; Tailwind v4 theme customizations belong in `app/assets/css/main.css`.
-- Vue files outside `app/components/ui/` have additional shadcn design-system lint rules. When one blocks a legitimate design decision, add `eslint-disable-next-line shadcn/<rule> -- <reason>` at that call site; ask before a file-level or config-level disable.
-- Never edit any documentation unless explicitly requested.
+- Follow `SETUP.md` for environment and local setup. The dev server uses port 5173; Compose PostgreSQL defaults to host port 5433.
+- `pnpm validate` runs Prettier check, ESLint, then Nuxt typecheck. Focused checks: `pnpm exec eslint <files>` and `pnpm exec prettier --check <files>`. There is currently no test script or configured test runner.
+- `pnpm setup` and `pnpm demo:setup` both run `seed/setup.ts`: they require interactive confirmation and **delete the Compose project's database volumes** before migrating and seeding. Re-running `pnpm db:seed` resets demo account passwords and signs those accounts out.
+- Drizzle reads `DATABASE_URL` and discovers tables through `server/db/schema/index.ts`. Export new table modules there; generate migrations with `pnpm db:generate`, inspect `server/db/migrations/`, then apply with `pnpm db:migrate` when authorized.
+- `server/db/schema/auth.ts` is generated from Better Auth configuration; see `server/db/schema/index.ts` for the regeneration workflow, check the CLI version against the installed Better Auth version, then generate a Drizzle migration.
+- Vue files outside `app/components/ui/` have additional shadcn design-system lint rules. The `defaults` skill contains the UI component policy.

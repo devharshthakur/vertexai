@@ -39,7 +39,7 @@
     </CardContent>
 
     <CardFooter>
-      <NuxtLink :to="`/courses/${enrollment.course.id}`" class="text-sm font-medium underline-offset-4 hover:underline"> View course </NuxtLink>
+      <NuxtLink :to="`/learn/${enrollment.course.id}`" class="text-sm font-medium underline-offset-4 hover:underline"> Continue learning </NuxtLink>
     </CardFooter>
   </Card>
 </template>

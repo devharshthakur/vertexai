@@ -17,7 +17,7 @@ Local development setup for VertexAI.
 ## Requirements
 
 - [Node.js](https://nodejs.org) 20 or newer
-- [pnpm](https://pnpm.io) 10 or newer
+- [pnpm](https://pnpm.io) 11.15 or newer
 - [Docker](https://docs.docker.com/get-docker/) with Docker Compose
 
 ## Install
@@ -144,6 +144,7 @@ The app is served on [http://localhost:5173](http://localhost:5173).
 | `pnpm lint`        | Lint with ESLint                                |
 | `pnpm format`      | Format with Prettier                            |
 | `pnpm typecheck`   | Typecheck with `vue-tsc`                        |
+| `pnpm deps:update` | Bump deps, validate, commit `chore: bump deps`  |
 | `pnpm db:up`       | Start the database container                    |
 | `pnpm db:down`     | Stop and remove the database container          |
 | `pnpm db:start`    | Start an existing (stopped) database container  |

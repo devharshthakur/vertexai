@@ -55,7 +55,9 @@
 
 <template>
   <div class="flex flex-col gap-6">
-    <Button variant="outline" as-child><NuxtLink to="/dashboard">Back to dashboard</NuxtLink></Button>
+    <Button variant="outline" as-child>
+      <NuxtLink to="/dashboard">Back to dashboard</NuxtLink>
+    </Button>
     <p v-if="pending">Loading your course…</p>
     <Alert v-else-if="error || !data || !current">
       <AlertTitle>Unable to open this lecture</AlertTitle>
@@ -69,13 +71,16 @@
       <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div class="flex flex-col gap-4">
           <LearningPlayer :key="current.id" :course-id="courseId" :lecture-id="current.id" :video-url="current.videoUrl" :title="current.title" :position-seconds="current.positionSeconds" />
-          <Alert v-if="saveError"><AlertTitle>Progress not saved</AlertTitle><AlertDescription>Please try again.</AlertDescription></Alert>
+          <Alert v-if="saveError">
+            <AlertTitle>Progress not saved</AlertTitle>
+            <AlertDescription>Please try again.</AlertDescription>
+          </Alert>
           <Button :disabled="current.completed || saving" @click="markComplete">{{ current.completed ? 'Completed' : 'Mark complete' }}</Button>
         </div>
         <Card>
-          <CardHeader
-            ><CardTitle>Course progress · {{ Math.round(data.progressPercent) }}%</CardTitle></CardHeader
-          >
+          <CardHeader>
+            <CardTitle>Course progress · {{ Math.round(data.progressPercent) }}%</CardTitle>
+          </CardHeader>
           <CardContent>
             <div class="flex flex-col gap-5">
               <Progress :model-value="data.progressPercent" aria-label="Course progress" />

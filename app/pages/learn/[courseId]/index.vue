@@ -20,6 +20,8 @@
       <AlertTitle>No lectures yet</AlertTitle>
       <AlertDescription>This course does not have any lectures yet.</AlertDescription>
     </Alert>
-    <Button as-child variant="outline"><NuxtLink to="/dashboard">Back to dashboard</NuxtLink></Button>
+    <Button as-child variant="outline">
+      <NuxtLink to="/dashboard">Back to dashboard</NuxtLink>
+    </Button>
   </div>
 </template>

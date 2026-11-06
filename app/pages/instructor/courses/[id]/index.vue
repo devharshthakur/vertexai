@@ -39,7 +39,10 @@
     <Skeleton class="h-10 w-1/2" />
     <Card>
       <CardContent>
-        <div class="flex flex-col gap-4"><Skeleton class="h-8 w-full" /><Skeleton class="h-28 w-full" /></div>
+        <div class="flex flex-col gap-4">
+          <Skeleton class="h-8 w-full" />
+          <Skeleton class="h-28 w-full" />
+        </div>
       </CardContent>
     </Card>
   </div>

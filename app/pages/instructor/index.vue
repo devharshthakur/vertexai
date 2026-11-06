@@ -49,8 +49,12 @@
             <Skeleton class="h-6 w-3/4" />
           </div>
         </CardHeader>
-        <CardContent><Skeleton class="h-4 w-full" /></CardContent>
-        <CardFooter><Skeleton class="h-4 w-24" /></CardFooter>
+        <CardContent>
+          <Skeleton class="h-4 w-full" />
+        </CardContent>
+        <CardFooter>
+          <Skeleton class="h-4 w-24" />
+        </CardFooter>
       </Card>
     </div>
 
@@ -60,7 +64,9 @@
         <EmptyDescription> Courses you create will appear here. New courses are submitted for admin review. </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button as-child><NuxtLink to="/instructor/courses/new">Create a course</NuxtLink></Button>
+        <Button as-child>
+          <NuxtLink to="/instructor/courses/new">Create a course</NuxtLink>
+        </Button>
       </EmptyContent>
     </Empty>
 

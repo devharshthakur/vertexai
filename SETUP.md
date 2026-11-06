@@ -87,13 +87,15 @@ Create the demo accounts, plus a seeded approved course with a module and lectur
 pnpm db:seed
 ```
 
-| Role       | Email                      |
-| ---------- | -------------------------- |
-| Admin      | `admin@vertexai.test`      |
-| Instructor | `instructor@vertexai.test` |
-| Student    | `student@vertexai.test`    |
+| Role       | Email                    |
+| ---------- | ------------------------ |
+| Admin      | `admin@example.com`      |
+| Instructor | `instructor@example.com` |
+| Student    | `student@example.com`    |
 
-Every demo account uses the password `VertexAI-Demo-Only-123!`, unless `.env` sets `DEMO_SEED_PASSWORD` (at least 12 characters). Re-running the seed re-applies that password and signs the accounts out. The script only makes sense locally, so it refuses to run when `NODE_ENV=production`.
+Every demo account uses the predefined password `password@1234`. Re-running the seed re-applies that password and signs the accounts out. The script only makes sense locally, so it refuses to run when `NODE_ENV=production`.
+
+Running `pnpm setup` or `pnpm demo:setup` immediately deletes all data in the `vertexai` Docker Compose project, including its volumes, then recreates and seeds the database. Running either command is treated as approval for this destructive reset.
 
 ## Authentication
 

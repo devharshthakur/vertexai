@@ -1,7 +1,7 @@
-const DEFAULT_DEMO_PASSWORD = 'password@123'
+export const DEFAULT_DEMO_PASSWORD = 'password@1234'
 
-export function validateDemoSeedPassword(password = process.env.DEMO_SEED_PASSWORD ?? DEFAULT_DEMO_PASSWORD): void {
+export function validateDemoSeedPassword(password = DEFAULT_DEMO_PASSWORD): void {
   if (password.length < 12) {
-    throw new Error('DEMO_SEED_PASSWORD must contain at least 12 characters.')
+    throw new Error('The predefined demo password must contain at least 12 characters.')
   }
 }

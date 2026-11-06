@@ -2,22 +2,22 @@ import 'dotenv/config'
 import { and, eq, inArray } from 'drizzle-orm'
 import { DEMO_COURSES, LEGACY_DEMO_COURSE_TITLES } from './courses'
 import { loadSeedTranscript } from './load-transcript'
-import { validateDemoSeedPassword } from './password'
+import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 import { useDb } from '../server/db'
 import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from '../server/db/schema'
 import { auth } from '../server/utils/auth'
 
-const DEMO_PASSWORD = process.env.DEMO_SEED_PASSWORD ?? 'password@123'
+const DEMO_PASSWORD = DEFAULT_DEMO_PASSWORD
 const DEMO_USERS = [
-  { name: 'VertexAI Demo Admin', email: 'admin@vertexai.test', role: 'admin' },
+  { name: 'VertexAI Demo Admin', email: 'admin@example.com', role: 'admin' },
   {
     name: 'VertexAI Demo Instructor',
-    email: 'instructor@vertexai.test',
+    email: 'instructor@example.com',
     role: 'instructor'
   },
   {
     name: 'VertexAI Demo Student',
-    email: 'student@vertexai.test',
+    email: 'student@example.com',
     role: 'student'
   }
 ] as const
@@ -194,7 +194,7 @@ async function seed() {
 
   console.info(`Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`)
   console.info(`Seeded ${DEMO_COURSES.length} demo courses (all approved and enrolled for the demo student).`)
-  console.info('Set DEMO_SEED_PASSWORD to choose the shared password.')
+  console.info('All demo accounts use the predefined password.')
 }
 
 void (async () => {

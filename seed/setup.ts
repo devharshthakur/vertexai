@@ -1,7 +1,6 @@
 import 'dotenv/config'
 import { spawnSync } from 'node:child_process'
-import { createInterface } from 'node:readline/promises'
-import { validateDemoSeedPassword } from './password'
+import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 
 const COMPOSE_PROJECT = 'vertexai'
 const POSTGRES_USER = process.env.POSTGRES_USER ?? 'vertexai'
@@ -24,22 +23,6 @@ function getLocalDatabaseUrl(): string {
   return databaseUrl.toString()
 }
 
-async function confirmReset(): Promise<boolean> {
-  if (!process.stdin.isTTY) {
-    throw new Error('demo:setup requires an interactive terminal to confirm the destructive database reset.')
-  }
-
-  const readline = createInterface({ input: process.stdin, output: process.stdout })
-
-  try {
-    const answer = await readline.question(`This permanently deletes all data in Docker Compose project "${COMPOSE_PROJECT}" and its volumes. Type RESET to continue: `)
-
-    return answer === 'RESET'
-  } finally {
-    readline.close()
-  }
-}
-
 function run(command: string, args: string[], env: NodeJS.ProcessEnv = process.env): void {
   const result = spawnSync(command, args, { stdio: 'inherit', env })
 
@@ -54,12 +37,8 @@ async function setupDemo(): Promise<void> {
     throw new Error('demo:setup is disabled in production.')
   }
 
-  validateDemoSeedPassword()
+  validateDemoSeedPassword(DEFAULT_DEMO_PASSWORD)
   const databaseUrl = getLocalDatabaseUrl()
-  if (!(await confirmReset())) {
-    console.info('Demo setup cancelled; the database was not changed.')
-    return
-  }
 
   const compose = ['compose', '-p', COMPOSE_PROJECT]
   run('docker', [...compose, 'down', '--volumes'])

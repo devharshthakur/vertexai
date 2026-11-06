@@ -21,6 +21,8 @@ export const COURSE_STATUSES = ['pending', 'approved', 'rejected', 'archived'] a
 export const courseDifficultySchema = z.enum(COURSE_DIFFICULTIES)
 export const courseStatusSchema = z.enum(COURSE_STATUSES)
 export const courseIdSchema = z.uuid('Invalid course id.')
+export const moduleIdSchema = z.uuid('Invalid module ID.')
+export const lectureIdSchema = z.uuid('Invalid lecture ID.')
 
 export const createCourseSchema = z.object({
   title: z.string().trim().min(3, 'Use at least 3 characters.').max(200, 'Keep the title under 200 characters.'),
@@ -58,7 +60,7 @@ export const updateLectureSchema = createLectureSchema.partial().refine((values)
 
 export const reorderLecturesSchema = z.object({
   lectureIds: z
-    .array(courseIdSchema)
+    .array(lectureIdSchema)
     .min(1)
     .max(100)
     .refine((lectureIds) => new Set(lectureIds).size === lectureIds.length, 'Each lecture may appear only once.')
@@ -71,7 +73,7 @@ export const reviewCourseSchema = z.object({
 
 export const reorderModulesSchema = z.object({
   moduleIds: z
-    .array(courseIdSchema)
+    .array(moduleIdSchema)
     .min(1)
     .max(100)
     .refine((moduleIds) => new Set(moduleIds).size === moduleIds.length, 'Each module may appear only once.')

@@ -1,11 +1,13 @@
-import { asc, desc, eq } from 'drizzle-orm'
-import { useDb } from '#server/db'
+import { and, asc, eq, gte, sql } from 'drizzle-orm'
+import { useDb, type Db } from '#server/db'
 import { courseApprovals, courses, lectures, modules } from '#server/db/schema'
 import type { CourseSummary, LectureSummary, ModuleSummary } from '#shared/types/courses'
 import type { AddModuleValues, CreateCourseValues, CreateLectureValues, ReorderLecturesValues, ReorderModulesValues, ReviewCourseValues, UpdateCourseValues, UpdateLectureValues } from '#shared/validation/courses'
 import { ServiceError } from '#server/utils/service-error'
 import { assertCanManageCourse, type CourseActor } from './access'
 import { toCourseSummary, toLectureSummary, toModuleSummary } from './presenters'
+
+type DbTransaction = Parameters<Parameters<Db['transaction']>[0]>[0]
 
 /** Creates a course in the pending state for its instructor. */
 export async function createCourse(input: CreateCourseValues, ownerId: string): Promise<CourseSummary> {
@@ -32,16 +34,12 @@ export async function updateCourse(courseId: string, input: UpdateCourseValues, 
   const [row] = await useDb()
     .update(courses)
     .set({
-      ...(input.title !== undefined && { title: input.title }),
-      ...(input.description !== undefined && {
-        description: input.description
-      }),
-      ...(input.category !== undefined && { category: input.category }),
-      ...(input.difficulty !== undefined && { difficulty: input.difficulty }),
-      ...(input.thumbnailUrl !== undefined && {
-        thumbnailUrl: input.thumbnailUrl
-      }),
-      ...(input.price !== undefined && { price: String(input.price) }),
+      title: input.title,
+      description: input.description,
+      category: input.category,
+      difficulty: input.difficulty,
+      thumbnailUrl: input.thumbnailUrl,
+      price: input.price === undefined ? undefined : String(input.price),
       updatedAt: new Date()
     })
     .where(eq(courses.id, existing.id))
@@ -50,32 +48,70 @@ export async function updateCourse(courseId: string, input: UpdateCourseValues, 
   return toCourseSummary(row!)
 }
 
-/** Adds a module at the requested or next available position. */
+/**
+ * Adds a module at the requested position, or appends it.
+ *
+ * The course row is locked for the whole transaction so concurrent module
+ * creations and reorders serialize before either reads the current positions.
+ */
 export async function addModule(courseId: string, input: AddModuleValues, actor: CourseActor): Promise<ModuleSummary> {
-  const existing = await requireOwnedCourse(courseId, actor)
-  const orderIndex = input.orderIndex ?? (await nextModuleOrderIndex(existing.id))
-  const [row] = await useDb().insert(modules).values({ courseId: existing.id, title: input.title, orderIndex }).returning()
+  return useDb().transaction(async (tx) => {
+    const existing = await lockOwnedCourse(tx, courseId, actor)
+    const currentModules = await tx.select({ id: modules.id, orderIndex: modules.orderIndex }).from(modules).where(eq(modules.courseId, existing.id)).orderBy(asc(modules.orderIndex), asc(modules.id))
 
-  return toModuleSummary(row!)
+    const orderIndex = input.orderIndex ?? currentModules.length
+
+    if (orderIndex > currentModules.length) {
+      throw new ServiceError('conflict', 'The module position is out of range.')
+    }
+
+    // Repair duplicate or skipped positions deterministically while the course row is locked.
+    if (!currentModules.every((module, index) => module.orderIndex === index)) {
+      for (const [index, module] of currentModules.entries()) {
+        await tx.update(modules).set({ orderIndex: index }).where(eq(modules.id, module.id))
+      }
+    }
+
+    if (orderIndex < currentModules.length) {
+      await tx
+        .update(modules)
+        .set({ orderIndex: sql`${modules.orderIndex} + 1` })
+        .where(and(eq(modules.courseId, existing.id), gte(modules.orderIndex, orderIndex)))
+    }
+
+    const [row] = await tx.insert(modules).values({ courseId: existing.id, title: input.title, orderIndex }).returning()
+
+    return toModuleSummary(row!)
+  })
 }
 
 /** Adds a YouTube lecture to an owned module at the next position. */
 export async function addLecture(courseId: string, moduleId: string, input: CreateLectureValues, actor: CourseActor): Promise<LectureSummary> {
-  const existingModule = await requireOwnedModule(courseId, moduleId, actor)
-  const orderIndex = await nextLectureOrderIndex(existingModule.id)
-  const [row] = await useDb()
-    .insert(lectures)
-    .values({
-      moduleId: existingModule.id,
-      title: input.title,
-      videoUrl: input.videoUrl,
-      transcript: input.transcript ?? null,
-      durationSeconds: input.durationSeconds ?? null,
-      orderIndex
-    })
-    .returning()
+  return useDb().transaction(async (tx) => {
+    const existingModule = await lockOwnedModule(tx, courseId, moduleId, actor)
+    const currentLectures = await tx.select({ id: lectures.id, orderIndex: lectures.orderIndex }).from(lectures).where(eq(lectures.moduleId, existingModule.id)).orderBy(asc(lectures.orderIndex), asc(lectures.id))
 
-  return toLectureSummary(row!)
+    // Repair duplicate or skipped positions deterministically while the module row is locked.
+    if (!currentLectures.every((lecture, index) => lecture.orderIndex === index)) {
+      for (const [index, lecture] of currentLectures.entries()) {
+        await tx.update(lectures).set({ orderIndex: index }).where(eq(lectures.id, lecture.id))
+      }
+    }
+
+    const [row] = await tx
+      .insert(lectures)
+      .values({
+        moduleId: existingModule.id,
+        title: input.title,
+        videoUrl: input.videoUrl,
+        transcript: input.transcript ?? null,
+        durationSeconds: input.durationSeconds ?? null,
+        orderIndex: currentLectures.length
+      })
+      .returning()
+
+    return toLectureSummary(row!)
+  })
 }
 
 /** Updates lecture details after verifying the course, module, and lecture ownership chain. */
@@ -101,11 +137,9 @@ export async function updateLecture(courseId: string, moduleId: string, lectureI
 
 /** Reorders all lectures in a module after verifying the submitted set. */
 export async function reorderLectures(courseId: string, moduleId: string, input: ReorderLecturesValues, actor: CourseActor): Promise<LectureSummary[]> {
-  const existingModule = await requireOwnedModule(courseId, moduleId, actor)
-  const db = useDb()
-
-  return db.transaction(async (tx) => {
-    const currentLectures = await tx.select({ id: lectures.id }).from(lectures).where(eq(lectures.moduleId, existingModule.id)).orderBy(asc(lectures.orderIndex))
+  return useDb().transaction(async (tx) => {
+    const existingModule = await lockOwnedModule(tx, courseId, moduleId, actor)
+    const currentLectures = await tx.select({ id: lectures.id }).from(lectures).where(eq(lectures.moduleId, existingModule.id)).orderBy(asc(lectures.orderIndex), asc(lectures.id))
     const currentIds = new Set(currentLectures.map((lecture) => lecture.id))
 
     if (currentIds.size !== input.lectureIds.length || input.lectureIds.some((lectureId) => !currentIds.has(lectureId))) {
@@ -120,18 +154,16 @@ export async function reorderLectures(courseId: string, moduleId: string, input:
       .select()
       .from(lectures)
       .where(eq(lectures.moduleId, existingModule.id))
-      .orderBy(asc(lectures.orderIndex))
+      .orderBy(asc(lectures.orderIndex), asc(lectures.id))
       .then((rows) => rows.map(toLectureSummary))
   })
 }
 
 /** Reorders every module in a course after verifying the submitted set. */
 export async function reorderModules(courseId: string, input: ReorderModulesValues, actor: CourseActor): Promise<ModuleSummary[]> {
-  const existing = await requireOwnedCourse(courseId, actor)
-  const db = useDb()
-
-  return db.transaction(async (tx) => {
-    const currentModules = await tx.select({ id: modules.id }).from(modules).where(eq(modules.courseId, existing.id)).orderBy(asc(modules.orderIndex))
+  return useDb().transaction(async (tx) => {
+    const existing = await lockOwnedCourse(tx, courseId, actor)
+    const currentModules = await tx.select({ id: modules.id }).from(modules).where(eq(modules.courseId, existing.id)).orderBy(asc(modules.orderIndex), asc(modules.id))
     const currentIds = new Set(currentModules.map((module) => module.id))
 
     if (currentIds.size !== input.moduleIds.length || input.moduleIds.some((moduleId) => !currentIds.has(moduleId))) {
@@ -146,7 +178,7 @@ export async function reorderModules(courseId: string, input: ReorderModulesValu
       .select()
       .from(modules)
       .where(eq(modules.courseId, existing.id))
-      .orderBy(asc(modules.orderIndex))
+      .orderBy(asc(modules.orderIndex), asc(modules.id))
       .then((rows) => rows.map((row) => toModuleSummary(row)))
   })
 }
@@ -174,13 +206,6 @@ export async function reviewCourse(courseId: string, input: ReviewCourseValues, 
   })
 }
 
-/** Returns the next contiguous module position for a course. */
-async function nextModuleOrderIndex(courseId: string): Promise<number> {
-  const rows = await useDb().select({ orderIndex: modules.orderIndex }).from(modules).where(eq(modules.courseId, courseId)).orderBy(desc(modules.orderIndex)).limit(1)
-
-  return (rows[0]?.orderIndex ?? -1) + 1
-}
-
 /** Loads a course and enforces owner/admin write access. */
 async function requireOwnedCourse(courseId: string, actor: CourseActor): Promise<typeof courses.$inferSelect> {
   const [row] = await useDb().select().from(courses).where(eq(courses.id, courseId)).limit(1)
@@ -201,9 +226,37 @@ async function requireOwnedModule(courseId: string, moduleId: string, actor: Cou
   return row
 }
 
-/** Returns the next contiguous lecture position within a module. */
-async function nextLectureOrderIndex(moduleId: string): Promise<number> {
-  const rows = await useDb().select({ orderIndex: lectures.orderIndex }).from(lectures).where(eq(lectures.moduleId, moduleId)).orderBy(desc(lectures.orderIndex)).limit(1)
+/**
+ * Locks the owned course row so module-list ordering operations serialize on
+ * the same key, then re-checks ownership against the locked row.
+ */
+async function lockOwnedCourse(tx: DbTransaction, courseId: string, actor: CourseActor): Promise<typeof courses.$inferSelect> {
+  const [row] = await tx.select().from(courses).where(eq(courses.id, courseId)).for('update').limit(1)
 
-  return (rows[0]?.orderIndex ?? -1) + 1
+  if (!row) throw new ServiceError('not_found')
+  assertCanManageCourse(row.instructorId, actor)
+
+  return row
+}
+
+/**
+ * Verifies course ownership and locks the module row so lecture-list ordering
+ * operations serialize per module.
+ */
+async function lockOwnedModule(tx: DbTransaction, courseId: string, moduleId: string, actor: CourseActor): Promise<typeof modules.$inferSelect> {
+  const [course] = await tx.select().from(courses).where(eq(courses.id, courseId)).limit(1)
+
+  if (!course) throw new ServiceError('not_found')
+  assertCanManageCourse(course.instructorId, actor)
+
+  const [row] = await tx
+    .select()
+    .from(modules)
+    .where(and(eq(modules.id, moduleId), eq(modules.courseId, course.id)))
+    .for('update')
+    .limit(1)
+
+  if (!row) throw new ServiceError('not_found')
+
+  return row
 }

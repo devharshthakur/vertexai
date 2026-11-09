@@ -16,7 +16,7 @@ export const COURSE_DIFFICULTIES = ['beginner', 'intermediate', 'advanced'] as c
  * Publication state of a course. Only `approved` courses are listed in the
  * public catalog; the transition is driven by the admin approval queue.
  */
-export const COURSE_STATUSES = ['pending', 'approved', 'rejected', 'archived'] as const
+export const COURSE_STATUSES = ['draft', 'pending', 'approved', 'rejected', 'archived'] as const
 
 export const courseDifficultySchema = z.enum(COURSE_DIFFICULTIES)
 export const courseStatusSchema = z.enum(COURSE_STATUSES)

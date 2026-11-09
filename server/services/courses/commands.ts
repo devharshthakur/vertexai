@@ -9,7 +9,7 @@ import { toCourseSummary, toLectureSummary, toModuleSummary } from './presenters
 
 type DbTransaction = Parameters<Parameters<Db['transaction']>[0]>[0]
 
-/** Creates a course in the pending state for its instructor. */
+/** Creates a private course draft for its instructor. */
 export async function createCourse(input: CreateCourseValues, ownerId: string): Promise<CourseSummary> {
   const [row] = await useDb()
     .insert(courses)
@@ -21,11 +21,24 @@ export async function createCourse(input: CreateCourseValues, ownerId: string): 
       difficulty: input.difficulty ?? null,
       thumbnailUrl: input.thumbnailUrl ?? null,
       price: input.price === undefined ? '0' : String(input.price),
-      status: 'pending'
+      status: 'draft'
     })
     .returning()
 
   return toCourseSummary(row!)
+}
+
+/** Submits a draft or rejected course for review, preserving prior decisions. */
+export async function submitCourse(courseId: string, actor: CourseActor): Promise<CourseSummary> {
+  return useDb().transaction(async (tx) => {
+    const course = await lockOwnedCourse(tx, courseId, actor)
+    if (course.status !== 'draft' && course.status !== 'rejected') {
+      throw new ServiceError('conflict', 'Only drafts or rejected courses can be submitted.')
+    }
+
+    const [updated] = await tx.update(courses).set({ status: 'pending', updatedAt: new Date() }).where(eq(courses.id, courseId)).returning()
+    return toCourseSummary(updated!)
+  })
 }
 
 /** Updates supplied course metadata after checking ownership. */

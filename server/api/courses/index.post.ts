@@ -7,8 +7,8 @@ import { parseBody } from '#server/utils/validate'
 /**
  * Creates a course.
  *
- * The course starts in the `pending` state, so it stays out of the public
- * catalog until an admin approves it.
+ * The course starts as a private draft until its instructor submits it and
+ * an admin approves it.
  */
 export default defineEventHandler(async (event) => {
   const session = await requireRole(event, 'instructor', 'admin')

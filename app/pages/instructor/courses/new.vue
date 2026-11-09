@@ -42,6 +42,6 @@
       <CourseMetadataForm class="mt-4" :on-save="createCourse" />
     </section>
 
-    <p class="border-t pt-5 text-sm text-muted-foreground">Your course will remain private while it is pending admin approval.</p>
+    <p class="border-t pt-5 text-sm text-muted-foreground">Your course starts as a private draft. Submit it for review when you are ready.</p>
   </div>
 </template>

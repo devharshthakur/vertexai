@@ -61,7 +61,7 @@
     <Empty v-else-if="!error && data?.items.length === 0">
       <EmptyHeader>
         <EmptyTitle>Your first course starts here</EmptyTitle>
-        <EmptyDescription> Courses you create will appear here. New courses are submitted for admin review. </EmptyDescription>
+        <EmptyDescription> Courses you create will appear here as private drafts until you submit them for review. </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
         <Button as-child>

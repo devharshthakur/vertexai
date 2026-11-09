@@ -18,6 +18,21 @@
   const { data: courseData, pending, error, refresh } = await useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`, { deep: true })
   const course = computed(() => courseData.value?.course ?? null)
   const errorMessage = shallowRef('')
+  const submitting = shallowRef(false)
+  const { data: review } = await useFetch<{ decision: 'approved' | 'rejected'; comment: string | null; reviewedAt: string } | null>(() => `/api/courses/${courseId.value}/review`)
+
+  async function submitForReview() {
+    submitting.value = true
+    errorMessage.value = ''
+    try {
+      await $fetch(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} })
+      await refresh()
+    } catch {
+      errorMessage.value = 'We could not submit this course for review. Please try again.'
+    } finally {
+      submitting.value = false
+    }
+  }
 
   async function updateCourse(values: CreateCourseValues) {
     errorMessage.value = ''
@@ -64,7 +79,7 @@
         <h1 class="text-3xl font-semibold tracking-tight">
           {{ course!.title }}
         </h1>
-        <p class="text-muted-foreground">New courses remain private until an admin approves them.</p>
+        <p class="text-muted-foreground">Drafts remain private until submitted and approved. Changes to approved courses are live.</p>
       </div>
       <div class="flex flex-wrap items-center gap-3">
         <Badge :variant="course!.status === 'approved' ? 'default' : 'secondary'">
@@ -73,12 +88,20 @@
         <Button variant="outline" as-child>
           <NuxtLink :to="`/courses/${course!.id}`">Preview</NuxtLink>
         </Button>
+        <Button v-if="course!.status === 'draft' || course!.status === 'rejected'" :disabled="submitting" @click="submitForReview">
+          {{ course!.status === 'rejected' ? 'Resubmit for review' : 'Submit for review' }}
+        </Button>
       </div>
     </header>
 
     <Alert v-if="errorMessage" variant="destructive">
       <AlertTitle>Course update failed</AlertTitle>
       <AlertDescription>{{ errorMessage }}</AlertDescription>
+    </Alert>
+
+    <Alert v-if="review">
+      <AlertTitle>Latest review: {{ review.decision }}</AlertTitle>
+      <AlertDescription>{{ review.comment || 'No comment was provided.' }}</AlertDescription>
     </Alert>
 
     <Card>

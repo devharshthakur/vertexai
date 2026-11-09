@@ -1,10 +1,10 @@
 import { and, asc, count, desc, eq, ilike, inArray, isNotNull, or, type SQL } from 'drizzle-orm'
 import { useDb } from '#server/db'
-import { courses, lectures, modules } from '#server/db/schema'
+import { courseApprovals, courses, lectures, modules } from '#server/db/schema'
 import type { CourseListResult, CourseWithCurriculum, LectureSummary } from '#shared/types/courses'
 import type { CourseQueryValues } from '#shared/validation/courses'
 import { ServiceError } from '#server/utils/service-error'
-import { assertCanViewCourse, type CourseActor } from './access'
+import { assertCanManageCourse, assertCanViewCourse, type CourseActor } from './access'
 import { toCourseSummary, toLectureSummary, toModuleSummary } from './presenters'
 
 /** Escapes wildcard characters in a user-supplied search term. */
@@ -25,6 +25,16 @@ export function listInstructorCourses(query: CourseQueryValues, instructorId: st
 /** Lists courses awaiting an administrator's review. */
 export function listPendingCourses(query: CourseQueryValues): Promise<CourseListResult> {
   return listCourses(query, eq(courses.status, 'pending'))
+}
+
+/** Returns the latest review only to the course owner or an administrator. */
+export async function getLatestCourseReview(courseId: string, actor: CourseActor) {
+  const db = useDb()
+  const [course] = await db.select().from(courses).where(eq(courses.id, courseId)).limit(1)
+  if (!course) throw new ServiceError('not_found')
+  assertCanManageCourse(course.instructorId, actor)
+  const [review] = await db.select().from(courseApprovals).where(eq(courseApprovals.courseId, courseId)).orderBy(desc(courseApprovals.reviewedAt), desc(courseApprovals.id)).limit(1)
+  return review ? { decision: review.decision, comment: review.comment, reviewedAt: review.reviewedAt.toISOString() } : null
 }
 
 /** Lists distinct categories used by approved courses. */

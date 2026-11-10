@@ -1,6 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite'
 
+const videoJsElements = new Set(['video-player', 'video-neutral-skin'])
+
 export default defineNuxtConfig({
   modules: ['@nuxt/eslint', '@nuxt/fonts', 'shadcn-nuxt', '@nuxt/icon', '@nuxtjs/color-mode'],
   components: {
@@ -8,6 +10,11 @@ export default defineNuxtConfig({
   },
   imports: {
     scan: false
+  },
+  vue: {
+    compilerOptions: {
+      isCustomElement: (tag) => videoJsElements.has(tag)
+    }
   },
   shadcn: {
     prefix: '',

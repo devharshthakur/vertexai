@@ -34,11 +34,7 @@ export const DEMO_COURSES: DemoCourse[] = [
     modules: [
       {
         title: 'Learn TypeScript',
-        lectures: [
-          {
-            slug: 'typescript'
-          }
-        ]
+        lectures: [{ slug: 'typescript' }]
       }
     ],
     approval: { decision: 'approved', comment: 'Approved for the demo catalog.' },
@@ -53,11 +49,7 @@ export const DEMO_COURSES: DemoCourse[] = [
     modules: [
       {
         title: 'Learn React',
-        lectures: [
-          {
-            slug: 'react'
-          }
-        ]
+        lectures: [{ slug: 'react' }]
       }
     ],
     approval: { decision: 'approved', comment: 'Approved for the demo catalog.' },
@@ -72,11 +64,7 @@ export const DEMO_COURSES: DemoCourse[] = [
     modules: [
       {
         title: 'Learn Tailwind CSS',
-        lectures: [
-          {
-            slug: 'tailwind'
-          }
-        ]
+        lectures: [{ slug: 'tailwind' }]
       }
     ],
     approval: { decision: 'approved', comment: 'Approved for the demo catalog.' },

@@ -50,6 +50,13 @@
       "when": 1794239363304,
       "tag": "0006_flippant_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794304856497,
+      "tag": "0007_woozy_lilandra",
+      "breakpoints": true
     }
   ]
 }

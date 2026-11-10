@@ -43,12 +43,16 @@ async function setupDemo(): Promise<void> {
   validateDemoSeedPassword(DEFAULT_DEMO_PASSWORD)
   const databaseUrl = getLocalDatabaseUrl()
 
+  console.info('Removing the demo Compose project and its volumes...')
   const compose = ['compose', '-p', COMPOSE_PROJECT]
   run('docker', [...compose, 'down', '--volumes'])
+  console.info('Starting a fresh database...')
   run('docker', [...compose, 'up', '-d', '--wait', 'db'])
 
   const databaseEnv = { ...process.env, DATABASE_URL: databaseUrl }
+  console.info('Applying migrations...')
   run('pnpm', ['db:migrate'], databaseEnv)
+  console.info('Seeding demo data...')
   run('pnpm', ['db:seed'], databaseEnv)
 
   console.info('Demo database recreated, migrated, and seeded successfully.')

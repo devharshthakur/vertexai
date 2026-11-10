@@ -46,7 +46,7 @@
                 <DropdownMenuItem as-child>
                   <NuxtLink to="/instructor">
                     <BookOpenCheckIcon data-icon="inline-start" />
-                    Instructor workspace
+                    Browse your courses
                   </NuxtLink>
                 </DropdownMenuItem>
               </DropdownMenuGroup>

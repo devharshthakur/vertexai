@@ -10,7 +10,7 @@
   import type { CourseListResult } from '#shared/types/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'instructor' })
-  useSeoMeta({ title: 'Instructor workspace · VertexAI' })
+  useSeoMeta({ title: 'Browse your courses · VertexAI' })
 
   const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/courses/mine')
 </script>
@@ -20,7 +20,7 @@
     <header class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div class="flex flex-col gap-2">
         <p class="text-sm font-medium text-muted-foreground">Instructor workspace</p>
-        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Your courses</h1>
+        <h1 class="text-3xl font-semibold tracking-tight sm:text-4xl">Browse your courses</h1>
         <p class="max-w-2xl text-muted-foreground">Create courses, build a curriculum, and track review status.</p>
       </div>
       <Button as-child>

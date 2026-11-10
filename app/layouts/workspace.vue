@@ -17,7 +17,7 @@
           <Button variant="ghost" size="sm" as-child>
             <NuxtLink to="/instructor">
               <BookOpenCheckIcon data-icon="inline-start" />
-              Instructor workspace
+              Browse your courses
             </NuxtLink>
           </Button>
           <Button v-if="isAdmin" variant="ghost" size="sm" as-child>

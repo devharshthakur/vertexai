@@ -84,7 +84,15 @@ pnpm db:studio   # browse the database
 
 ## Seed data
 
-Create the demo accounts, plus a seeded approved course with a module and lecture:
+To recreate the demo from a clean database, first add the lecture videos described below, then run:
+
+```bash
+pnpm demo:setup
+```
+
+**This deletes the `vertexai` Docker Compose project's containers and volumes, including all existing database data.** The command validates the demo assets first, then removes the project and its volumes, starts a fresh database, applies migrations, and seeds the demo. Running it is approval for that destructive reset. It does not run in production.
+
+To seed an existing migrated database without recreating its container or volume, use:
 
 ```bash
 pnpm db:seed
@@ -96,9 +104,7 @@ pnpm db:seed
 | Instructor | `instructor@example.com` |
 | Student    | `student@example.com`    |
 
-Every demo account uses the predefined password `password@1234`. Re-running the seed re-applies that password and signs the accounts out. The script only makes sense locally, so it refuses to run when `NODE_ENV=production`.
-
-Running `pnpm setup` or `pnpm demo:setup` immediately deletes all data in the `vertexai` Docker Compose project, including its volumes, then recreates and seeds the database. Running either command is treated as approval for this destructive reset.
+The seed creates three approved courses and enrolls the demo student. Every demo account uses the predefined password `password@1234`. Re-running `db:seed` re-applies that password, signs the accounts out, and rebuilds the managed demo course curriculum and enrollment. The seed refuses to run when `NODE_ENV=production`.
 
 ### Demo lecture assets
 
@@ -111,9 +117,9 @@ public/videos/<slug>/
   about.md
 ```
 
-The demo slugs are `typescript`, `react`, and `tailwind`. Add one MP4 video per folder; the seed prefers `video.mp4` and otherwise takes the first `.mp4` file. Video files are ignored by Git, so add them locally before seeding. `about.md` must start with `# Lecture title`; the remaining text becomes the plain-text course description. `transcript.txt` becomes the seeded lecture transcript. The seed validates every folder before changing database rows. See [`public/videos/README.md`](public/videos/README.md) for the format.
+The demo slugs are `typescript`, `react`, and `tailwind`. Add one MP4 video per folder; the seed prefers `video.mp4` and otherwise takes the first `.mp4` file. Video files are ignored by Git, so add them locally before seeding. `about.md` must start with `# Lecture title`; the remaining text becomes the plain-text course description. The `transcript.txt` beside each video is the transcript stored on the seeded lecture. The seed validates every folder before changing database rows. See [`public/videos/README.md`](public/videos/README.md) for the format and distribution instructions.
 
-Everything under `public/videos/` is publicly served by the app. Use demo assets you are allowed to distribute; this is not private course delivery. The `pnpm setup` and `pnpm demo:setup` commands check these files before resetting the database.
+Everything under `public/videos/` is publicly served by the app. Use demo assets you are allowed to distribute; this is not private course delivery.
 
 ## Authentication
 

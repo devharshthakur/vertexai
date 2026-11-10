@@ -1,7 +1,8 @@
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { useDb } from '#server/db'
-import { courses, enrollments, lectureProgress, lectures, modules } from '#server/db/schema'
+import { courses, enrollments, lectureProgress, lectures, modules, streaks } from '#server/db/schema'
 import { ServiceError } from '#server/utils/service-error'
+import { recordDailyStreakActivity } from '#server/services/streaks'
 import type { LearningCourse } from '#shared/types/learning'
 import type { ProgressUpdate } from '#shared/validation/progress'
 
@@ -69,6 +70,21 @@ export async function updateLectureProgress(courseId: string, lectureId: string,
       .insert(lectureProgress)
       .values({ enrollmentId: enrollment.id, lectureId, ...update })
       .onConflictDoUpdate({ target: [lectureProgress.enrollmentId, lectureProgress.lectureId], set: update })
+
+    if (input.action === 'view') {
+      const today = new Date().toISOString().slice(0, 10)
+
+      // Upsert an empty row first so concurrent views in different courses
+      // serialize on the same per-user streak record.
+      await tx.insert(streaks).values({ userId }).onConflictDoNothing()
+      const [streak] = await tx.select().from(streaks).where(eq(streaks.userId, userId)).for('update').limit(1)
+      if (!streak) throw new ServiceError('not_found')
+
+      if (streak.lastActiveDate !== today) {
+        const updated = recordDailyStreakActivity({ currentStreak: streak.currentStreak, longestStreak: streak.longestStreak, lastActiveDate: streak.lastActiveDate }, today)
+        await tx.update(streaks).set(updated).where(eq(streaks.userId, userId))
+      }
+    }
 
     if (input.action === 'complete') {
       const [counts] = await tx

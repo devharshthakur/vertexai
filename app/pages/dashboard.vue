@@ -2,12 +2,13 @@
   import { BookOpenIcon, CircleAlertIcon } from '@lucide/vue'
   import EnrolledCourseCard from '@/components/course/EnrolledCourseCard.vue'
   import { Button } from '@/components/ui/button'
-  import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+  import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
   import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
   import { Separator } from '@/components/ui/separator'
   import { Skeleton } from '@/components/ui/skeleton'
   import { useAuthSessionState } from '@/composables/useAuthSession'
   import { useMyEnrollments } from '@/composables/useEnrollment'
+  import type { LearningStreak } from '#shared/types/learning'
 
   definePageMeta({ middleware: 'auth' })
 
@@ -18,8 +19,16 @@
 
   const session = useAuthSessionState()
   const { enrollments, hasData, isPending, isError, isRefetchError, refetch } = useMyEnrollments()
-
   defineExpose({ enrollments, isPending, isError, refetch })
+
+  const {
+    data: streak,
+    pending: streakPending,
+    error: streakError,
+    refresh: refreshStreak
+  } = await useFetch<LearningStreak>('/api/me/streak', {
+    default: () => ({ currentStreak: 0, longestStreak: 0, lastActiveDate: null })
+  })
 
   const firstName = computed(() => session.value?.user.name?.trim().split(/\s+/)[0] ?? 'there')
 
@@ -63,6 +72,33 @@
     </header>
 
     <Separator />
+
+    <section aria-labelledby="streak-heading">
+      <Card>
+        <CardHeader>
+          <CardTitle id="streak-heading">Learning streak</CardTitle>
+          <CardDescription>Open an enrolled lecture each day to keep your streak going.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div v-if="streakPending" class="flex flex-col gap-2" role="status" aria-busy="true">
+            <Skeleton class="h-7 w-32" />
+            <Skeleton class="h-4 w-48" />
+          </div>
+          <div v-else-if="streakError" class="flex flex-wrap items-center gap-3">
+            <p class="text-sm text-muted-foreground">We could not load your streak.</p>
+            <Button size="sm" variant="outline" @click="refreshStreak()">Try again</Button>
+          </div>
+          <div v-else class="flex flex-wrap gap-x-8 gap-y-3">
+            <p>
+              <span class="text-2xl font-semibold">{{ streak?.currentStreak ?? 0 }}</span> <span class="text-sm text-muted-foreground">current days</span>
+            </p>
+            <p>
+              <span class="text-2xl font-semibold">{{ streak?.longestStreak ?? 0 }}</span> <span class="text-sm text-muted-foreground">longest days</span>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
 
     <section class="flex flex-col gap-4" aria-labelledby="courses-heading">
       <div class="flex flex-col gap-1">

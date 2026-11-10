@@ -20,7 +20,7 @@
   const emit = defineEmits<{ saved: [lecture: LectureSummary] }>()
   const errorMessage = shallowRef('')
   const durationPlaceholder = 'Optional'
-  const videoUrlPlaceholder = 'https://www.youtube.com/watch?v=…'
+  const videoUrlPlaceholder = '/videos/typescript/video.mp4'
 
   const form = useForm({
     defaultValues: {
@@ -63,7 +63,7 @@
   <Card>
     <CardHeader>
       <CardTitle>{{ lecture ? `Edit ${lecture.title}` : 'Add a lecture' }}</CardTitle>
-      <CardDescription>Use a YouTube video link and optionally paste its transcript.</CardDescription>
+      <CardDescription>Use a local video path and optionally paste its transcript.</CardDescription>
     </CardHeader>
     <CardContent>
       <form class="flex flex-col gap-5" novalidate @submit.prevent="form.handleSubmit()">
@@ -86,8 +86,9 @@
           <form.Field name="videoUrl">
             <template #default="{ field }">
               <Field :data-invalid="!field.state.meta.isValid">
-                <FieldLabel :for="`${moduleId}-${lecture?.id ?? 'new'}-video-url`">YouTube video URL</FieldLabel>
-                <Input :id="`${moduleId}-${lecture?.id ?? 'new'}-video-url`" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="url" :placeholder="videoUrlPlaceholder" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+                <FieldLabel :for="`${moduleId}-${lecture?.id ?? 'new'}-video-url`">Video path</FieldLabel>
+                <Input :id="`${moduleId}-${lecture?.id ?? 'new'}-video-url`" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="text" :placeholder="videoUrlPlaceholder" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+                <FieldDescription>Path to an MP4 file under public/videos, for example /videos/typescript/video.mp4.</FieldDescription>
                 <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
               </Field>
             </template>
@@ -127,7 +128,7 @@
                   @update:model-value="(value) => field.handleChange(String(value))"
                   @blur="field.handleBlur"
                 />
-                <FieldDescription>Transcripts must be pasted manually; YouTube captions are not fetched automatically.</FieldDescription>
+                <FieldDescription>Optional. Paste the transcript here; it is stored with the lecture.</FieldDescription>
                 <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
               </Field>
             </template>

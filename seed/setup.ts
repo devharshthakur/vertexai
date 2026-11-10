@@ -1,5 +1,7 @@
 import 'dotenv/config'
 import { spawnSync } from 'node:child_process'
+import { DEMO_VIDEO_SLUGS } from './courses'
+import { loadDemoVideos } from './load-demo-video'
 import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 
 const COMPOSE_PROJECT = 'vertexai'
@@ -37,6 +39,7 @@ async function setupDemo(): Promise<void> {
     throw new Error('demo:setup is disabled in production.')
   }
 
+  await loadDemoVideos(DEMO_VIDEO_SLUGS)
   validateDemoSeedPassword(DEFAULT_DEMO_PASSWORD)
   const databaseUrl = getLocalDatabaseUrl()
 

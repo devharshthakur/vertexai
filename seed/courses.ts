@@ -1,10 +1,8 @@
 import type { CourseDifficulty, CourseStatus } from '../shared/validation/courses.ts'
 
 interface DemoLecture {
-  title: string
-  videoUrl: string
-  durationSeconds: number
-  transcript: string | null
+  /** Folder under `public/videos/` holding an MP4, `transcript.txt`, and `about.md`. */
+  slug: string
 }
 
 interface DemoModule {
@@ -14,7 +12,8 @@ interface DemoModule {
 
 export interface DemoCourse {
   title: string
-  description: string
+  /** Folder whose `about.md` supplies the course description. */
+  descriptionSlug: string
   category: string
   difficulty: CourseDifficulty
   status: CourseStatus
@@ -28,7 +27,7 @@ export interface DemoCourse {
 export const DEMO_COURSES: DemoCourse[] = [
   {
     title: 'Learning TypeScript',
-    description: 'A concise, beginner-friendly TypeScript crash course by Brad Traversy on Traversy Media.',
+    descriptionSlug: 'typescript',
     category: 'Web Development',
     difficulty: 'beginner',
     status: 'approved',
@@ -37,10 +36,7 @@ export const DEMO_COURSES: DemoCourse[] = [
         title: 'Learn TypeScript',
         lectures: [
           {
-            title: 'TypeScript Crash Course — Traversy Media',
-            videoUrl: 'https://www.youtube.com/watch?v=BCg4U1FzODs',
-            durationSeconds: 3147,
-            transcript: null
+            slug: 'typescript'
           }
         ]
       }
@@ -50,7 +46,7 @@ export const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Learning React',
-    description: 'A concise introduction to modern React with Web Dev Simplified.',
+    descriptionSlug: 'react',
     category: 'Web Development',
     difficulty: 'beginner',
     status: 'approved',
@@ -59,10 +55,7 @@ export const DEMO_COURSES: DemoCourse[] = [
         title: 'Learn React',
         lectures: [
           {
-            title: 'Learn React in 30 Minutes — Web Dev Simplified',
-            videoUrl: 'https://www.youtube.com/watch?v=hQAHSlTtcmY',
-            durationSeconds: 1635,
-            transcript: null
+            slug: 'react'
           }
         ]
       }
@@ -72,7 +65,7 @@ export const DEMO_COURSES: DemoCourse[] = [
   },
   {
     title: 'Learning Tailwind CSS',
-    description: 'A beginner-friendly Tailwind CSS v4 course with JavaScript Mastery.',
+    descriptionSlug: 'tailwind',
     category: 'Web Development',
     difficulty: 'beginner',
     status: 'approved',
@@ -81,10 +74,7 @@ export const DEMO_COURSES: DemoCourse[] = [
         title: 'Learn Tailwind CSS',
         lectures: [
           {
-            title: 'Tailwind CSS v4 Full Course — JavaScript Mastery',
-            videoUrl: 'https://www.youtube.com/watch?v=6biMWgD6_JY',
-            durationSeconds: 3260,
-            transcript: null
+            slug: 'tailwind'
           }
         ]
       }
@@ -93,6 +83,9 @@ export const DEMO_COURSES: DemoCourse[] = [
     enrollmentProgress: '0.00'
   }
 ]
+
+/** Every folder the demo seed validates before changing database rows. */
+export const DEMO_VIDEO_SLUGS = [...new Set(DEMO_COURSES.flatMap((course) => [course.descriptionSlug, ...course.modules.flatMap((module) => module.lectures.map((lecture) => lecture.slug))]))]
 
 /** Earlier demo-only seed fixtures removed by the canonical demo seed. */
 export const LEGACY_DEMO_COURSE_TITLES = [

@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { and, eq, inArray } from 'drizzle-orm'
-import { DEMO_COURSES, LEGACY_DEMO_COURSE_TITLES } from './courses'
-import { loadSeedTranscript } from './load-transcript'
+import { DEMO_COURSES, DEMO_VIDEO_SLUGS, LEGACY_DEMO_COURSE_TITLES } from './courses'
+import { loadDemoVideos, type DemoVideoContent } from './load-demo-video'
 import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 import { useDb } from '../server/db'
 import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from '../server/db/schema'
@@ -73,7 +73,7 @@ async function ensureUser(demoUser: (typeof DEMO_USERS)[number]): Promise<string
  * Upserts only canonical demo courses, removes only the named legacy demo
  * fixtures, and recreates curriculum/enrollment state for those courses.
  */
-async function seedDemoCourses(instructorId: string, adminId: string, studentId: string): Promise<void> {
+async function seedDemoCourses(instructorId: string, adminId: string, studentId: string, demoVideos: ReadonlyMap<string, DemoVideoContent>): Promise<void> {
   const db = useDb()
   const managedTitles = [...DEMO_COURSES.map(({ title }) => title), ...LEGACY_DEMO_COURSE_TITLES]
 
@@ -98,6 +98,11 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
     await tx.delete(courses).where(and(eq(courses.instructorId, instructorId), inArray(courses.title, LEGACY_DEMO_COURSE_TITLES)))
 
     for (const demoCourse of DEMO_COURSES) {
+      const courseDescription = demoVideos.get(demoCourse.descriptionSlug)?.courseDescription
+      if (!courseDescription) {
+        throw new Error(`Missing about.md content for demo course "${demoCourse.title}".`)
+      }
+
       const [existing] = await tx
         .select({ id: courses.id })
         .from(courses)
@@ -109,7 +114,7 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
         await tx
           .update(courses)
           .set({
-            description: demoCourse.description,
+            description: courseDescription,
             category: demoCourse.category,
             difficulty: demoCourse.difficulty,
             price: '0',
@@ -122,7 +127,7 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
           .values({
             instructorId,
             title: demoCourse.title,
-            description: demoCourse.description,
+            description: courseDescription,
             category: demoCourse.category,
             difficulty: demoCourse.difficulty,
             price: '0',
@@ -145,16 +150,21 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
           })
           .returning({ id: modules.id })
 
-        const lectureValues = await Promise.all(
-          demoModule.lectures.map(async (lecture, lectureIndex) => ({
+        const lectureValues = demoModule.lectures.map((lecture, lectureIndex) => {
+          const video = demoVideos.get(lecture.slug)
+          if (!video) {
+            throw new Error(`Missing demo video for lecture folder "${lecture.slug}".`)
+          }
+
+          return {
             moduleId: insertedModule!.id,
-            title: lecture.title,
-            videoUrl: lecture.videoUrl,
-            transcript: lecture.transcript ?? (await loadSeedTranscript(lecture.videoUrl)),
-            durationSeconds: lecture.durationSeconds,
+            title: video.lectureTitle,
+            videoUrl: video.videoUrl,
+            transcript: video.transcript,
+            durationSeconds: null,
             orderIndex: lectureIndex
-          }))
-        )
+          }
+        })
 
         await tx.insert(lectures).values(lectureValues)
       }
@@ -185,14 +195,17 @@ async function seed() {
   }
   validateDemoSeedPassword(DEMO_PASSWORD)
 
+  const demoVideos = await loadDemoVideos(DEMO_VIDEO_SLUGS)
+
   const userIds = new Map<string, string>()
   for (const demoUser of DEMO_USERS) {
     userIds.set(demoUser.role, await ensureUser(demoUser))
   }
 
-  await seedDemoCourses(userIds.get('instructor')!, userIds.get('admin')!, userIds.get('student')!)
+  await seedDemoCourses(userIds.get('instructor')!, userIds.get('admin')!, userIds.get('student')!, demoVideos)
 
   console.info(`Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`)
+  console.info(`Loaded ${demoVideos.size} demo video assets from public/videos/.`)
   console.info(`Seeded ${DEMO_COURSES.length} demo courses (all approved and enrolled for the demo student).`)
   console.info('All demo accounts use the predefined password.')
 }

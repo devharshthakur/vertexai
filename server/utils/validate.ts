@@ -40,7 +40,7 @@ export function parseQuery<T>(event: RequestEvent, schema: Validator<T>) {
   return parse(getQuery(event), schema)
 }
 
-/** Validates a route parameter, such as a course id. */
+/** Validates a route parameter against a zod schema, such as a course id. */
 export function parseParam<T>(event: RequestEvent, name: string, schema: Validator<T>): T {
   const result = schema.safeParse(getRouterParam(event, name))
 

@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
+  import CourseMaterialsPanel from '@/components/instructor/CourseMaterialsPanel.vue'
   import ModuleManager from '@/components/instructor/ModuleManager.vue'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
@@ -19,14 +20,14 @@
   const course = computed(() => courseData.value?.course ?? null)
   const errorMessage = shallowRef('')
   const submitting = shallowRef(false)
-  const { data: review } = await useFetch<{ decision: 'approved' | 'rejected'; comment: string | null; reviewedAt: string } | null>(() => `/api/courses/${courseId.value}/review`)
+  const { data: review, refresh: refreshReview } = await useFetch<{ decision: 'approved' | 'rejected'; comment: string | null; reviewedAt: string } | null>(() => `/api/courses/${courseId.value}/review`)
 
   async function submitForReview() {
     submitting.value = true
     errorMessage.value = ''
     try {
       await $fetch(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} })
-      await refresh()
+      await Promise.all([refresh(), refreshReview()])
     } catch {
       errorMessage.value = 'We could not submit this course for review. Please try again.'
     } finally {
@@ -42,7 +43,7 @@
         method: 'PUT',
         body: values
       })
-      await refresh()
+      await Promise.all([refresh(), refreshReview()])
     } catch {
       errorMessage.value = 'We could not save course details. Please try again.'
     }
@@ -113,6 +114,8 @@
         <CourseMetadataForm :course="course!" :on-save="updateCourse" />
       </CardContent>
     </Card>
+
+    <CourseMaterialsPanel :course-id="course!.id" :modules="courseData.modules" />
 
     <ModuleManager v-model:modules="courseData.modules" :course-id="course!.id" />
   </div>

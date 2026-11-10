@@ -4,19 +4,25 @@
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
-  import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+  import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Progress } from '@/components/ui/progress'
   import { useQueryClient } from '@tanstack/vue-query'
   import type { LearningCourse } from '#shared/types/learning'
+  import type { CourseMaterialSummary } from '#shared/types/course-materials'
 
   definePageMeta({ middleware: 'auth' })
   const route = useRoute()
   const courseId = computed(() => String(route.params.courseId))
   const lectureId = computed(() => String(route.params.lectureId))
   const { data, error, pending, refresh } = await useFetch<LearningCourse>(() => `/api/courses/${courseId.value}/learn`)
+  const { data: materials, error: materialsError } = await useFetch<CourseMaterialSummary[]>(() => `/api/courses/${courseId.value}/materials`, { default: () => [] })
   const player = useTemplateRef<InstanceType<typeof LearningPlayer>>('player')
   const queryClient = useQueryClient()
   const current = computed(() => data.value?.modules.flatMap((module) => module.lectures).find((lecture) => lecture.id === lectureId.value))
+  const currentModule = computed(() => data.value?.modules.find((module) => module.lectures.some((lecture) => lecture.id === lectureId.value)))
+  const currentMaterials = computed(() => (materials.value ?? []).filter((material) => material.moduleId === currentModule.value?.id && (material.lectureId === null || material.lectureId === lectureId.value)))
+  const currentVideoMaterials = computed(() => currentMaterials.value.filter((material) => material.contentType.startsWith('video/')))
+  const currentDocumentMaterials = computed(() => currentMaterials.value.filter((material) => !material.contentType.startsWith('video/')))
   const saving = shallowRef(false)
   const saveError = shallowRef(false)
 
@@ -26,6 +32,10 @@
 
   function seekTo(timestampSeconds: number) {
     player.value?.seekTo(timestampSeconds)
+  }
+
+  function materialUrl(materialId: string): string {
+    return `/api/courses/${courseId.value}/materials/${materialId}`
   }
 
   watch(
@@ -82,6 +92,28 @@
         <div class="flex flex-col gap-4">
           <LearningPlayer ref="player" :key="current.id" :course-id="courseId" :lecture-id="current.id" :video-url="current.videoUrl" :title="current.title" :position-seconds="current.positionSeconds" />
           <LectureTools :key="`tools-${current.id}`" :course-id="courseId" :lecture-id="current.id" :get-current-time="getCurrentTime" @seek="seekTo" />
+          <Alert v-if="materialsError">
+            <AlertTitle>Course materials unavailable</AlertTitle>
+            <AlertDescription>We could not load the resources for this lecture.</AlertDescription>
+          </Alert>
+          <Card v-if="currentMaterials.length">
+            <CardHeader>
+              <CardTitle>Lecture materials</CardTitle>
+              <CardDescription>Files attached to this lecture and its module.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="flex flex-col gap-4">
+                <video v-for="material in currentVideoMaterials" :key="material.id" :src="materialUrl(material.id)" :aria-label="material.originalFilename" controls preload="metadata" class="aspect-video w-full rounded-md">Your browser does not support embedded video.</video>
+                <ul v-if="currentDocumentMaterials.length" class="flex flex-col gap-2">
+                  <li v-for="material in currentDocumentMaterials" :key="material.id">
+                    <Button variant="outline" size="sm" as-child>
+                      <a :href="materialUrl(material.id)" :download="material.originalFilename">{{ material.originalFilename }} · {{ Math.ceil(material.sizeBytes / 1024) }} KB</a>
+                    </Button>
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
           <Alert v-if="saveError">
             <AlertTitle>Progress not saved</AlertTitle>
             <AlertDescription>Please try again.</AlertDescription>

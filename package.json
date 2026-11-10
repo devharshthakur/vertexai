@@ -33,7 +33,7 @@
     "clean": "nuxt cleanup",
     "git:clean": "cleanup --auto",
     "clean:all": "nuxt cleanup && node -e \"require('node:fs').rmSync('node_modules', { recursive: true, force: true })\"",
-    "merge": "tsx scripts/merge.ts",
+    "git:merge": "tsx scripts/merge.ts",
     "deps:update": "tsx scripts/update-deps.ts",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",

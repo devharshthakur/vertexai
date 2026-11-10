@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import LearningPlayer from '@/components/learning/LearningPlayer.vue'
   import LectureTools from '@/components/learning/LectureTools.vue'
+  import { useLectureContent } from '@/composables/useLectureContent'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
@@ -18,11 +19,7 @@
   const { data: materials, error: materialsError } = await useFetch<CourseMaterialSummary[]>(() => `/api/courses/${courseId.value}/materials`, { default: () => [] })
   const player = useTemplateRef<InstanceType<typeof LearningPlayer>>('player')
   const queryClient = useQueryClient()
-  const current = computed(() => data.value?.modules.flatMap((module) => module.lectures).find((lecture) => lecture.id === lectureId.value))
-  const currentModule = computed(() => data.value?.modules.find((module) => module.lectures.some((lecture) => lecture.id === lectureId.value)))
-  const currentMaterials = computed(() => (materials.value ?? []).filter((material) => material.moduleId === currentModule.value?.id && (material.lectureId === null || material.lectureId === lectureId.value)))
-  const currentVideoMaterials = computed(() => currentMaterials.value.filter((material) => material.contentType.startsWith('video/')))
-  const currentDocumentMaterials = computed(() => currentMaterials.value.filter((material) => !material.contentType.startsWith('video/')))
+  const { current, lectureMaterials } = useLectureContent(data, materials, lectureId)
   const saving = shallowRef(false)
   const saveError = shallowRef(false)
 
@@ -96,16 +93,16 @@
             <AlertTitle>Course materials unavailable</AlertTitle>
             <AlertDescription>We could not load the resources for this lecture.</AlertDescription>
           </Alert>
-          <Card v-if="currentMaterials.length">
+          <Card v-if="lectureMaterials.all.length">
             <CardHeader>
               <CardTitle>Lecture materials</CardTitle>
               <CardDescription>Files attached to this lecture and its module.</CardDescription>
             </CardHeader>
             <CardContent>
               <div class="flex flex-col gap-4">
-                <video v-for="material in currentVideoMaterials" :key="material.id" :src="materialUrl(material.id)" :aria-label="material.originalFilename" controls preload="metadata" class="aspect-video w-full rounded-md">Your browser does not support embedded video.</video>
-                <ul v-if="currentDocumentMaterials.length" class="flex flex-col gap-2">
-                  <li v-for="material in currentDocumentMaterials" :key="material.id">
+                <video v-for="material in lectureMaterials.videos" :key="material.id" :src="materialUrl(material.id)" :aria-label="material.originalFilename" controls preload="metadata" class="aspect-video w-full rounded-md">Your browser does not support embedded video.</video>
+                <ul v-if="lectureMaterials.documents.length" class="flex flex-col gap-2">
+                  <li v-for="material in lectureMaterials.documents" :key="material.id">
                     <Button variant="outline" size="sm" as-child>
                       <a :href="materialUrl(material.id)" :download="material.originalFilename">{{ material.originalFilename }} · {{ Math.ceil(material.sizeBytes / 1024) }} KB</a>
                     </Button>

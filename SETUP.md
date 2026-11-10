@@ -100,6 +100,21 @@ Every demo account uses the predefined password `password@1234`. Re-running the 
 
 Running `pnpm setup` or `pnpm demo:setup` immediately deletes all data in the `vertexai` Docker Compose project, including its volumes, then recreates and seeds the database. Running either command is treated as approval for this destructive reset.
 
+### Demo lecture assets
+
+The seeded courses read their lectures from `public/videos/`:
+
+```text
+public/videos/<slug>/
+  video.mp4
+  transcript.txt
+  about.md
+```
+
+The demo slugs are `typescript`, `react`, and `tailwind`. Add one MP4 video per folder; the seed prefers `video.mp4` and otherwise takes the first `.mp4` file. Video files are ignored by Git, so add them locally before seeding. `about.md` must start with `# Lecture title`; the remaining text becomes the plain-text course description. `transcript.txt` becomes the seeded lecture transcript. The seed validates every folder before changing database rows. See [`public/videos/README.md`](public/videos/README.md) for the format.
+
+Everything under `public/videos/` is publicly served by the app. Use demo assets you are allowed to distribute; this is not private course delivery. The `pnpm setup` and `pnpm demo:setup` commands check these files before resetting the database.
+
 ## Authentication
 
 [Better Auth](https://better-auth.com) handles sign-in, sessions and roles. The server instance lives in `server/utils/auth.ts` and is mounted on `/api/auth/**` by `server/api/auth/[...all].ts`.

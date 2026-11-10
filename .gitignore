@@ -26,5 +26,13 @@ logs
 # Externally installed agent skills
 .agents/
 
+# Local demo lecture videos
+public/videos/**/*.mp4
+public/videos/**/*.webm
+public/videos/**/*.mkv
+public/videos/**/*.mov
+public/videos/**/*.m4v
+public/videos/**/*.ogv
+
 #Temp plan file
 /PLAN.md

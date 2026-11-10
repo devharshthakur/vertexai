@@ -10,7 +10,7 @@
   import { useMyEnrollments } from '@/composables/useEnrollment'
   import type { LearningStreak } from '#shared/types/learning'
 
-  definePageMeta({ middleware: 'auth' })
+  definePageMeta({ middleware: ['auth', 'student-dashboard'] })
 
   useSeoMeta({
     title: 'Your dashboard · VertexAI',

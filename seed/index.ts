@@ -23,7 +23,7 @@ const DEMO_USERS = [
 ] as const
 
 /**
- * Keeps the demo accounts on the shared password from `DEMO_SEED_PASSWORD`
+ * Keeps the demo accounts on the predefined shared password
  * even when they were created by an earlier run, and drops their sessions so
  * nobody keeps an old credential signed in.
  */
@@ -109,29 +109,23 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
         .where(and(eq(courses.instructorId, instructorId), eq(courses.title, demoCourse.title)))
         .limit(1)
       let courseId = existing?.id
+      const courseData = {
+        description: courseDescription,
+        category: demoCourse.category,
+        difficulty: demoCourse.difficulty,
+        price: '0',
+        status: demoCourse.status
+      }
 
       if (courseId) {
-        await tx
-          .update(courses)
-          .set({
-            description: courseDescription,
-            category: demoCourse.category,
-            difficulty: demoCourse.difficulty,
-            price: '0',
-            status: demoCourse.status
-          })
-          .where(eq(courses.id, courseId))
+        await tx.update(courses).set(courseData).where(eq(courses.id, courseId))
       } else {
         const [inserted] = await tx
           .insert(courses)
           .values({
             instructorId,
             title: demoCourse.title,
-            description: courseDescription,
-            category: demoCourse.category,
-            difficulty: demoCourse.difficulty,
-            price: '0',
-            status: demoCourse.status
+            ...courseData
           })
           .returning({ id: courses.id })
         courseId = inserted!.id

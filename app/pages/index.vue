@@ -4,6 +4,7 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { APP_ROLES } from '#shared/types/auth'
 
   useSeoMeta({
     title: 'VertexAI · Learn with focus',
@@ -13,6 +14,7 @@
   definePageMeta({ layout: 'marketing' })
 
   const session = useAuthSessionState()
+  const canTeach = computed(() => session.value?.user.role === APP_ROLES.INSTRUCTOR || session.value?.user.role === APP_ROLES.ADMIN)
 
   const upcomingFeatures = [
     {
@@ -39,8 +41,8 @@
 
       <div class="flex flex-wrap items-center justify-center gap-3">
         <Button v-if="session" size="lg" as-child>
-          <NuxtLink to="/dashboard">
-            Dashboard
+          <NuxtLink :to="canTeach ? '/instructor' : '/dashboard'">
+            {{ canTeach ? 'Browse your courses' : 'Dashboard' }}
             <ArrowRightIcon data-icon="inline-end" />
           </NuxtLink>
         </Button>

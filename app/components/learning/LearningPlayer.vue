@@ -5,6 +5,7 @@
   interface Player {
     getCurrentTime: () => number
     cueVideoById: (options: { videoId: string; startSeconds: number }) => void
+    seekTo: (seconds: number, allowSeekAhead: boolean) => void
     destroy: () => void
   }
   interface PlayerEvent {
@@ -24,6 +25,7 @@
   let player: Player | undefined
   let timer: ReturnType<typeof setInterval> | undefined
   let hasPlayed = false
+  let isReady = false
   let disposed = false
   let saveQueue: Promise<void> = Promise.resolve()
 
@@ -69,6 +71,20 @@
     })
   }
 
+  function getCurrentTime(): number | null {
+    if (!player || !isReady) return null
+    const seconds = player.getCurrentTime()
+    if (!Number.isFinite(seconds) || seconds < 0) return null
+    return Math.min(86400, Math.floor(seconds))
+  }
+
+  function seekTo(seconds: number) {
+    if (!player || !isReady || !Number.isFinite(seconds) || seconds < 0) return
+    player.seekTo(Math.min(86400, Math.floor(seconds)), true)
+  }
+
+  defineExpose({ getCurrentTime, seekTo })
+
   function onStateChange(event: PlayerEvent) {
     if (event.data === 1) {
       hasPlayed = true
@@ -95,7 +111,10 @@
         videoId,
         playerVars: { origin: window.location.origin, playsinline: 1 },
         events: {
-          onReady: (event: PlayerEvent) => event.target.cueVideoById({ videoId, startSeconds: props.positionSeconds }),
+          onReady: (event: PlayerEvent) => {
+            isReady = true
+            event.target.cueVideoById({ videoId, startSeconds: props.positionSeconds })
+          },
           onStateChange,
           onError: () => {
             error.value = true

@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import LearningPlayer from '@/components/learning/LearningPlayer.vue'
+  import LectureTools from '@/components/learning/LectureTools.vue'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
@@ -13,10 +14,19 @@
   const courseId = computed(() => String(route.params.courseId))
   const lectureId = computed(() => String(route.params.lectureId))
   const { data, error, pending, refresh } = await useFetch<LearningCourse>(() => `/api/courses/${courseId.value}/learn`)
+  const player = useTemplateRef<InstanceType<typeof LearningPlayer>>('player')
   const queryClient = useQueryClient()
   const current = computed(() => data.value?.modules.flatMap((module) => module.lectures).find((lecture) => lecture.id === lectureId.value))
   const saving = shallowRef(false)
   const saveError = shallowRef(false)
+
+  function getCurrentTime() {
+    return player.value?.getCurrentTime() ?? null
+  }
+
+  function seekTo(timestampSeconds: number) {
+    player.value?.seekTo(timestampSeconds)
+  }
 
   watch(
     [courseId, lectureId, current],
@@ -70,7 +80,8 @@
       </header>
       <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div class="flex flex-col gap-4">
-          <LearningPlayer :key="current.id" :course-id="courseId" :lecture-id="current.id" :video-url="current.videoUrl" :title="current.title" :position-seconds="current.positionSeconds" />
+          <LearningPlayer ref="player" :key="current.id" :course-id="courseId" :lecture-id="current.id" :video-url="current.videoUrl" :title="current.title" :position-seconds="current.positionSeconds" />
+          <LectureTools :key="`tools-${current.id}`" :course-id="courseId" :lecture-id="current.id" :get-current-time="getCurrentTime" @seek="seekTo" />
           <Alert v-if="saveError">
             <AlertTitle>Progress not saved</AlertTitle>
             <AlertDescription>Please try again.</AlertDescription>

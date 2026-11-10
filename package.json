@@ -69,6 +69,7 @@
     "class-variance-authority": "0.7.1",
     "cn": "0.5.2",
     "drizzle-orm": "0.45.4",
+    "h3": "1.15.11",
     "nuxt": "4.6.4",
     "pg": "8.23.1",
     "reka-ui": "2.11.0",

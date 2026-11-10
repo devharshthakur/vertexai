@@ -34,16 +34,19 @@ Copy the template and edit it:
 cp .env.example .env
 ```
 
-| Variable                                              | Purpose                                               |
-| ----------------------------------------------------- | ----------------------------------------------------- |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Local database credentials                            |
-| `POSTGRES_PORT`                                       | Host port for the database (`5433` by default)        |
-| `DATABASE_URL`                                        | Connection string used by Drizzle and the Nuxt server |
-| `BETTER_AUTH_SECRET`                                  | Secret used to sign sessions                          |
-| `BETTER_AUTH_URL`                                     | Base URL the app is served from                       |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`           | Optional GitHub OAuth credentials                     |
+| Variable                                              | Purpose                                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Local database credentials                                              |
+| `POSTGRES_PORT`                                       | Host port for the database (`5433` by default)                          |
+| `DATABASE_URL`                                        | Connection string used by Drizzle and the Nuxt server                   |
+| `BETTER_AUTH_SECRET`                                  | Secret used to sign sessions                                            |
+| `BETTER_AUTH_URL`                                     | Base URL the app is served from                                         |
+| `COURSE_MATERIALS_DIR`                                | Optional absolute path outside the repository for uploaded course files |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`           | Optional GitHub OAuth credentials                                       |
 
 `POSTGRES_PORT` defaults to `5433` so it does not clash with a PostgreSQL already listening on `5432`.
+
+Course PDFs, PowerPoint slides, and videos are stored on the server's local filesystem, not in the database or repository. Set `COURSE_MATERIALS_DIR` to an absolute path outside the repository to choose the directory; by default, files go to `~/.local/share/vertexai/course-materials`. Keep this directory persistent and backed up; changing its path without moving existing files makes those materials unavailable. Each upload is limited to 100 MiB. This storage is local to one app instance and is not suitable for multi-instance deployments without shared storage.
 
 Generate the auth secret with:
 

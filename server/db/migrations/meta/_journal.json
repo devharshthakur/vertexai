@@ -43,6 +43,13 @@
       "when": 1794202378887,
       "tag": "0005_bright_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794239363304,
+      "tag": "0006_flippant_puppet_master",
+      "breakpoints": true
     }
   ]
 }

@@ -10,8 +10,8 @@ import { users } from './auth'
  * foreign key to `users`, because Better Auth migrated `users.id` as text.
  *
  * `progress_percent` is a cached value: the progress service recomputes it
- * when a lecture is completed. `lecture_progress`, `notes` and `bookmarks`
- * join this file in Week 2, when the player starts reporting progress.
+ * when a lecture is completed. Notes, bookmarks, and streaks live in the
+ * separate `learning-tools` schema module.
  */
 export const enrollments = pgTable(
   'enrollments',

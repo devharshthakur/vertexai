@@ -8,11 +8,15 @@
   import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
   import { Separator } from '@/components/ui/separator'
   import { Skeleton } from '@/components/ui/skeleton'
+  import { useAuthSessionState } from '@/composables/useAuthSession'
   import { pluralize } from '@/lib/pluralize'
+  import { APP_ROLES } from '#shared/types/auth'
   import type { CourseWithCurriculum } from '#shared/types/courses'
 
   const route = useRoute()
   const courseId = computed(() => String(route.params.id))
+  const session = useAuthSessionState()
+  const canEnroll = computed(() => session.value?.user.role !== APP_ROLES.INSTRUCTOR && session.value?.user.role !== APP_ROLES.ADMIN)
 
   const { data: course, pending, error } = useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`)
 
@@ -58,7 +62,7 @@
           {{ course.course.description }}
         </p>
 
-        <EnrollButton :course-id="course.course.id" />
+        <EnrollButton v-if="canEnroll" :course-id="course.course.id" />
       </header>
 
       <Separator />

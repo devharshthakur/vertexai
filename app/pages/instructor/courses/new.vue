@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
+  import { provideInstructorDrafts } from '@/composables/useInstructorDrafts'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import type { CreateCourseValues } from '#shared/validation/courses'
 
@@ -7,6 +8,8 @@
   useSeoMeta({ title: 'Create a course · VertexAI' })
 
   const errorMessage = shallowRef('')
+  const createdCourseId = shallowRef('')
+  provideInstructorDrafts()
 
   async function createCourse(values: CreateCourseValues) {
     errorMessage.value = ''
@@ -16,9 +19,11 @@
         method: 'POST',
         body: values
       })
-      await navigateTo(`/instructor/courses/${course.id}`)
+      createdCourseId.value = course.id
+      return true
     } catch {
       errorMessage.value = 'We could not create this course. Please try again.'
+      return false
     }
   }
 </script>
@@ -39,7 +44,7 @@
     <section class="flex flex-col gap-2">
       <h2 class="text-xl font-semibold tracking-tight">Course details</h2>
       <p class="text-sm text-muted-foreground">This information will appear on your course listing.</p>
-      <CourseMetadataForm class="mt-4" :on-save="createCourse" />
+      <CourseMetadataForm class="mt-4" :on-save="createCourse" @saved="navigateTo(`/instructor/courses/${createdCourseId}`)" />
     </section>
 
     <p class="border-t pt-5 text-sm text-muted-foreground">Your course starts as a private draft. Submit it for review when you are ready.</p>

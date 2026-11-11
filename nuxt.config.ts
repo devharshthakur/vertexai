@@ -64,7 +64,7 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      include: ['@lucide/vue', '@tanstack/vue-form', '@tanstack/vue-query', '@vueuse/core', 'better-auth/client/plugins', 'better-auth/vue', 'class-variance-authority', 'cn', 'reka-ui', 'zod']
+      include: ['@lucide/vue', '@tanstack/vue-form', '@tanstack/vue-query', '@videojs/html/video/neutral-skin', '@videojs/html/video/player', '@vueuse/core', 'better-auth/client/plugins', 'better-auth/vue', 'class-variance-authority', 'cn', 'reka-ui', 'zod']
     }
   }
 })

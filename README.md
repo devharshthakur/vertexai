@@ -19,7 +19,7 @@ An AI-augmented learning management system with a tutor that knows your course.
 
 VertexAI is a learning management system built around one idea: the AI tutor should answer from _your_ course material, not from a generic chatbot.
 
-It brings the familiar LMS loop — courses, lectures, assignments, quizzes, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from.
+The goal is the familiar LMS loop — courses, lectures, assessments, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from. The LMS foundations work today; the tutor and assessment features are planned. See [FEATURES.md](./FEATURES.md) for the breakdown.
 
 ## Who it's for
 
@@ -29,33 +29,32 @@ It brings the familiar LMS loop — courses, lectures, assignments, quizzes, cer
 
 ## Features
 
-- Course authoring, a searchable catalog, and enrollment
-- Lectures with progress tracking, notes, and bookmarks
-- Assignments, auto-graded quizzes, certificates, streaks, and badges
-- An AI tutor grounded in course material, with source citations
-- AI-generated lecture summaries, flashcards, and quiz drafts
-- Explanations that adapt to a beginner, intermediate, or advanced level
-- Instructor analytics, plus an admin layer for approvals and moderation
+The app currently covers course authoring, a searchable catalog, enrollment, lecture progress, notes, bookmarks, learning streaks, and admin course approvals. AI tutoring, assessments, certificates, badges, and analytics are planned.
+
+[FEATURES.md](./FEATURES.md) lists what works today and what is still to come.
 
 ## Tech stack
 
-| Layer     | Choice                                   |
-| --------- | ---------------------------------------- |
-| Framework | Nuxt 4, Vue 3, TypeScript                |
-| UI        | Tailwind CSS 4, shadcn-vue, Lucide icons |
-| Data      | PostgreSQL (Docker Compose), Drizzle ORM |
-| Auth      | Better Auth (email + password, GitHub)   |
-| Forms     | TanStack Form, Zod                       |
-| Tooling   | ESLint, Prettier, Husky                  |
+| Layer       | Choice                                                |
+| ----------- | ----------------------------------------------------- |
+| Framework   | Nuxt 4, Vue 3, TypeScript                             |
+| UI          | Tailwind CSS 4, shadcn-vue, Lucide icons, Video.js 10 |
+| Data        | PostgreSQL 17 (Docker Compose), Drizzle ORM           |
+| Auth        | Better Auth (email + password, optional GitHub)       |
+| Validation  | Zod, with schemas shared by client and server         |
+| Client data | Nuxt `useFetch`, TanStack Vue Query                   |
+| Tooling     | ESLint, Prettier, Husky, nano-staged                  |
 
 ## Getting started
 
-Follow **[SETUP.md](./SETUP.md)** to run the app locally: database, environment, migrations, and auth.
+Follow [SETUP.md](./SETUP.md) to run the app locally, then read [ARCHITECTURE.md](./ARCHITECTURE.md) to see how the code is organized.
 
 ## Project documentation
 
 - [SETUP.md](./SETUP.md) — local development setup
-- [docs/PRD.md](./docs/PRD.md) — the product requirements document this is built from
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — how the application is built
+- [FEATURES.md](./FEATURES.md) — what works today and what is planned
+- [docs/PRD/PRD.docx](./docs/PRD/PRD.docx) — the product requirements this is built from (readable copy in [PRD.html](./docs/PRD/PRD.html))
 
 ## Author
 

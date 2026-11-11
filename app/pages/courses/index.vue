@@ -16,6 +16,7 @@
   })
 
   const filters = ref<CatalogFilterState>({ ...DEFAULT_CATALOG_FILTERS })
+  const filterResetKey = shallowRef(0)
 
   const query = computed(() => ({
     q: filters.value.q || undefined,
@@ -39,6 +40,11 @@
       page: patch.page ?? 1
     }
   }
+
+  function clearFilters() {
+    updateFilters(DEFAULT_CATALOG_FILTERS)
+    filterResetKey.value++
+  }
 </script>
 
 <template>
@@ -50,7 +56,7 @@
       </p>
     </header>
 
-    <CatalogFilters :filters="filters" :categories="categories" @update:filters="updateFilters" />
+    <CatalogFilters :key="filterResetKey" :filters="filters" :categories="categories" @update:filters="updateFilters" />
 
     <div v-if="pending" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
       <Skeleton v-for="index in 6" :key="index" class="h-56" />
@@ -75,9 +81,7 @@
         <EmptyDescription> Nothing matches these filters yet. Try a different search. </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" as-child>
-          <NuxtLink to="/courses">Clear filters</NuxtLink>
-        </Button>
+        <Button variant="outline" @click="clearFilters">Clear filters</Button>
       </EmptyContent>
     </Empty>
 

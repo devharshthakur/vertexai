@@ -66,7 +66,7 @@
         <h1 class="text-xl font-bold">Welcome back</h1>
         <FieldDescription>
           Don't have an account?
-          <NuxtLink to="/auth/signup" class="underline underline-offset-4"> Sign up </NuxtLink>
+          <NuxtLink :to="{ path: '/auth/signup', query: { redirect: redirectTo } }" class="underline underline-offset-4"> Sign up </NuxtLink>
         </FieldDescription>
       </div>
       <form.Field name="email">

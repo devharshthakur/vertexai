@@ -19,8 +19,9 @@
   const emit = defineEmits<{ seek: [timestampSeconds: number] }>()
 
   const lectureUrl = computed(() => `/api/courses/${props.courseId}/lectures/${props.lectureId}`)
-  const { data: notes, pending: notesPending, error: notesError, refresh: refreshNotes } = await useFetch<LectureNote[]>(() => `${lectureUrl.value}/notes`, { default: () => [] })
-  const { data: bookmarks, pending: bookmarksPending, error: bookmarksError, refresh: refreshBookmarks } = await useFetch<LectureBookmark[]>(() => `${lectureUrl.value}/bookmarks`, { default: () => [] })
+  const notesRequest = useFetch<LectureNote[]>(() => `${lectureUrl.value}/notes`, { default: () => [] })
+  const bookmarksRequest = useFetch<LectureBookmark[]>(() => `${lectureUrl.value}/bookmarks`, { default: () => [] })
+  const [{ data: notes, pending: notesPending, error: notesError, refresh: refreshNotes }, { data: bookmarks, pending: bookmarksPending, error: bookmarksError, refresh: refreshBookmarks }] = await Promise.all([notesRequest, bookmarksRequest])
   const editingNoteId = shallowRef<string | null>(null)
   const errorMessage = shallowRef('')
   const savingBookmark = shallowRef(false)

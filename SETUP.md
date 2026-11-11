@@ -1,24 +1,32 @@
 # Setup
 
-Local development setup for VertexAI.
+Run VertexAI on your machine: install the dependencies, start a Docker-hosted PostgreSQL database, apply the schema, and open the Nuxt dev server.
 
-## Table of Contents
+> [!TIP]
+> The steps below are in the order you need them. Each one assumes the previous step is complete.
+
+## Contents
 
 - [Requirements](#requirements)
 - [Install](#install)
 - [Environment](#environment)
 - [Database](#database)
-- [Migrations](#migrations)
-- [Seed data](#seed-data)
-- [Authentication](#authentication)
+- [Schema and demo data](#schema-and-demo-data)
+  - [Option A: demo data](#option-a-demo-data)
+  - [Option B: empty database](#option-b-empty-database)
 - [Run the app](#run-the-app)
-- [Scripts](#scripts)
+- [Authentication](#authentication)
+- [Database commands](#database-commands)
 
 ## Requirements
 
-- [Node.js](https://nodejs.org) 20 or newer
-- [pnpm](https://pnpm.io) 11.15 or newer
-- [Docker](https://docs.docker.com/get-docker/) with Docker Compose
+| Tool                                          | Version         | Used for                            |
+| --------------------------------------------- | --------------- | ----------------------------------- |
+| [Node.js](https://nodejs.org)                 | 20 or newer     | Nuxt 4 and the project scripts      |
+| [pnpm](https://pnpm.io)                       | 11.15 or newer  | Dependencies and every command here |
+| [Docker](https://docs.docker.com/get-docker/) | Current release | The local PostgreSQL container      |
+
+You do not need a PostgreSQL install on your machine; the database runs in Docker.
 
 ## Install
 
@@ -26,77 +34,87 @@ Local development setup for VertexAI.
 pnpm install
 ```
 
+This also installs the Git hooks (Husky) and generates Nuxt's TypeScript types.
+
 ## Environment
 
-Copy the template and edit it:
+Create your local environment file from the template:
 
 ```bash
 cp .env.example .env
 ```
 
-| Variable                                              | Purpose                                                                 |
-| ----------------------------------------------------- | ----------------------------------------------------------------------- |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Local database credentials                                              |
-| `POSTGRES_PORT`                                       | Host port for the database (`5433` by default)                          |
-| `DATABASE_URL`                                        | Connection string used by Drizzle and the Nuxt server                   |
-| `BETTER_AUTH_SECRET`                                  | Secret used to sign sessions                                            |
-| `BETTER_AUTH_URL`                                     | Base URL the app is served from                                         |
-| `COURSE_MATERIALS_DIR`                                | Optional absolute path outside the repository for uploaded course files |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`           | Optional GitHub OAuth credentials                                       |
+### Required variables
 
-`POSTGRES_PORT` defaults to `5433` so it does not clash with a PostgreSQL already listening on `5432`.
+| Variable                                              | Purpose                                               | Default in `.env.example`                                |
+| ----------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------------- |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Credentials for the Docker database                   | `vertexai`                                               |
+| `POSTGRES_PORT`                                       | Host port the database is published on                | `5433`                                                   |
+| `DATABASE_URL`                                        | Connection string used by Drizzle and the Nuxt server | `postgresql://vertexai:vertexai@localhost:5433/vertexai` |
+| `BETTER_AUTH_SECRET`                                  | Secret Better Auth uses to sign sessions              | A placeholder; generate your own                         |
+| `BETTER_AUTH_URL`                                     | Base URL the app is served from                       | `http://localhost:5173`                                  |
 
-Course PDFs, PowerPoint slides, and videos are stored on the server's local filesystem, not in the database or repository. Set `COURSE_MATERIALS_DIR` to an absolute path outside the repository to choose the directory; by default, files go to `~/.local/share/vertexai/course-materials`. Keep this directory persistent and backed up; changing its path without moving existing files makes those materials unavailable. Each upload is limited to 100 MiB. This storage is local to one app instance and is not suitable for multi-instance deployments without shared storage.
+> [!TIP]
+> Generate the auth secret with `openssl rand -base64 32` and paste the result into `BETTER_AUTH_SECRET`.
 
-Generate the auth secret with:
+> [!NOTE]
+> `POSTGRES_PORT` defaults to `5433` so the container does not clash with a PostgreSQL server that may already be listening on `5432`.
 
-```bash
-openssl rand -base64 32
-```
+> [!IMPORTANT]
+> Keep these values consistent. The port in `DATABASE_URL` must match `POSTGRES_PORT`, and `BETTER_AUTH_URL` must use the port the dev server runs on.
+
+### Optional variables
+
+| Variable                                    | Purpose                                                    | Default                                    |
+| ------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------ |
+| `COURSE_MATERIALS_DIR`                      | Absolute path where uploaded course files are stored       | `~/.local/share/vertexai/course-materials` |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub sign-in; the button stays hidden until both are set | Unset                                      |
+
+Course materials — PDFs, slides, and uploaded videos — live on the filesystem, not in the database or the repository:
+
+- The directory must be an absolute path outside this repository. The app rejects a configured path inside the checkout.
+- Files survive database resets, so keep the directory backed up. Moving it without moving the files makes existing materials unavailable.
+- Each upload is limited to 100 MiB.
+- This storage belongs to one app instance. Multi-instance deployments need shared storage instead.
 
 ## Database
 
-The database runs in Docker. Start it:
+Start PostgreSQL in Docker:
 
 ```bash
-pnpm db:up # start PostgreSQL on localhost:5433
+pnpm db:up
 ```
 
-Once the container exists, `db:start`/`db:stop` resume or pause it without removing the container or its data:
+The container publishes the database on `localhost:5433` by default and keeps its data in a Docker volume managed by the `vertexai` Compose project.
 
-```bash
-pnpm db:start # start an existing (stopped) db container
-pnpm db:stop  # stop the db container, keeping the volume
-```
+| Command         | Effect                                                           |
+| --------------- | ---------------------------------------------------------------- |
+| `pnpm db:start` | Start an existing, stopped container; data kept                  |
+| `pnpm db:stop`  | Stop the container; data kept                                    |
+| `pnpm db:down`  | Remove the container and network; the named volume and data stay |
+| `pnpm db:logs`  | Follow the database logs                                         |
 
-## Migrations
+> [!NOTE]
+> `db:up` creates the container if it does not exist; `db:start` only restarts one that already exists. Use `db:up` on a fresh checkout.
 
-Tables are defined in `server/db/schema`, and `drizzle.config.ts` reads the same `DATABASE_URL` the Nuxt server uses:
+## Schema and demo data
 
-```bash
-pnpm db:generate # write a migration from server/db/schema
-pnpm db:migrate  # apply pending migrations
-pnpm db:check    # validate the migration history
-pnpm db:studio   # browse the database
-```
+Tables are defined in `server/db/schema`, and migrations are committed in `server/db/migrations`. Choose one of the two paths below.
 
-`GET /api/health` reports whether the database is reachable: `200` with `{ "status": "ok", "database": "up" }` when it is, `503` with `{ "status": "error", "database": "down" }` when the probe fails.
+### Option A: demo data
 
-## Seed data
-
-To recreate the demo from a clean database, first add the lecture videos described below, then run:
+The demo dataset is the fastest way to see a populated app. Add the lecture videos described below first, then run:
 
 ```bash
 pnpm demo:setup
 ```
 
-**This deletes the `vertexai` Docker Compose project's containers and volumes, including all existing database data.** The command validates the demo assets first, then removes the project and its volumes, starts a fresh database, applies migrations, and seeds the demo. Running it is approval for that destructive reset. It does not run in production.
+> [!WARNING]
+> This deletes the `vertexai` Docker Compose project's containers and volumes, including all existing database data. Running the command is your approval for that reset.
 
-To seed an existing migrated database without recreating its container or volume, use:
+The command validates the demo assets first, then removes the Compose project and its volumes, starts a fresh database, applies migrations, and seeds the demo. It refuses to run when `NODE_ENV=production`.
 
-```bash
-pnpm db:seed
-```
+Demo accounts, all using the password `password@1234`:
 
 | Role       | Email                    |
 | ---------- | ------------------------ |
@@ -104,9 +122,12 @@ pnpm db:seed
 | Instructor | `instructor@example.com` |
 | Student    | `student@example.com`    |
 
-The seed creates three approved courses and enrolls the demo student. Every demo account uses the predefined password `password@1234`. Re-running `db:seed` re-applies that password, signs the accounts out, and rebuilds the managed demo course curriculum and enrollment. The seed refuses to run when `NODE_ENV=production`.
+The seed creates three approved courses and enrolls the demo student. Running `pnpm db:seed` re-applies the demo password, signs those accounts out, and rebuilds the demo courses and enrollment without touching the container or its volume.
 
-### Demo lecture assets
+> [!NOTE]
+> `demo:setup` builds its connection from `POSTGRES_*` and `POSTGRES_PORT`, not from `DATABASE_URL`. Keep them consistent.
+
+#### Demo lecture assets
 
 The seeded courses read their lectures from `public/videos/`:
 
@@ -117,39 +138,28 @@ public/videos/<slug>/
   about.md
 ```
 
-The demo slugs are `typescript`, `react`, and `tailwind`. Add one MP4 video per folder; the seed prefers `video.mp4` and otherwise takes the first `.mp4` file. Video files are ignored by Git, so add them locally before seeding. `about.md` must start with `# Lecture title`; the remaining text becomes the plain-text course description. The `transcript.txt` beside each video is the transcript stored on the seeded lecture. The seed validates every folder before changing database rows. See [`public/videos/README.md`](public/videos/README.md) for the format and distribution instructions.
+The demo slugs are `typescript`, `react`, and `tailwind`. For each folder:
 
-Everything under `public/videos/` is publicly served by the app. Use demo assets you are allowed to distribute; this is not private course delivery.
+- Add exactly one MP4 video. The seed prefers `video.mp4` and otherwise uses the first `.mp4` file. Video files are ignored by Git, so add them locally before seeding.
+- Keep `about.md` starting with `# Lecture title`; the remaining text becomes the plain-text course description.
+- Keep `transcript.txt` beside the video; it becomes the seeded lecture transcript.
 
-## Authentication
+The seed validates every folder before it changes any database row. See [`public/videos/README.md`](public/videos/README.md) for the source videos, the download archive, and the encoding guidance.
 
-[Better Auth](https://better-auth.com) handles sign-in, sessions and roles. The server instance lives in `server/utils/auth.ts` and is mounted on `/api/auth/**` by `server/api/auth/[...all].ts`.
+> [!IMPORTANT]
+> Everything under `public/videos/` is served publicly by the app. Use demo material you are allowed to distribute.
 
-Sign-in works with email and password out of the box. GitHub sign-in is optional: set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` in `.env` and the button appears on the login page. Register the OAuth app with the callback URL `http://localhost:5173/api/auth/callback/github`.
+### Option B: empty database
 
-| Route                 | What it is                              |
-| --------------------- | --------------------------------------- |
-| `/auth/login`         | Sign in with email, password or GitHub  |
-| `/auth/signup`        | Create an account                       |
-| `/dashboard`          | A page that requires a session          |
-| `/api/auth/**`        | The Better Auth API                     |
-| `/api/auth-providers` | The sign-in methods this deployment has |
-
-New accounts get the `student` role. Admins are created with the Better Auth CLI and can promote accounts to `instructor` or `admin`:
+If you do not need demo content, apply the committed migrations instead:
 
 ```bash
-pnpm dlx auth@1.7.11 create-admin --config server/utils/auth.ts \
-  --email you@example.com --name "Your Name" --role admin
-```
-
-The auth tables (`users`, `sessions`, `accounts`, `verifications`) are generated by the Better Auth CLI into `server/db/schema/auth.ts`. Regenerate them after changing the auth config or its plugins, then run the usual Drizzle workflow:
-
-```bash
-pnpm dlx auth@1.7.11 generate --config server/utils/auth.ts \
-  --output server/db/schema/auth.ts -y
-pnpm db:generate
 pnpm db:migrate
 ```
+
+This uses the database configured by `DATABASE_URL`. Once the app is running, create an account at `/auth/signup`.
+
+You can add the demo content later without resetting the database: add the lecture assets described in Option A, then run `pnpm db:seed`.
 
 ## Run the app
 
@@ -157,27 +167,47 @@ pnpm db:migrate
 pnpm dev
 ```
 
-The app is served on [http://localhost:5173](http://localhost:5173).
+Open [http://localhost:5173](http://localhost:5173).
 
-## Scripts
+Check that the app can reach the database:
 
-| Script             | What it does                                    |
-| ------------------ | ----------------------------------------------- |
-| `pnpm dev`         | Start the dev server on port 5173               |
-| `pnpm build`       | Build for production                            |
-| `pnpm preview`     | Serve the production build on port 4173         |
-| `pnpm validate`    | Run format check, lint and typecheck            |
-| `pnpm lint`        | Lint with ESLint                                |
-| `pnpm format`      | Format with Prettier                            |
-| `pnpm typecheck`   | Typecheck with `vue-tsc`                        |
-| `pnpm deps:update` | Bump deps, validate, commit `chore: bump deps`  |
-| `pnpm db:up`       | Start the database container                    |
-| `pnpm db:down`     | Stop and remove the database container          |
-| `pnpm db:start`    | Start an existing (stopped) database container  |
-| `pnpm db:stop`     | Stop the database container, keeping the volume |
-| `pnpm db:logs`     | Follow the database logs                        |
-| `pnpm db:generate` | Write a migration from `server/db/schema`       |
-| `pnpm db:migrate`  | Apply pending migrations                        |
-| `pnpm db:check`    | Validate the migration history                  |
-| `pnpm db:studio`   | Browse the database                             |
-| `pnpm clean`       | Remove generated Nuxt output                    |
+```bash
+curl http://localhost:5173/api/health
+```
+
+A healthy setup returns `200` with:
+
+```json
+{ "status": "ok", "database": "up" }
+```
+
+When the probe fails, the endpoint returns `503` with `{ "status": "error", "database": "down" }`. Check the container with `pnpm db:logs`.
+
+## Authentication
+
+[Better Auth](https://better-auth.com) handles sign-in, sessions, and roles. The server instance lives in `server/utils/auth.ts` and is mounted on `/api/auth/**` by `server/api/auth/[...all].ts`.
+
+- Email and password sign-in works without extra configuration.
+- GitHub sign-in is optional: set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, then register the OAuth app with the callback URL `http://localhost:5173/api/auth/callback/github`. The button appears only when both values are set.
+- New accounts receive the `student` role.
+
+Create the first admin from the command line. The database must be running and migrated:
+
+```bash
+pnpm dlx auth@1.7.18 create-admin --config server/utils/auth.ts \
+  --email you@example.com --name "Your Name" --role admin
+```
+
+> [!NOTE]
+> Keep the `auth` CLI version in these commands aligned with the installed `better-auth` version (`1.7.18` in `package.json`).
+
+## Database commands
+
+| Command            | What it does                                  |
+| ------------------ | --------------------------------------------- |
+| `pnpm db:migrate`  | Apply pending migrations                      |
+| `pnpm db:generate` | Write a new migration from `server/db/schema` |
+| `pnpm db:check`    | Validate the migration history                |
+| `pnpm db:studio`   | Browse the database in Drizzle Studio         |
+
+Migrations are read from `server/db/migrations` and applied to the database in `DATABASE_URL`.

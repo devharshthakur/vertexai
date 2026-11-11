@@ -13,12 +13,16 @@
   definePageMeta({ layout: 'workspace', middleware: 'admin' })
   useSeoMeta({ title: 'Course approvals · VertexAI' })
 
+  const page = shallowRef(1)
   const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/admin/courses/pending', {
-    query: { limit: 50 }
+    query: { limit: 50, page }
   })
   const comments = ref<Record<string, string>>({})
   const busyCourseId = shallowRef<string | null>(null)
   const pageError = shallowRef('')
+  watch(data, (result) => {
+    if (result && page.value > result.totalPages) page.value = result.totalPages
+  })
 
   async function decide(courseId: string, decision: 'approved' | 'rejected') {
     pageError.value = ''
@@ -87,7 +91,7 @@
       </Card>
     </div>
 
-    <Empty v-else-if="!error && data?.items.length === 0">
+    <Empty v-else-if="!error && data?.total === 0">
       <EmptyHeader>
         <EmptyTitle>All caught up</EmptyTitle>
         <EmptyDescription>There are no pending courses to review.</EmptyDescription>
@@ -134,5 +138,10 @@
         </CardFooter>
       </Card>
     </div>
+    <footer v-if="data && data.total > 0" class="flex items-center justify-between gap-4 border-t border-border pt-6">
+      <Button variant="outline" size="sm" :disabled="pending || page <= 1" @click="page--">Previous</Button>
+      <p class="text-sm text-muted-foreground">Page {{ data.page }} of {{ data.totalPages }} · {{ data.total }} pending</p>
+      <Button variant="outline" size="sm" :disabled="pending || page >= data.totalPages" @click="page++">Next</Button>
+    </footer>
   </div>
 </template>

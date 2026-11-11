@@ -2,6 +2,7 @@
   import { ArrowDownIcon, ArrowUpIcon, PlusIcon } from '@lucide/vue'
   import type { ModuleSummary } from '#shared/types/courses'
   import LectureManager from '@/components/instructor/LectureManager.vue'
+  import { useInstructorDraft } from '@/composables/useInstructorDrafts'
   import { addModuleSchema } from '#shared/validation/courses'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@
   const title = shallowRef('')
   const saving = shallowRef(false)
   const errorMessage = shallowRef('')
+  useInstructorDraft(() => title.value !== '')
 
   async function addModule() {
     errorMessage.value = ''
@@ -87,7 +89,7 @@
         <form class="flex flex-col gap-3 sm:flex-row sm:items-end" @submit.prevent="addModule">
           <Field class="flex-1">
             <FieldLabel for="module-title">Add a module</FieldLabel>
-            <Input id="module-title" v-model="title" maxlength="200" placeholder="Module title" />
+            <Input id="module-title" v-model="title" :disabled="saving" maxlength="200" placeholder="Module title" />
           </Field>
           <Button type="submit" :disabled="saving || !title.trim()">
             <PlusIcon data-icon="inline-start" />

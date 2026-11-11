@@ -2,21 +2,23 @@
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
   import CourseMaterialsPanel from '@/components/instructor/CourseMaterialsPanel.vue'
   import ModuleManager from '@/components/instructor/ModuleManager.vue'
+  import { provideInstructorDrafts } from '@/composables/useInstructorDrafts'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Skeleton } from '@/components/ui/skeleton'
-  import type { CourseWithCurriculum } from '#shared/types/courses'
+  import type { CourseSummary, CourseWithCurriculum } from '#shared/types/courses'
   import type { CreateCourseValues } from '#shared/validation/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'instructor' })
 
   const route = useRoute()
+  provideInstructorDrafts()
   const courseId = computed(() => String(route.params.id))
   useSeoMeta({ title: 'Edit course · VertexAI' })
 
-  const { data: courseData, pending, error, refresh } = await useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`, { deep: true })
+  const { data: courseData, pending, error } = await useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`, { deep: true })
   const course = computed(() => courseData.value?.course ?? null)
   const errorMessage = shallowRef('')
   const submitting = shallowRef(false)
@@ -26,8 +28,9 @@
     submitting.value = true
     errorMessage.value = ''
     try {
-      await $fetch(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} })
-      await Promise.all([refresh(), refreshReview()])
+      const updated = await $fetch<CourseSummary>(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} })
+      if (courseData.value) courseData.value.course = updated
+      await refreshReview()
     } catch {
       errorMessage.value = 'We could not submit this course for review. Please try again.'
     } finally {
@@ -39,13 +42,16 @@
     errorMessage.value = ''
 
     try {
-      await $fetch(`/api/courses/${courseId.value}`, {
+      const updated = await $fetch<CourseSummary>(`/api/courses/${courseId.value}`, {
         method: 'PUT',
         body: values
       })
-      await Promise.all([refresh(), refreshReview()])
+      if (courseData.value) courseData.value.course = updated
+      await refreshReview()
+      return true
     } catch {
       errorMessage.value = 'We could not save course details. Please try again.'
+      return false
     }
   }
 </script>

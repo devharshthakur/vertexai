@@ -2,6 +2,7 @@
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
   import CourseMaterialsPanel from '@/components/instructor/CourseMaterialsPanel.vue'
   import ModuleManager from '@/components/instructor/ModuleManager.vue'
+  import AssignmentManager from '@/components/instructor/AssignmentManager.vue'
   import { provideInstructorDrafts } from '@/composables/useInstructorDrafts'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
@@ -124,5 +125,6 @@
     <CourseMaterialsPanel :course-id="course!.id" :modules="courseData.modules" />
 
     <ModuleManager v-model:modules="courseData.modules" :course-id="course!.id" />
+    <AssignmentManager :course-id="course!.id" />
   </div>
 </template>

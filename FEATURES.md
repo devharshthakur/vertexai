@@ -7,17 +7,18 @@ VertexAI aims to cover the full teaching loop: authoring, publishing, learning, 
 
 ## Available now
 
-| Area                | What works                                                                                           |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| Accounts and roles  | Email and password sign-up/sign-in, optional GitHub OAuth, student/instructor/admin roles            |
-| Course catalog      | Published courses with text search, category and difficulty filters, and pagination                  |
-| Course authoring    | Course metadata, ordered modules and lectures, PDF/PowerPoint/video materials, submission for review |
-| Course approval     | Admin queue of pending courses, approve or reject with an optional comment                           |
-| Enrollment          | Enroll in approved courses; enrolled courses appear on the dashboard                                 |
-| Lectures            | Video playback, resume position, completion tracking, course progress percentage                     |
-| Notes and bookmarks | Timestamped notes and bookmarks attached to a lecture                                                |
-| Learning streaks    | Current and longest daily streak per user                                                            |
-| Demo data           | Seeded accounts, three approved courses, and lecture assets                                          |
+| Area                | What works                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------- |
+| Accounts and roles  | Email and password sign-up/sign-in, optional GitHub OAuth, student/instructor/admin roles                |
+| Course catalog      | Published courses with text search, category and difficulty filters, and pagination                      |
+| Course authoring    | Course metadata, ordered modules and lectures, PDF/PowerPoint/video materials, submission for review     |
+| Course approval     | Admin queue of pending courses, approve or reject with an optional comment                               |
+| Enrollment          | Enroll in approved courses; enrolled courses appear on the dashboard                                     |
+| Lectures            | Video playback, resume position, completion tracking, course progress percentage                         |
+| Notes and bookmarks | Timestamped notes and bookmarks attached to a lecture                                                    |
+| Assignments         | Instructor rubrics and deadlines, enrolled-student file submissions, protected downloads, manual grading |
+| Learning streaks    | Current and longest daily streak per user                                                                |
+| Demo data           | Seeded accounts, three approved courses, and lecture assets                                              |
 
 ## Planned
 
@@ -26,7 +27,6 @@ These come from the product requirements and are not implemented yet:
 - **AI tutor** grounded in course material, with citations back to the lecture.
 - **AI study aids**: lecture summaries, flashcards, and quiz drafts.
 - **Adaptive explanations** at beginner, intermediate, and advanced levels.
-- **Assignments** with submissions.
 - **Auto-graded quizzes**.
 - **Certificates** on course completion.
 - **Achievement badges.**

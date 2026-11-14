@@ -7,48 +7,55 @@
   import { Button } from '@/components/ui/button'
   import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field'
   import { Input } from '@/components/ui/input'
+  import { Spinner } from '@/components/ui/spinner'
   import { Textarea } from '@/components/ui/textarea'
   import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { watch } from 'vue'
 
   const props = defineProps<{
     course?: CourseSummary | null
     onSave: (values: CreateCourseValues) => Promise<boolean>
   }>()
   const emit = defineEmits<{ saved: [] }>()
-  const saving = shallowRef(false)
 
-  const defaults: CreateCourseValues = {
-    title: props.course?.title ?? '',
-    description: props.course?.description ?? null,
-    category: props.course?.category ?? null,
-    difficulty: (props.course?.difficulty as CreateCourseValues['difficulty']) ?? null,
-    thumbnailUrl: props.course?.thumbnailUrl ?? null,
-    price: props.course?.price ?? 0
+  /** Form defaults follow the course the parent loaded or replaced after a save. */
+  function toDefaults(course?: CourseSummary | null): CreateCourseValues {
+    return {
+      title: course?.title ?? '',
+      description: course?.description ?? null,
+      category: course?.category ?? null,
+      difficulty: (course?.difficulty as CreateCourseValues['difficulty']) ?? null,
+      thumbnailUrl: course?.thumbnailUrl ?? null,
+      price: course?.price ?? 0
+    }
   }
 
   const form = useForm({
-    defaultValues: defaults,
+    defaultValues: toDefaults(props.course),
     validationLogic: revalidateLogic(),
     validators: { onDynamic: createCourseSchema },
     onSubmit: async ({ value }) => {
-      saving.value = true
-      try {
-        const saved = await props.onSave({
-          ...value,
-          description: value.description || null,
-          category: value.category || null,
-          thumbnailUrl: value.thumbnailUrl || null
-        })
-        if (saved) {
-          form.reset(value)
-          emit('saved')
-        }
-      } finally {
-        saving.value = false
+      const saved = await props.onSave({
+        ...value,
+        description: value.description || null,
+        category: value.category || null,
+        thumbnailUrl: value.thumbnailUrl || null
+      })
+      if (saved) {
+        form.reset(value)
+        emit('saved')
       }
     }
   })
   useInstructorDraft(() => !form.state.isDefaultValue)
+
+  /** Subscribe to the submitting flag so the field set disables during a save. */
+  const submitting = form.useSelector((state) => state.isSubmitting)
+
+  watch(
+    () => props.course,
+    (course) => form.reset(toDefaults(course))
+  )
 
   /** Number inputs emit text, and the schema expects a number. */
   function toPrice(value: string | number) {
@@ -70,7 +77,7 @@
 
 <template>
   <form class="flex flex-col gap-6" novalidate @submit.prevent="form.handleSubmit()">
-    <FieldSet :disabled="saving">
+    <FieldSet :disabled="submitting">
       <FieldGroup>
         <form.Field name="title">
           <template #default="{ field }">
@@ -106,7 +113,7 @@
 
           <form.Field name="difficulty">
             <template #default="{ field }">
-              <DifficultySelect :model-value="field.state.value ?? null" @update:model-value="field.handleChange" />
+              <DifficultySelect :model-value="field.state.value ?? null" :invalid="!field.state.meta.isValid" :errors="field.state.meta.errors" @update:model-value="field.handleChange" />
             </template>
           </form.Field>
         </div>
@@ -135,6 +142,7 @@
 
         <form.Subscribe v-slot="{ isSubmitting }">
           <Button type="submit" :disabled="isSubmitting">
+            <Spinner v-if="isSubmitting" data-icon="inline-start" />
             {{
               isSubmitting ? 'Saving…'
               : course ? 'Save changes'

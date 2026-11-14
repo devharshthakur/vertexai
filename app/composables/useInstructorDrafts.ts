@@ -1,13 +1,28 @@
-import { inject, onScopeDispose, provide, type InjectionKey } from 'vue'
+import { useEventListener } from '@vueuse/core'
+import { inject, onScopeDispose, provide, shallowRef, type InjectionKey, type ShallowRef } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
 
 type DraftRegistry = { register: (isDirty: () => boolean) => () => void }
 
-const draftKey: InjectionKey<DraftRegistry> = Symbol('instructor drafts')
+type PendingNavigation = { resolve: (allowed: boolean) => void }
 
-/** Own the registry and navigation guards for one instructor page. */
+type DraftGuard = {
+  pending: Readonly<ShallowRef<PendingNavigation | null>>
+  resolve: (allowed: boolean) => void
+}
+
+const draftKey: InjectionKey<DraftRegistry> = Symbol('instructor drafts')
+const guardKey: InjectionKey<DraftGuard> = Symbol('instructor draft guard')
+
+/**
+ * Own the registry, navigation guards, and confirmation dialog state for one
+ * instructor page. The dialog itself is rendered by `InstructorDraftGuard` so
+ * the page keeps a single, accessible confirmation surface.
+ */
 export function provideInstructorDrafts() {
   const drafts = new Set<() => boolean>()
+  const pending = shallowRef<PendingNavigation | null>(null)
+
   provide(draftKey, {
     register(isDirty) {
       drafts.add(isDirty)
@@ -15,24 +30,38 @@ export function provideInstructorDrafts() {
     }
   })
 
+  const guard: DraftGuard = {
+    pending,
+    resolve(allowed) {
+      const current = pending.value
+      pending.value = null
+      current?.resolve(allowed)
+    }
+  }
+  provide(guardKey, guard)
+
   function hasDrafts() {
     return [...drafts].some((isDirty) => isDirty())
   }
 
   function confirmLeaving() {
-    return !hasDrafts() || window.confirm('You have unsaved changes. Leave without saving?')
+    if (!hasDrafts()) return true
+    // A second navigation may arrive while the dialog is open; keep the
+    // first prompt and block the duplicate instead of stacking dialogs.
+    if (pending.value) return false
+    return new Promise<boolean>((resolve) => {
+      pending.value = { resolve }
+    })
   }
 
   onBeforeRouteLeave(() => confirmLeaving())
   onBeforeRouteUpdate((to, from) => (to.path === from.path ? true : confirmLeaving()))
 
   if (import.meta.client) {
-    const beforeUnload = (event: BeforeUnloadEvent) => {
+    useEventListener(window, 'beforeunload', (event) => {
       if (!hasDrafts()) return
       event.preventDefault()
-    }
-    window.addEventListener('beforeunload', beforeUnload)
-    onScopeDispose(() => window.removeEventListener('beforeunload', beforeUnload))
+    })
   }
 }
 
@@ -41,4 +70,11 @@ export function useInstructorDraft(isDirty: () => boolean) {
   const registry = inject(draftKey)
   if (!registry) throw new Error('Instructor drafts require a page provider')
   onScopeDispose(registry.register(isDirty))
+}
+
+/** Read and settle the pending navigation prompt for the page's confirmation dialog. */
+export function useInstructorDraftGuard() {
+  const guard = inject(guardKey)
+  if (!guard) throw new Error('Instructor draft guard requires a page provider')
+  return guard
 }

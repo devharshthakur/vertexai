@@ -1,14 +1,32 @@
 <script setup lang="ts">
+  import { useMutation } from '@tanstack/vue-query'
   import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { toast } from 'vue-sonner'
   import { Button } from '@/components/ui/button'
-  import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Input } from '@/components/ui/input'
+  import { Spinner } from '@/components/ui/spinner'
   import { authClient } from '@/lib/auth-client'
   import { passwordSchema } from '#shared/validation/auth'
   import type { PasswordValues } from '#shared/validation/auth'
 
-  const serverError = shallowRef('')
-  const saved = shallowRef(false)
+  const { mutateAsync: changePassword } = useMutation({
+    mutationFn: async (values: PasswordValues) => {
+      const { error } = await authClient.changePassword({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
+        revokeOtherSessions: true
+      })
+      if (error) throw new Error(error.message ?? 'Unable to change your password.')
+    },
+    onSuccess: () => {
+      form.reset()
+      toast.success('Password changed.')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to change your password.')
+    }
+  })
 
   const form = useForm({
     defaultValues: {
@@ -19,22 +37,11 @@
     validationLogic: revalidateLogic(),
     validators: { onDynamic: passwordSchema },
     onSubmit: async ({ value }) => {
-      serverError.value = ''
-      saved.value = false
-
-      const { error } = await authClient.changePassword({
-        currentPassword: value.currentPassword,
-        newPassword: value.newPassword,
-        revokeOtherSessions: true
-      })
-
-      if (error) {
-        serverError.value = error.message ?? 'Unable to change your password.'
-        return
+      try {
+        await changePassword(value)
+      } catch {
+        // The mutation reports the failure.
       }
-
-      form.reset()
-      saved.value = true
     }
   })
 </script>
@@ -72,11 +79,10 @@
       <Field orientation="horizontal" class="flex-wrap">
         <form.Subscribe v-slot="{ isSubmitting }">
           <Button type="submit" :disabled="isSubmitting">
+            <Spinner v-if="isSubmitting" data-icon="inline-start" />
             {{ isSubmitting ? 'Changing…' : 'Change password' }}
           </Button>
         </form.Subscribe>
-        <FieldError v-if="serverError">{{ serverError }}</FieldError>
-        <FieldDescription v-if="saved" role="status"> Your password has been changed. </FieldDescription>
       </Field>
     </FieldGroup>
   </form>

@@ -10,13 +10,10 @@
   import { useSignOut } from '@/composables/useSignOut'
   import { APP_ROLES } from '#shared/types/auth'
 
-  const props = withDefaults(
-    defineProps<{
-      variant?: 'full' | 'minimal'
-      class?: HTMLAttributes['class']
-    }>(),
-    { variant: 'full', class: undefined }
-  )
+  const { variant = 'full', class: className = undefined } = defineProps<{
+    variant?: 'full' | 'minimal'
+    class?: HTMLAttributes['class']
+  }>()
 
   const session = useAuthSessionState()
   const { signOut } = useSignOut()
@@ -25,7 +22,7 @@
 </script>
 
 <template>
-  <header :class="cn('border-b', props.class)">
+  <header :class="cn('border-b', className)">
     <AppContainer class="flex h-14 items-center justify-between gap-4">
       <NuxtLink to="/" class="text-sm font-semibold tracking-tight"> VertexAI </NuxtLink>
 

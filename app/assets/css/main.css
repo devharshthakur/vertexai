@@ -134,6 +134,11 @@
     width: 100%;
   }
 
+  /* Keep the unupgraded custom element from flashing unstyled markup. */
+  video-neutral-skin:not(:defined) {
+    visibility: hidden;
+  }
+
   video-neutral-skin {
     display: block;
     width: 100%;

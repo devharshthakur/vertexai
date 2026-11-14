@@ -1,5 +1,7 @@
 <script setup lang="ts">
-  import { shallowRef } from 'vue'
+  import { useMutation } from '@tanstack/vue-query'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { toast } from 'vue-sonner'
   import type { LectureBookmark, LectureNote } from '#shared/types/learning'
   import { createLectureBookmarkSchema, createLectureNoteSchema, updateLectureNoteSchema } from '#shared/validation/learning'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -8,8 +10,8 @@
   import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
   import { Separator } from '@/components/ui/separator'
+  import { Spinner } from '@/components/ui/spinner'
   import { Textarea } from '@/components/ui/textarea'
-  import { revalidateLogic, useForm } from '@tanstack/vue-form'
 
   const props = defineProps<{
     courseId: string
@@ -23,8 +25,6 @@
   const bookmarksRequest = useFetch<LectureBookmark[]>(() => `${lectureUrl.value}/bookmarks`, { default: () => [] })
   const [{ data: notes, pending: notesPending, error: notesError, refresh: refreshNotes }, { data: bookmarks, pending: bookmarksPending, error: bookmarksError, refresh: refreshBookmarks }] = await Promise.all([notesRequest, bookmarksRequest])
   const editingNoteId = shallowRef<string | null>(null)
-  const errorMessage = shallowRef('')
-  const savingBookmark = shallowRef(false)
   const loading = computed(() => notesPending.value || bookmarksPending.value)
   const loadFailed = computed(() => Boolean(notesError.value || bookmarksError.value))
 
@@ -33,26 +33,76 @@
     validationLogic: revalidateLogic(),
     validators: { onDynamic: updateLectureNoteSchema },
     onSubmit: async ({ value }) => {
-      errorMessage.value = ''
-      try {
-        if (editingNoteId.value) {
-          const input = updateLectureNoteSchema.parse({ content: value.content })
-          await $fetch(`${lectureUrl.value}/notes/${editingNoteId.value}`, { method: 'PUT', body: input })
-        } else {
-          const timestampSeconds = props.getCurrentTime()
-          if (timestampSeconds === null) {
-            errorMessage.value = 'The video player is not ready, so a timestamp cannot be captured yet.'
-            return
-          }
-          const input = createLectureNoteSchema.parse({ content: value.content, timestampSeconds })
-          await $fetch(`${lectureUrl.value}/notes`, { method: 'POST', body: input })
-        }
-        editingNoteId.value = null
-        noteForm.reset()
-        await refreshNotes()
-      } catch {
-        errorMessage.value = 'We could not save the note. Please try again.'
+      const timestampSeconds = editingNoteId.value ? null : props.getCurrentTime()
+      if (!editingNoteId.value && timestampSeconds === null) {
+        toast.warning('The video player is not ready, so a timestamp cannot be captured yet.')
+        return
       }
+
+      try {
+        await saveNote({ content: value.content, timestampSeconds })
+      } catch {
+        // The mutation reports the failure.
+      }
+    }
+  })
+
+  const { mutateAsync: saveNote } = useMutation({
+    mutationFn: ({ content, timestampSeconds }: { content: string; timestampSeconds: number | null }) => {
+      if (editingNoteId.value) {
+        const input = updateLectureNoteSchema.parse({ content })
+        return $fetch(`${lectureUrl.value}/notes/${editingNoteId.value}`, { method: 'PUT', body: input })
+      }
+
+      const input = createLectureNoteSchema.parse({ content, timestampSeconds })
+      return $fetch(`${lectureUrl.value}/notes`, { method: 'POST', body: input })
+    },
+    onSuccess: async () => {
+      toast.success(editingNoteId.value ? 'Note updated.' : 'Note added.')
+      editingNoteId.value = null
+      noteForm.reset()
+      await refreshNotes()
+    },
+    onError: () => {
+      toast.error('We could not save the note. Please try again.')
+    }
+  })
+
+  const { mutateAsync: deleteNoteRequest } = useMutation({
+    mutationFn: (note: LectureNote) => $fetch(`${lectureUrl.value}/notes/${note.id}`, { method: 'DELETE' }),
+    onSuccess: async (_result, note) => {
+      if (editingNoteId.value === note.id) cancelEditing()
+      await refreshNotes()
+      toast.success('Note deleted.')
+    },
+    onError: () => {
+      toast.error('We could not delete the note. Please try again.')
+    }
+  })
+
+  const { mutateAsync: addBookmarkRequest, isPending: isAddingBookmark } = useMutation({
+    mutationFn: (payload: { timestampSeconds: number }) =>
+      $fetch(`${lectureUrl.value}/bookmarks`, {
+        method: 'POST',
+        body: payload
+      }),
+    onSuccess: async () => {
+      await refreshBookmarks()
+      toast.success('Bookmark added.')
+    },
+    onError: () => {
+      toast.error('We could not add the bookmark. Please try again.')
+    }
+  })
+
+  const { mutateAsync: deleteBookmarkRequest } = useMutation({
+    mutationFn: (bookmark: LectureBookmark) => $fetch(`${lectureUrl.value}/bookmarks/${bookmark.id}`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      await refreshBookmarks()
+      toast.success('Bookmark removed.')
+    },
+    onError: () => {
+      toast.error('We could not remove the bookmark. Please try again.')
     }
   })
 
@@ -64,7 +114,6 @@
   }
 
   function editNote(note: LectureNote) {
-    errorMessage.value = ''
     editingNoteId.value = note.id
     noteForm.setFieldValue('content', note.content)
   }
@@ -72,47 +121,36 @@
   function cancelEditing() {
     editingNoteId.value = null
     noteForm.reset()
-    errorMessage.value = ''
   }
 
   async function deleteNote(note: LectureNote) {
-    errorMessage.value = ''
     try {
-      await $fetch(`${lectureUrl.value}/notes/${note.id}`, { method: 'DELETE' })
-      if (editingNoteId.value === note.id) cancelEditing()
-      await refreshNotes()
+      await deleteNoteRequest(note)
     } catch {
-      errorMessage.value = 'We could not delete the note. Please try again.'
+      // The mutation reports the failure.
     }
   }
 
   async function addBookmark() {
-    errorMessage.value = ''
     const timestampSeconds = props.getCurrentTime()
     const result = createLectureBookmarkSchema.safeParse({ timestampSeconds })
     if (!result.success) {
-      errorMessage.value = timestampSeconds === null ? 'The video player is not ready, so a timestamp cannot be captured yet.' : 'The current video position is invalid.'
+      toast.warning(timestampSeconds === null ? 'The video player is not ready, so a timestamp cannot be captured yet.' : 'The current video position is invalid.')
       return
     }
 
-    savingBookmark.value = true
     try {
-      await $fetch(`${lectureUrl.value}/bookmarks`, { method: 'POST', body: result.data })
-      await refreshBookmarks()
+      await addBookmarkRequest(result.data)
     } catch {
-      errorMessage.value = 'We could not add the bookmark. Please try again.'
-    } finally {
-      savingBookmark.value = false
+      // The mutation reports the failure.
     }
   }
 
   async function deleteBookmark(bookmark: LectureBookmark) {
-    errorMessage.value = ''
     try {
-      await $fetch(`${lectureUrl.value}/bookmarks/${bookmark.id}`, { method: 'DELETE' })
-      await refreshBookmarks()
+      await deleteBookmarkRequest(bookmark)
     } catch {
-      errorMessage.value = 'We could not delete the bookmark. Please try again.'
+      // The mutation reports the failure.
     }
   }
 </script>
@@ -125,9 +163,9 @@
     </CardHeader>
     <CardContent>
       <div class="flex flex-col gap-5">
-        <Alert v-if="errorMessage || loadFailed" variant="destructive">
-          <AlertTitle>{{ loadFailed ? 'Lecture tools could not be loaded' : 'Lecture tool update failed' }}</AlertTitle>
-          <AlertDescription>{{ errorMessage || 'Refresh the page and try again.' }}</AlertDescription>
+        <Alert v-if="loadFailed" variant="destructive">
+          <AlertTitle>Lecture tools could not be loaded</AlertTitle>
+          <AlertDescription>Refresh the page and try again.</AlertDescription>
         </Alert>
 
         <form class="flex flex-col gap-3" novalidate @submit.prevent="noteForm.handleSubmit()">
@@ -144,11 +182,14 @@
           </FieldGroup>
           <div class="flex flex-wrap gap-2">
             <noteForm.Subscribe v-slot="{ isSubmitting }">
-              <Button type="submit" :disabled="isSubmitting">{{
-                isSubmitting ? 'Saving…'
-                : editingNoteId ? 'Save note'
-                : 'Add note'
-              }}</Button>
+              <Button type="submit" :disabled="isSubmitting">
+                <Spinner v-if="isSubmitting" data-icon="inline-start" />
+                {{
+                  isSubmitting ? 'Saving…'
+                  : editingNoteId ? 'Save note'
+                  : 'Add note'
+                }}
+              </Button>
               <Button v-if="editingNoteId" type="button" variant="outline" :disabled="isSubmitting" @click="cancelEditing">Cancel</Button>
             </noteForm.Subscribe>
           </div>
@@ -185,7 +226,10 @@
         <section class="flex flex-col gap-3" aria-labelledby="lecture-bookmarks-heading">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h3 id="lecture-bookmarks-heading" class="font-semibold">Bookmarks</h3>
-            <Button type="button" variant="outline" size="sm" :disabled="savingBookmark" @click="addBookmark">{{ savingBookmark ? 'Saving…' : 'Bookmark current time' }}</Button>
+            <Button type="button" variant="outline" size="sm" :disabled="isAddingBookmark" @click="addBookmark">
+              <Spinner v-if="isAddingBookmark" data-icon="inline-start" />
+              {{ isAddingBookmark ? 'Saving…' : 'Bookmark current time' }}
+            </Button>
           </div>
           <p v-if="loading" class="text-sm text-muted-foreground" role="status">Loading bookmarks…</p>
           <p v-else-if="bookmarksError" class="text-sm text-muted-foreground">Bookmarks could not be loaded.</p>

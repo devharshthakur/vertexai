@@ -1,59 +1,32 @@
 <script setup lang="ts">
+  import '@videojs/html/video/player'
+  import '@videojs/html/video/neutral-skin'
+  import type { VideoPlayerElement } from '@videojs/html/video'
+  import { useEventListener, useIntervalFn } from '@vueuse/core'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-  import { getYouTubeVideoId } from '#shared/utils/youtube'
-
-  interface Player {
-    getCurrentTime: () => number
-    cueVideoById: (options: { videoId: string; startSeconds: number }) => void
-    seekTo: (seconds: number, allowSeekAhead: boolean) => void
-    destroy: () => void
-  }
-  interface PlayerEvent {
-    target: Player
-    data: number
-  }
-  interface YouTubeWindow extends Window {
-    YT?: { Player: new (element: HTMLElement, options: object) => Player }
-    onYouTubeIframeAPIReady?: () => void
-    learningYouTubeReady?: Promise<void>
-  }
 
   const props = defineProps<{ courseId: string; lectureId: string; videoUrl: string | null; title: string; positionSeconds: number }>()
-  const host = useTemplateRef<HTMLElement>('host')
+  const player = useTemplateRef<VideoPlayerElement>('player')
   const error = shallowRef(false)
   const saveError = shallowRef(false)
-  let player: Player | undefined
-  let timer: ReturnType<typeof setInterval> | undefined
+  let unsubscribe: (() => void) | undefined
   let hasPlayed = false
-  let isReady = false
-  let disposed = false
   let saveQueue: Promise<void> = Promise.resolve()
 
-  function loadYouTube(): Promise<void> {
-    const youtubeWindow = window as YouTubeWindow
-    if (youtubeWindow.YT?.Player) return Promise.resolve()
-    if (youtubeWindow.learningYouTubeReady) return youtubeWindow.learningYouTubeReady
-    youtubeWindow.learningYouTubeReady = new Promise<void>((resolve, reject) => {
-      const previous = youtubeWindow.onYouTubeIframeAPIReady
-      youtubeWindow.onYouTubeIframeAPIReady = () => {
-        previous?.()
-        resolve()
-      }
-      const script = document.createElement('script')
-      script.src = 'https://www.youtube.com/iframe_api'
-      script.onerror = () => {
-        youtubeWindow.learningYouTubeReady = undefined
-        reject(new Error('YouTube unavailable'))
-      }
-      document.head.appendChild(script)
-    })
-    return youtubeWindow.learningYouTubeReady
+  const { pause: pauseAutosave, resume: resumeAutosave, isActive: autosaveActive } = useIntervalFn(savePosition, 10000, { immediate: false })
+
+  function startTimer() {
+    if (!autosaveActive.value) resumeAutosave()
+  }
+
+  function stopTimer() {
+    pauseAutosave()
   }
 
   function savePosition() {
-    if (!player || !hasPlayed) return
-    const seconds = player.getCurrentTime()
-    if (!Number.isFinite(seconds) || seconds < 0) return
+    if (!hasPlayed) return
+    const seconds = getCurrentTime()
+    if (seconds === null) return
     const positionSeconds = Math.min(86400, Math.floor(seconds))
     saveQueue = saveQueue.then(async () => {
       try {
@@ -72,67 +45,71 @@
   }
 
   function getCurrentTime(): number | null {
-    if (!player || !isReady) return null
-    const seconds = player.getCurrentTime()
-    if (!Number.isFinite(seconds) || seconds < 0) return null
+    const seconds = player.value?.store.currentTime
+    if (seconds === undefined || !Number.isFinite(seconds) || seconds < 0) return null
     return Math.min(86400, Math.floor(seconds))
   }
 
   function seekTo(seconds: number) {
-    if (!player || !isReady || !Number.isFinite(seconds) || seconds < 0) return
-    player.seekTo(Math.min(86400, Math.floor(seconds)), true)
+    const store = player.value?.store
+    if (!store || !Number.isFinite(seconds) || seconds < 0) return
+    void store.seek(Math.min(86400, Math.floor(seconds))).catch(() => {
+      error.value = true
+    })
   }
 
   defineExpose({ getCurrentTime, seekTo })
 
-  function onStateChange(event: PlayerEvent) {
-    if (event.data === 1) {
-      hasPlayed = true
-      if (!timer) timer = setInterval(savePosition, 10000)
-    } else {
-      if (timer) clearInterval(timer)
-      timer = undefined
-      if (event.data === 0 || event.data === 2) savePosition()
-    }
-  }
-
-  onMounted(async () => {
-    const videoId = props.videoUrl ? getYouTubeVideoId(props.videoUrl) : null
-    if (!videoId) {
+  onMounted(() => {
+    const store = player.value?.store
+    if (!props.videoUrl || !store) {
       error.value = true
       return
     }
-    try {
-      await loadYouTube()
-      if (disposed || !host.value) return
-      const youtubeWindow = window as YouTubeWindow
-      if (!youtubeWindow.YT?.Player) throw new Error('YouTube unavailable')
-      player = new youtubeWindow.YT.Player(host.value, {
-        videoId,
-        playerVars: { origin: window.location.origin, playsinline: 1 },
-        events: {
-          onReady: (event: PlayerEvent) => {
-            isReady = true
-            event.target.cueVideoById({ videoId, startSeconds: props.positionSeconds })
-          },
-          onStateChange,
-          onError: () => {
-            error.value = true
-          }
-        }
-      })
-      window.addEventListener('pagehide', savePosition)
-    } catch {
-      error.value = true
+
+    let resumed = false
+    let wasPaused = true
+    let ended = false
+
+    const sync = () => {
+      error.value = Boolean(store.error)
+      if (store.error) stopTimer()
+
+      if (!resumed && store.duration > 0) {
+        resumed = true
+        const startSeconds = Math.min(props.positionSeconds, Math.max(0, store.duration - 1))
+        if (startSeconds > 0) void store.seek(startSeconds).catch(() => {})
+      }
+
+      const paused = store.paused
+      if (wasPaused && !paused) {
+        hasPlayed = true
+        startTimer()
+      } else if (!wasPaused && paused) {
+        stopTimer()
+        savePosition()
+      }
+      wasPaused = paused
+
+      if (!ended && store.ended) {
+        ended = true
+        stopTimer()
+        if (!paused) savePosition()
+      }
     }
+
+    sync()
+    unsubscribe = store.subscribe(sync)
   })
 
+  if (import.meta.client) {
+    useEventListener(window, 'pagehide', savePosition)
+  }
+
   onBeforeUnmount(() => {
-    disposed = true
-    if (timer) clearInterval(timer)
     savePosition()
-    window.removeEventListener('pagehide', savePosition)
-    player?.destroy()
+    stopTimer()
+    unsubscribe?.()
   })
 </script>
 
@@ -140,14 +117,16 @@
   <div class="flex flex-col gap-3">
     <Alert v-if="error">
       <AlertTitle>Video unavailable</AlertTitle>
-      <AlertDescription>This YouTube video cannot be played here right now.</AlertDescription>
+      <AlertDescription>This lecture video cannot be played here right now.</AlertDescription>
     </Alert>
     <Alert v-if="saveError">
       <AlertTitle>Playback position not saved</AlertTitle>
       <AlertDescription>Check your connection. We will try again while the video plays.</AlertDescription>
     </Alert>
-    <div v-show="!error" class="aspect-video w-full overflow-hidden rounded-md [&>iframe]:size-full">
-      <div ref="host" :title="title" />
-    </div>
+    <video-player v-show="!error" ref="player">
+      <video-neutral-skin>
+        <video v-if="videoUrl" :src="videoUrl" :aria-label="title" playsinline preload="metadata" />
+      </video-neutral-skin>
+    </video-player>
   </div>
 </template>

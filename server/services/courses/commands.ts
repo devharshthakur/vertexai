@@ -98,7 +98,7 @@ export async function addModule(courseId: string, input: AddModuleValues, actor:
   })
 }
 
-/** Adds a YouTube lecture to an owned module at the next position. */
+/** Adds a local-video lecture to an owned module at the next position. */
 export async function addLecture(courseId: string, moduleId: string, input: CreateLectureValues, actor: CourseActor): Promise<LectureSummary> {
   return useDb().transaction(async (tx) => {
     const existingModule = await lockOwnedModule(tx, courseId, moduleId, actor)

@@ -1,24 +1,38 @@
 <script setup lang="ts">
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
-  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+  import InstructorDraftGuard from '@/components/instructor/InstructorDraftGuard.vue'
+  import { provideInstructorDrafts } from '@/composables/useInstructorDrafts'
+  import { useMutation } from '@tanstack/vue-query'
+  import { toast } from 'vue-sonner'
   import type { CreateCourseValues } from '#shared/validation/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'instructor' })
   useSeoMeta({ title: 'Create a course · VertexAI' })
 
-  const errorMessage = shallowRef('')
+  const createdCourseId = shallowRef('')
+  provideInstructorDrafts()
 
-  async function createCourse(values: CreateCourseValues) {
-    errorMessage.value = ''
-
-    try {
-      const course = await $fetch<{ id: string }>('/api/courses', {
+  const { mutateAsync: createCourse } = useMutation({
+    mutationFn: (values: CreateCourseValues) =>
+      $fetch<{ id: string }>('/api/courses', {
         method: 'POST',
         body: values
-      })
-      await navigateTo(`/instructor/courses/${course.id}`)
+      }),
+    onSuccess: (course) => {
+      createdCourseId.value = course.id
+      toast.success('Course created.')
+    },
+    onError: () => {
+      toast.error('We could not create this course. Please try again.')
+    }
+  })
+
+  async function createCourseAndReturn(values: CreateCourseValues) {
+    try {
+      await createCourse(values)
+      return true
     } catch {
-      errorMessage.value = 'We could not create this course. Please try again.'
+      return false
     }
   }
 </script>
@@ -31,17 +45,13 @@
       <p class="max-w-2xl text-muted-foreground">Share your expertise with students. Add the essential details below to get started.</p>
     </header>
 
-    <Alert v-if="errorMessage" variant="destructive">
-      <AlertTitle>Course could not be created</AlertTitle>
-      <AlertDescription>{{ errorMessage }}</AlertDescription>
-    </Alert>
-
     <section class="flex flex-col gap-2">
       <h2 class="text-xl font-semibold tracking-tight">Course details</h2>
       <p class="text-sm text-muted-foreground">This information will appear on your course listing.</p>
-      <CourseMetadataForm class="mt-4" :on-save="createCourse" />
+      <CourseMetadataForm class="mt-4" :on-save="createCourseAndReturn" @saved="navigateTo(`/instructor/courses/${createdCourseId}`)" />
     </section>
 
     <p class="border-t pt-5 text-sm text-muted-foreground">Your course starts as a private draft. Submit it for review when you are ready.</p>
+    <InstructorDraftGuard />
   </div>
 </template>

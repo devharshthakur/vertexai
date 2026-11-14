@@ -1,13 +1,16 @@
 <script setup lang="ts">
   import LearningPlayer from '@/components/learning/LearningPlayer.vue'
   import LectureTools from '@/components/learning/LectureTools.vue'
+  import LecturePreviewPlayer from '@/components/course/LecturePreviewPlayer.vue'
   import { useLectureContent } from '@/composables/useLectureContent'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Progress } from '@/components/ui/progress'
-  import { useQueryClient } from '@tanstack/vue-query'
+  import { Spinner } from '@/components/ui/spinner'
+  import { useMutation, useQueryClient } from '@tanstack/vue-query'
+  import { toast } from 'vue-sonner'
   import type { LearningCourse } from '#shared/types/learning'
   import type { CourseMaterialSummary } from '#shared/types/course-materials'
 
@@ -15,12 +18,12 @@
   const route = useRoute()
   const courseId = computed(() => String(route.params.courseId))
   const lectureId = computed(() => String(route.params.lectureId))
-  const { data, error, pending, refresh } = await useFetch<LearningCourse>(() => `/api/courses/${courseId.value}/learn`)
-  const { data: materials, error: materialsError } = await useFetch<CourseMaterialSummary[]>(() => `/api/courses/${courseId.value}/materials`, { default: () => [] })
+  const courseRequest = useFetch<LearningCourse>(() => `/api/courses/${courseId.value}/learn`)
+  const materialsRequest = useFetch<CourseMaterialSummary[]>(() => `/api/courses/${courseId.value}/materials`, { default: () => [] })
+  const [{ data, error, pending, refresh }, { data: materials, error: materialsError }] = await Promise.all([courseRequest, materialsRequest])
   const player = useTemplateRef<InstanceType<typeof LearningPlayer>>('player')
   const queryClient = useQueryClient()
   const { current, lectureMaterials } = useLectureContent(data, materials, lectureId)
-  const saving = shallowRef(false)
   const saveError = shallowRef(false)
 
   function getCurrentTime() {
@@ -36,15 +39,15 @@
   }
 
   watch(
-    [courseId, lectureId, current],
-    async ([course, lecture, selected], _old, onCleanup) => {
-      if (!selected || import.meta.server) return
+    () => current.value?.id,
+    async (selectedLectureId, _previous, onCleanup) => {
+      if (!selectedLectureId || import.meta.server) return
       let active = true
       onCleanup(() => {
         active = false
       })
       try {
-        await $fetch(`/api/courses/${course}/lectures/${lecture}/progress`, { method: 'POST', body: { action: 'view' } })
+        await $fetch(`/api/courses/${courseId.value}/lectures/${lectureId.value}/progress`, { method: 'POST', body: { action: 'view' } })
         if (active) saveError.value = false
       } catch {
         if (active) saveError.value = true
@@ -53,19 +56,25 @@
     { immediate: true }
   )
 
-  async function markComplete() {
-    saving.value = true
-    saveError.value = false
-    try {
-      await $fetch(`/api/courses/${courseId.value}/lectures/${lectureId.value}/progress`, { method: 'POST', body: { action: 'complete' } })
+  const { mutateAsync: completeLecture, isPending: isCompleting } = useMutation({
+    mutationFn: () => $fetch(`/api/courses/${courseId.value}/lectures/${lectureId.value}/progress`, { method: 'POST', body: { action: 'complete' } }),
+    onSuccess: async () => {
       await refresh()
       // Invalidate all per-user enrollment lists after a completion.
       // eslint-disable-next-line @tanstack/query/prefer-query-options -- This is a shared query-key prefix, not one query's options.
       await queryClient.invalidateQueries({ queryKey: ['enrollments'] })
+      toast.success('Lecture completed.')
+    },
+    onError: () => {
+      toast.error('We could not save your progress. Please try again.')
+    }
+  })
+
+  async function markComplete() {
+    try {
+      await completeLecture()
     } catch {
-      saveError.value = true
-    } finally {
-      saving.value = false
+      // The mutation reports the failure.
     }
   }
 </script>
@@ -100,7 +109,7 @@
             </CardHeader>
             <CardContent>
               <div class="flex flex-col gap-4">
-                <video v-for="material in lectureMaterials.videos" :key="material.id" :src="materialUrl(material.id)" :aria-label="material.originalFilename" controls preload="metadata" class="aspect-video w-full rounded-md">Your browser does not support embedded video.</video>
+                <LecturePreviewPlayer v-for="material in lectureMaterials.videos" :key="material.id" :video-url="materialUrl(material.id)" :title="material.originalFilename" />
                 <ul v-if="lectureMaterials.documents.length" class="flex flex-col gap-2">
                   <li v-for="material in lectureMaterials.documents" :key="material.id">
                     <Button variant="outline" size="sm" as-child>
@@ -115,7 +124,10 @@
             <AlertTitle>Progress not saved</AlertTitle>
             <AlertDescription>Please try again.</AlertDescription>
           </Alert>
-          <Button :disabled="current.completed || saving" @click="markComplete">{{ current.completed ? 'Completed' : 'Mark complete' }}</Button>
+          <Button :disabled="current.completed || isCompleting" @click="markComplete">
+            <Spinner v-if="isCompleting" data-icon="inline-start" />
+            {{ current.completed ? 'Completed' : 'Mark complete' }}
+          </Button>
         </div>
         <Card>
           <CardHeader>

@@ -4,6 +4,7 @@
   import { Button } from '@/components/ui/button'
   import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Input } from '@/components/ui/input'
+  import { Spinner } from '@/components/ui/spinner'
   import { refreshAuthSession } from '@/composables/useAuthSession'
   import { authClient } from '@/lib/auth-client'
   import { resolveSafeRedirect } from '@/lib/redirect'
@@ -53,7 +54,7 @@
         <h1 class="text-xl font-bold">Create your account</h1>
         <FieldDescription>
           Already have an account?
-          <NuxtLink to="/auth/login" class="underline underline-offset-4"> Sign in </NuxtLink>
+          <NuxtLink :to="{ path: '/auth/login', query: { redirect: redirectTo } }" class="underline underline-offset-4"> Sign in </NuxtLink>
         </FieldDescription>
       </div>
       <form.Field name="name">
@@ -86,6 +87,7 @@
       <form.Subscribe v-slot="{ isSubmitting }">
         <Field>
           <Button type="submit" class="w-full" :disabled="isSubmitting">
+            <Spinner v-if="isSubmitting" data-icon="inline-start" />
             {{ isSubmitting ? 'Creating account…' : 'Create account' }}
           </Button>
         </Field>

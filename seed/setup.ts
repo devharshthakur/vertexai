@@ -1,5 +1,7 @@
 import 'dotenv/config'
 import { spawnSync } from 'node:child_process'
+import { DEMO_VIDEO_SLUGS } from './courses'
+import { loadDemoVideos } from './load-demo-video'
 import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 
 const COMPOSE_PROJECT = 'vertexai'
@@ -37,15 +39,20 @@ async function setupDemo(): Promise<void> {
     throw new Error('demo:setup is disabled in production.')
   }
 
+  await loadDemoVideos(DEMO_VIDEO_SLUGS)
   validateDemoSeedPassword(DEFAULT_DEMO_PASSWORD)
   const databaseUrl = getLocalDatabaseUrl()
 
+  console.info('Removing the demo Compose project and its volumes...')
   const compose = ['compose', '-p', COMPOSE_PROJECT]
   run('docker', [...compose, 'down', '--volumes'])
+  console.info('Starting a fresh database...')
   run('docker', [...compose, 'up', '-d', '--wait', 'db'])
 
   const databaseEnv = { ...process.env, DATABASE_URL: databaseUrl }
+  console.info('Applying migrations...')
   run('pnpm', ['db:migrate'], databaseEnv)
+  console.info('Seeding demo data...')
   run('pnpm', ['db:seed'], databaseEnv)
 
   console.info('Demo database recreated, migrated, and seeded successfully.')

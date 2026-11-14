@@ -1,51 +1,67 @@
 <script setup lang="ts">
   import CourseMetadataForm from '@/components/instructor/CourseMetadataForm.vue'
   import CourseMaterialsPanel from '@/components/instructor/CourseMaterialsPanel.vue'
+  import InstructorDraftGuard from '@/components/instructor/InstructorDraftGuard.vue'
   import ModuleManager from '@/components/instructor/ModuleManager.vue'
+  import AssignmentManager from '@/components/instructor/AssignmentManager.vue'
+  import { provideInstructorDrafts } from '@/composables/useInstructorDrafts'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Skeleton } from '@/components/ui/skeleton'
-  import type { CourseWithCurriculum } from '#shared/types/courses'
+  import { Spinner } from '@/components/ui/spinner'
+  import { useMutation } from '@tanstack/vue-query'
+  import { toast } from 'vue-sonner'
+  import type { CourseSummary, CourseWithCurriculum } from '#shared/types/courses'
   import type { CreateCourseValues } from '#shared/validation/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'instructor' })
 
   const route = useRoute()
+  provideInstructorDrafts()
   const courseId = computed(() => String(route.params.id))
   useSeoMeta({ title: 'Edit course · VertexAI' })
 
-  const { data: courseData, pending, error, refresh } = await useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`, { deep: true })
+  const courseRequest = useFetch<CourseWithCurriculum>(() => `/api/courses/${courseId.value}`, { deep: true })
+  const reviewRequest = useFetch<{ decision: 'approved' | 'rejected'; comment: string | null; reviewedAt: string } | null>(() => `/api/courses/${courseId.value}/review`)
+  const [{ data: courseData, pending, error }, { data: review, refresh: refreshReview }] = await Promise.all([courseRequest, reviewRequest])
   const course = computed(() => courseData.value?.course ?? null)
-  const errorMessage = shallowRef('')
-  const submitting = shallowRef(false)
-  const { data: review, refresh: refreshReview } = await useFetch<{ decision: 'approved' | 'rejected'; comment: string | null; reviewedAt: string } | null>(() => `/api/courses/${courseId.value}/review`)
 
-  async function submitForReview() {
-    submitting.value = true
-    errorMessage.value = ''
-    try {
-      await $fetch(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} })
-      await Promise.all([refresh(), refreshReview()])
-    } catch {
-      errorMessage.value = 'We could not submit this course for review. Please try again.'
-    } finally {
-      submitting.value = false
+  const { mutate: submitCourse, isPending: isSubmitting } = useMutation({
+    mutationFn: () => $fetch<CourseSummary>(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} }),
+    onSuccess: async (updated) => {
+      if (courseData.value) courseData.value.course = updated
+      await refreshReview()
+      toast.success('Course submitted for review.')
+    },
+    onError: () => {
+      toast.error('We could not submit this course for review. Please try again.')
     }
-  }
+  })
 
-  async function updateCourse(values: CreateCourseValues) {
-    errorMessage.value = ''
-
-    try {
-      await $fetch(`/api/courses/${courseId.value}`, {
+  const { mutateAsync: saveCourse } = useMutation({
+    mutationFn: (values: CreateCourseValues) =>
+      $fetch<CourseSummary>(`/api/courses/${courseId.value}`, {
         method: 'PUT',
         body: values
-      })
-      await Promise.all([refresh(), refreshReview()])
+      }),
+    onSuccess: async (updated) => {
+      if (courseData.value) courseData.value.course = updated
+      await refreshReview()
+      toast.success('Course details saved.')
+    },
+    onError: () => {
+      toast.error('We could not save course details. Please try again.')
+    }
+  })
+
+  async function updateCourse(values: CreateCourseValues) {
+    try {
+      await saveCourse(values)
+      return true
     } catch {
-      errorMessage.value = 'We could not save course details. Please try again.'
+      return false
     }
   }
 </script>
@@ -89,16 +105,12 @@
         <Button variant="outline" as-child>
           <NuxtLink :to="`/courses/${course!.id}`">Preview</NuxtLink>
         </Button>
-        <Button v-if="course!.status === 'draft' || course!.status === 'rejected'" :disabled="submitting" @click="submitForReview">
+        <Button v-if="course!.status === 'draft' || course!.status === 'rejected'" :disabled="isSubmitting" @click="submitCourse()">
+          <Spinner v-if="isSubmitting" data-icon="inline-start" />
           {{ course!.status === 'rejected' ? 'Resubmit for review' : 'Submit for review' }}
         </Button>
       </div>
     </header>
-
-    <Alert v-if="errorMessage" variant="destructive">
-      <AlertTitle>Course update failed</AlertTitle>
-      <AlertDescription>{{ errorMessage }}</AlertDescription>
-    </Alert>
 
     <Alert v-if="review">
       <AlertTitle>Latest review: {{ review.decision }}</AlertTitle>
@@ -118,5 +130,7 @@
     <CourseMaterialsPanel :course-id="course!.id" :modules="courseData.modules" />
 
     <ModuleManager v-model:modules="courseData.modules" :course-id="course!.id" />
+    <AssignmentManager :course-id="course!.id" />
+    <InstructorDraftGuard />
   </div>
 </template>

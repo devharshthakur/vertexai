@@ -1,8 +1,12 @@
 <script setup lang="ts">
+  import { useMutation } from '@tanstack/vue-query'
   import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { watch } from 'vue'
+  import { toast } from 'vue-sonner'
   import { Button } from '@/components/ui/button'
   import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Input } from '@/components/ui/input'
+  import { Spinner } from '@/components/ui/spinner'
   import { refreshAuthSession } from '@/composables/useAuthSession'
   import { authClient } from '@/lib/auth-client'
   import { profileSchema } from '#shared/validation/auth'
@@ -13,28 +17,37 @@
     email: string
   }>()
 
-  const serverError = shallowRef('')
-  const saved = shallowRef(false)
+  const { mutateAsync: updateProfile } = useMutation({
+    mutationFn: async (name: string) => {
+      const { error } = await authClient.updateUser({ name })
+      if (error) throw new Error(error.message ?? 'Unable to update your profile.')
+    },
+    onSuccess: async () => {
+      await refreshAuthSession()
+      toast.success('Profile updated.')
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : 'Unable to update your profile.')
+    }
+  })
 
   const form = useForm({
     defaultValues: { name: props.name } satisfies ProfileValues,
     validationLogic: revalidateLogic(),
     validators: { onDynamic: profileSchema },
     onSubmit: async ({ value }) => {
-      serverError.value = ''
-      saved.value = false
-
-      const { error } = await authClient.updateUser({ name: value.name })
-
-      if (error) {
-        serverError.value = error.message ?? 'Unable to update your profile.'
-        return
+      try {
+        await updateProfile(value.name)
+      } catch {
+        // The mutation reports the failure.
       }
-
-      await refreshAuthSession()
-      saved.value = true
     }
   })
+
+  watch(
+    () => props.name,
+    (name) => form.reset({ name })
+  )
 </script>
 
 <template>
@@ -57,11 +70,10 @@
       <Field orientation="horizontal" class="flex-wrap">
         <form.Subscribe v-slot="{ isSubmitting }">
           <Button type="submit" :disabled="isSubmitting">
+            <Spinner v-if="isSubmitting" data-icon="inline-start" />
             {{ isSubmitting ? 'Saving…' : 'Save changes' }}
           </Button>
         </form.Subscribe>
-        <FieldError v-if="serverError">{{ serverError }}</FieldError>
-        <FieldDescription v-if="saved" role="status"> Your profile has been updated. </FieldDescription>
       </Field>
     </FieldGroup>
   </form>

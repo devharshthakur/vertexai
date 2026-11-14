@@ -126,3 +126,28 @@
     @apply font-sans;
   }
 }
+
+@layer components {
+  /* Video.js owns the playback controls; the rest of the interface uses shadcn-vue. */
+  video-player {
+    display: block;
+    width: 100%;
+  }
+
+  /* Keep the unupgraded custom element from flashing unstyled markup. */
+  video-neutral-skin:not(:defined) {
+    visibility: hidden;
+  }
+
+  video-neutral-skin {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    --media-accent-color: var(--primary);
+    --media-accent-text-color: var(--primary-foreground);
+    --media-border-color: var(--border);
+    --media-border-radius: var(--radius);
+    --media-font-family: var(--font-sans);
+    --media-scale-unit: 1rem;
+  }
+}

@@ -25,7 +25,7 @@
     limit: CATALOG_PAGE_SIZE
   }))
 
-  const { data: courses, pending, error } = useFetch<CourseListResult>('/api/courses', { query })
+  const { data: courses, pending, error, refresh } = useFetch<CourseListResult>('/api/courses', { query })
 
   const { data: categories } = useFetch<string[]>('/api/courses/categories', {
     default: () => []
@@ -39,18 +39,27 @@
       page: patch.page ?? 1
     }
   }
+
+  function clearFilters() {
+    filters.value = { ...DEFAULT_CATALOG_FILTERS }
+  }
+
+  /** Follows the body's priority: a failed request wins over a pending refetch or a stale count. */
+  const catalogSummary = computed(() => {
+    if (error.value) return 'The catalog is unavailable right now.'
+    if (pending.value) return 'Loading courses…'
+    return courses.value ? pluralize(courses.value.total, 'published course') : 'Loading courses…'
+  })
 </script>
 
 <template>
   <div class="flex flex-col gap-8">
     <header class="flex flex-col gap-2">
       <h1 class="text-3xl font-semibold tracking-tight">Course catalog</h1>
-      <p class="text-muted-foreground">
-        {{ courses ? pluralize(courses.total, 'published course') : 'Loading courses…' }}
-      </p>
+      <p class="text-muted-foreground">{{ catalogSummary }}</p>
     </header>
 
-    <CatalogFilters :filters="filters" :categories="categories" @update:filters="updateFilters" />
+    <CatalogFilters v-model:filters="filters" :categories="categories" />
 
     <div v-if="pending" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
       <Skeleton v-for="index in 6" :key="index" class="h-56" />
@@ -64,6 +73,9 @@
         <EmptyTitle>The catalog is unavailable</EmptyTitle>
         <EmptyDescription> We could not load the courses. Please try again in a moment. </EmptyDescription>
       </EmptyHeader>
+      <EmptyContent>
+        <Button variant="outline" @click="refresh()">Try again</Button>
+      </EmptyContent>
     </Empty>
 
     <Empty v-else-if="!courses || courses.items.length === 0">
@@ -75,9 +87,7 @@
         <EmptyDescription> Nothing matches these filters yet. Try a different search. </EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <Button variant="outline" as-child>
-          <NuxtLink to="/courses">Clear filters</NuxtLink>
-        </Button>
+        <Button variant="outline" @click="clearFilters">Clear filters</Button>
       </EmptyContent>
     </Empty>
 

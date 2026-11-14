@@ -5,9 +5,9 @@
 
   definePageMeta({ middleware: 'auth' })
   const route = useRoute()
-  const courseId = String(route.params.courseId)
-  const { data, error } = await useFetch<LearningCourse>(`/api/courses/${courseId}/learn`)
-  if (data.value?.resumeLectureId) await navigateTo(`/learn/${courseId}/lectures/${data.value.resumeLectureId}`, { replace: true })
+  const courseId = computed(() => String(route.params.courseId))
+  const { data, error } = await useFetch<LearningCourse>(() => `/api/courses/${courseId.value}/learn`)
+  if (data.value?.resumeLectureId) await navigateTo(`/learn/${courseId.value}/lectures/${data.value.resumeLectureId}`, { replace: true })
 </script>
 
 <template>

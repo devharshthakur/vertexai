@@ -1,5 +1,4 @@
 import { z } from 'zod'
-import { getYouTubeVideoId } from '../utils/youtube'
 
 /**
  * Schemas for the course catalog and the instructor course builder.
@@ -44,14 +43,15 @@ export const addModuleSchema = z.object({
   orderIndex: z.number().int().min(0).optional()
 })
 
-const youtubeVideoUrlSchema = z
-  .url('Enter a valid YouTube URL.')
+/** Demo lectures point at MP4 files under `public/videos/`. */
+const localVideoPathSchema = z
+  .string()
   .trim()
-  .refine((value) => getYouTubeVideoId(value) !== null, 'Use a valid HTTPS YouTube video link.')
+  .regex(/^\/videos\/[a-z0-9-]+\/[A-Za-z0-9][A-Za-z0-9._-]*\.mp4$/i, 'Use a local MP4 path such as /videos/typescript/video.mp4.')
 
 export const createLectureSchema = z.object({
   title: z.string().trim().min(1, 'Enter a lecture title.').max(200, 'Keep the title under 200 characters.'),
-  videoUrl: youtubeVideoUrlSchema,
+  videoUrl: localVideoPathSchema,
   transcript: z.string().max(500_000, 'Transcript must be 500,000 characters or fewer.').nullable(),
   durationSeconds: z.number().int().min(1).max(86_400).nullable()
 })

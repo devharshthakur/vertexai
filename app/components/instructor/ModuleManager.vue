@@ -6,6 +6,7 @@
   import type { ModuleSummary } from '#shared/types/courses'
   import LectureManager from '@/components/instructor/LectureManager.vue'
   import { useInstructorDraft } from '@/composables/useInstructorDrafts'
+  import { useOptimisticReorder } from '@/composables/useOptimisticReorder'
   import { addModuleSchema } from '#shared/validation/courses'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -51,50 +52,25 @@
     }
   })
 
-  const { mutateAsync: reorderModules, isPending: isReordering } = useMutation({
-    mutationFn: (moduleIds: string[]) =>
+  const { isReordering, move: moveModule } = useOptimisticReorder({
+    items: modules,
+    reorderFn: (moduleIds) =>
       $fetch<ModuleSummary[]>(`/api/courses/${props.courseId}/modules/reorder`, {
         method: 'PUT',
         body: { moduleIds }
       }),
-    onMutate: (moduleIds) => {
-      const previous = [...modules.value]
-      const byId = new Map(modules.value.map((module) => [module.id, module]))
-      modules.value = moduleIds.flatMap((id) => {
-        const module = byId.get(id)
-        return module ? [module] : []
-      })
-      return { previous }
-    },
-    onSuccess: (saved) => {
-      // The reorder endpoint returns module summaries without their lecture
-      // lists, so keep the lectures already loaded instead of clearing them.
-      const lecturesByModule = new Map(modules.value.map((module) => [module.id, module.lectures]))
-      modules.value = saved.map((module) => ({
+    successMessage: 'Module order saved.',
+    errorMessage: 'The module order was not saved. Please try again.',
+    // The reorder endpoint returns module summaries without their lecture
+    // lists, so keep the lectures already loaded instead of clearing them.
+    mergeSaved: (saved, current) => {
+      const lecturesByModule = new Map(current.map((module) => [module.id, module.lectures]))
+      return saved.map((module) => ({
         ...module,
         lectures: lecturesByModule.get(module.id) ?? module.lectures
       }))
-      toast.success('Module order saved.')
-    },
-    onError: (_error, _moduleIds, context) => {
-      if (context?.previous) modules.value = context.previous
-      toast.error('The module order was not saved. Please try again.')
     }
   })
-
-  async function moveModule(index: number, offset: -1 | 1) {
-    const target = index + offset
-    if (target < 0 || target >= modules.value.length || isReordering.value) return
-
-    const reordered = [...modules.value]
-    ;[reordered[index], reordered[target]] = [reordered[target]!, reordered[index]!]
-
-    try {
-      await reorderModules(reordered.map((module) => module.id))
-    } catch {
-      // The mutation restores the previous order.
-    }
-  }
 </script>
 
 <template>

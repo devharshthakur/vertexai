@@ -1,5 +1,7 @@
 <script setup lang="ts">
+  import 'vue-sonner/style.css'
   import AppHeader from '@/components/layout/AppHeader.vue'
+  import { Toaster } from '@/components/ui/sonner'
 
   const layout = useLayout()
 </script>
@@ -11,5 +13,6 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
+    <Toaster position="top-right" />
   </div>
 </template>

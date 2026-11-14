@@ -1,16 +1,18 @@
 <script setup lang="ts">
   import { CheckIcon, ExternalLinkIcon, XIcon } from '@lucide/vue'
   import { useMutation } from '@tanstack/vue-query'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { z } from 'zod'
   import { toast } from 'vue-sonner'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
   import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-  import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
+  import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Skeleton } from '@/components/ui/skeleton'
   import { Spinner } from '@/components/ui/spinner'
   import { Textarea } from '@/components/ui/textarea'
-  import type { CourseListResult } from '#shared/types/courses'
+  import type { CourseListResult, CourseSummary } from '#shared/types/courses'
   import { reviewCourseSchema, type ReviewCourseValues } from '#shared/validation/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'admin' })
@@ -20,14 +22,37 @@
   const { data, pending, error, refresh } = await useFetch<CourseListResult>('/api/admin/courses/pending', {
     query: { limit: 50, page }
   })
-  const comments = ref<Record<string, string>>({})
-  const busyCourseId = shallowRef<string | null>(null)
-  const busyDecision = shallowRef<'approved' | 'rejected' | null>(null)
-  watch(data, (result) => {
-    if (result && page.value > result.totalPages) page.value = result.totalPages
+  const approvalsFormSchema = z.object({
+    entries: z.array(z.object({ comment: reviewCourseSchema.shape.comment }))
+  })
+  type ApprovalsFormValues = z.input<typeof approvalsFormSchema>
+
+  function toFormValues(items: CourseSummary[]): ApprovalsFormValues {
+    return { entries: items.map(() => ({ comment: '' })) }
+  }
+
+  const form = useForm({
+    defaultValues: toFormValues(data.value?.items ?? []),
+    validationLogic: revalidateLogic({ mode: 'change' }),
+    validators: { onDynamic: approvalsFormSchema }
   })
 
-  const { mutateAsync: decideCourse } = useMutation({
+  /** Keep the form entries aligned with the pending courses the server returns. */
+  watch(data, (result) => {
+    if (result && page.value > result.totalPages) page.value = result.totalPages
+    form.reset(toFormValues(result?.items ?? []))
+  })
+
+  /** Array entries are edited by index, so the deep field names stay typed. */
+  function commentFieldName(index: number) {
+    return `entries[${index}].comment` as `entries[${number}].comment`
+  }
+
+  const {
+    mutate: decideCourse,
+    isPending: isDeciding,
+    variables: decisionVariables
+  } = useMutation({
     mutationFn: ({ courseId, payload }: { courseId: string; payload: ReviewCourseValues }) =>
       $fetch(`/api/admin/courses/${courseId}/decision`, {
         method: 'POST',
@@ -43,27 +68,32 @@
     }
   })
 
-  async function decide(courseId: string, decision: 'approved' | 'rejected') {
-    const result = reviewCourseSchema.safeParse({
-      decision,
-      comment: comments.value[courseId] || null
-    })
+  function isCourseDecisionPending(courseId: string, decision: 'approved' | 'rejected') {
+    return isDeciding.value && decisionVariables.value?.courseId === courseId && decisionVariables.value.payload.decision === decision
+  }
+
+  /**
+   * `reviewCourseSchema` is registered as a form-level validator, so `validateField` cannot
+   * observe it. Parse the pending payload directly and mirror any issue into the field's
+   * error map, which is what `<FieldError>` renders.
+   */
+  function decide(index: number, decision: ReviewCourseValues['decision']) {
+    const course = data.value?.items[index]
+    if (!course) return
+
+    const comment = form.state.values.entries[index]?.comment
+    const result = reviewCourseSchema.safeParse({ decision, comment: comment?.trim() || null })
 
     if (!result.success) {
-      toast.error(result.error.issues[0]?.message ?? 'Enter a valid review comment.')
+      form.setFieldMeta(commentFieldName(index), (meta) => ({
+        ...meta,
+        errorMap: { ...meta.errorMap, onDynamic: [result.error.issues[0]?.message ?? 'Enter a valid review comment.'] },
+        errorSourceMap: { ...meta.errorSourceMap, onDynamic: 'form' }
+      }))
       return
     }
 
-    busyCourseId.value = courseId
-    busyDecision.value = decision
-    try {
-      await decideCourse({ courseId, payload: result.data })
-    } catch {
-      // The mutation reports the failure.
-    } finally {
-      busyCourseId.value = null
-      busyDecision.value = null
-    }
+    decideCourse({ courseId: course.id, payload: result.data })
   }
 </script>
 
@@ -114,7 +144,7 @@
     </Empty>
 
     <div v-else-if="data" class="grid gap-5 lg:grid-cols-2">
-      <Card v-for="course in data.items" :key="course.id" class="flex flex-col">
+      <Card v-for="(course, index) in data.items" :key="course.id" class="flex flex-col">
         <CardHeader>
           <CardDescription>
             {{ course.category || 'Uncategorized' }}
@@ -132,22 +162,27 @@
               <ExternalLinkIcon data-icon="inline-end" />
             </NuxtLink>
             <FieldGroup>
-              <Field>
-                <FieldLabel :for="`review-${course.id}`">Review comment (optional)</FieldLabel>
-                <Textarea :id="`review-${course.id}`" v-model="comments[course.id]" maxlength="2000" placeholder="Add context for the instructor…" />
-              </Field>
+              <form.Field :name="commentFieldName(index)">
+                <template #default="{ field }">
+                  <Field :data-invalid="!field.state.meta.isValid">
+                    <FieldLabel :for="`review-${course.id}`">Review comment (optional)</FieldLabel>
+                    <Textarea :id="`review-${course.id}`" :model-value="field.state.value ?? ''" maxlength="2000" :aria-invalid="!field.state.meta.isValid" placeholder="Add context for the instructor…" @update:model-value="(value) => field.handleChange(String(value))" @blur="field.handleBlur" />
+                    <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
+                  </Field>
+                </template>
+              </form.Field>
             </FieldGroup>
           </div>
         </CardContent>
         <CardFooter>
           <div class="flex flex-wrap gap-3">
-            <Button :disabled="busyCourseId !== null" @click="decide(course.id, 'approved')">
-              <Spinner v-if="busyCourseId === course.id && busyDecision === 'approved'" data-icon="inline-start" />
+            <Button :disabled="isDeciding" @click="decide(index, 'approved')">
+              <Spinner v-if="isCourseDecisionPending(course.id, 'approved')" data-icon="inline-start" />
               <CheckIcon v-else data-icon="inline-start" />
-              {{ busyCourseId === course.id && busyDecision === 'approved' ? 'Saving…' : 'Approve course' }}
+              {{ isCourseDecisionPending(course.id, 'approved') ? 'Saving…' : 'Approve course' }}
             </Button>
-            <Button variant="outline" :disabled="busyCourseId !== null" @click="decide(course.id, 'rejected')">
-              <Spinner v-if="busyCourseId === course.id && busyDecision === 'rejected'" data-icon="inline-start" />
+            <Button variant="outline" :disabled="isDeciding" @click="decide(index, 'rejected')">
+              <Spinner v-if="isCourseDecisionPending(course.id, 'rejected')" data-icon="inline-start" />
               <XIcon v-else data-icon="inline-start" />
               Reject
             </Button>

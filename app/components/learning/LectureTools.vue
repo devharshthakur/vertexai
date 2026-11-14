@@ -68,7 +68,7 @@
     }
   })
 
-  const { mutateAsync: deleteNoteRequest } = useMutation({
+  const { mutate: deleteNoteRequest } = useMutation({
     mutationFn: (note: LectureNote) => $fetch(`${lectureUrl.value}/notes/${note.id}`, { method: 'DELETE' }),
     onSuccess: async (_result, note) => {
       if (editingNoteId.value === note.id) cancelEditing()
@@ -80,7 +80,7 @@
     }
   })
 
-  const { mutateAsync: addBookmarkRequest, isPending: isAddingBookmark } = useMutation({
+  const { mutate: addBookmarkRequest, isPending: isAddingBookmark } = useMutation({
     mutationFn: (payload: { timestampSeconds: number }) =>
       $fetch(`${lectureUrl.value}/bookmarks`, {
         method: 'POST',
@@ -95,7 +95,7 @@
     }
   })
 
-  const { mutateAsync: deleteBookmarkRequest } = useMutation({
+  const { mutate: deleteBookmarkRequest } = useMutation({
     mutationFn: (bookmark: LectureBookmark) => $fetch(`${lectureUrl.value}/bookmarks/${bookmark.id}`, { method: 'DELETE' }),
     onSuccess: async () => {
       await refreshBookmarks()
@@ -123,15 +123,7 @@
     noteForm.reset()
   }
 
-  async function deleteNote(note: LectureNote) {
-    try {
-      await deleteNoteRequest(note)
-    } catch {
-      // The mutation reports the failure.
-    }
-  }
-
-  async function addBookmark() {
+  function addBookmark() {
     const timestampSeconds = props.getCurrentTime()
     const result = createLectureBookmarkSchema.safeParse({ timestampSeconds })
     if (!result.success) {
@@ -139,19 +131,7 @@
       return
     }
 
-    try {
-      await addBookmarkRequest(result.data)
-    } catch {
-      // The mutation reports the failure.
-    }
-  }
-
-  async function deleteBookmark(bookmark: LectureBookmark) {
-    try {
-      await deleteBookmarkRequest(bookmark)
-    } catch {
-      // The mutation reports the failure.
-    }
+    addBookmarkRequest(result.data)
   }
 </script>
 
@@ -213,7 +193,7 @@
                 <Button type="button" variant="link" size="sm" @click="emit('seek', note.timestampSeconds)">{{ formatTimestamp(note.timestampSeconds) }}</Button>
                 <div class="ml-auto flex gap-1">
                   <Button type="button" variant="ghost" size="sm" :disabled="Boolean(editingNoteId) && editingNoteId !== note.id" @click="editNote(note)">Edit</Button>
-                  <Button type="button" variant="ghost" size="sm" @click="deleteNote(note)">Delete</Button>
+                  <Button type="button" variant="ghost" size="sm" @click="deleteNoteRequest(note)">Delete</Button>
                 </div>
               </div>
               <p class="text-sm whitespace-pre-wrap">{{ note.content }}</p>
@@ -242,7 +222,7 @@
           <ul v-else class="flex flex-col gap-2">
             <li v-for="bookmark in bookmarks" :key="bookmark.id" class="flex items-center justify-between gap-2">
               <Button type="button" variant="link" size="sm" @click="emit('seek', bookmark.timestampSeconds)">{{ formatTimestamp(bookmark.timestampSeconds) }}</Button>
-              <Button type="button" variant="ghost" size="sm" :aria-label="`Remove bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`" @click="deleteBookmark(bookmark)">Remove</Button>
+              <Button type="button" variant="ghost" size="sm" :aria-label="`Remove bookmark at ${formatTimestamp(bookmark.timestampSeconds)}`" @click="deleteBookmarkRequest(bookmark)">Remove</Button>
             </li>
           </ul>
         </section>

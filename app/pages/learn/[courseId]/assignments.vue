@@ -19,7 +19,6 @@
   const courseId = computed(() => String(route.params.courseId))
   const { data: assignments, pending, error, refresh } = await useFetch<AssignmentSummary[]>(() => `/api/courses/${courseId.value}/assignments`, { default: () => [] })
   const files = reactive<Record<string, File | null>>({})
-  const submittingId = shallowRef('')
 
   /** Precompute deadline state and rubric totals once per list update. */
   const assignmentViews = computed(() =>
@@ -32,7 +31,11 @@
     }))
   )
 
-  const { mutateAsync: submitFileRequest } = useMutation({
+  const {
+    mutate: submitFileRequest,
+    isPending: isSubmitting,
+    variables: submitVariables
+  } = useMutation({
     mutationFn: ({ assignmentId, file }: { assignmentId: string; file: File }) => {
       const body = new FormData()
       body.append('file', file)
@@ -53,18 +56,15 @@
     if (target instanceof HTMLInputElement) files[assignmentId] = target.files?.[0] ?? null
   }
 
-  async function submitFile(assignmentId: string) {
+  function isSubmittingAssignment(assignmentId: string) {
+    return isSubmitting.value && submitVariables.value?.assignmentId === assignmentId
+  }
+
+  function submitFile(assignmentId: string) {
     const file = files[assignmentId]
     if (!file) return
 
-    submittingId.value = assignmentId
-    try {
-      await submitFileRequest({ assignmentId, file })
-    } catch {
-      // The mutation reports the failure.
-    } finally {
-      submittingId.value = ''
-    }
+    submitFileRequest({ assignmentId, file })
   }
 </script>
 
@@ -144,16 +144,16 @@
                     :id="`file-${view.assignment.id}`"
                     type="file"
                     accept=".pdf,.zip,.c,.cc,.cpp,.cs,.go,.h,.hpp,.html,.java,.js,.jsx,.kt,.md,.php,.py,.rb,.rs,.sh,.sql,.ts,.tsx,.txt,.vue,.xml,.yaml,.yml"
-                    :disabled="submittingId === view.assignment.id"
+                    :disabled="isSubmittingAssignment(view.assignment.id)"
                     @change="setFile(view.assignment.id, $event)"
                   />
                   <FieldDescription>PDF, ZIP, or source-code file · maximum 100 MiB. Resubmitting replaces your ungraded file.</FieldDescription>
                 </Field>
-                <Button class="self-start" :disabled="!files[view.assignment.id] || submittingId === view.assignment.id" @click="submitFile(view.assignment.id)">
-                  <Spinner v-if="submittingId === view.assignment.id" data-icon="inline-start" />
+                <Button class="self-start" :disabled="!files[view.assignment.id] || isSubmittingAssignment(view.assignment.id)" @click="submitFile(view.assignment.id)">
+                  <Spinner v-if="isSubmittingAssignment(view.assignment.id)" data-icon="inline-start" />
                   <UploadIcon v-else data-icon="inline-start" />
                   {{
-                    submittingId === view.assignment.id ? 'Uploading…'
+                    isSubmittingAssignment(view.assignment.id) ? 'Uploading…'
                     : view.assignment.submission ? 'Replace submission'
                     : 'Submit assignment'
                   }}

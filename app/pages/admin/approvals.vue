@@ -1,14 +1,17 @@
 <script setup lang="ts">
   import { CheckIcon, ExternalLinkIcon, XIcon } from '@lucide/vue'
+  import { useMutation } from '@tanstack/vue-query'
+  import { toast } from 'vue-sonner'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
   import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
   import { Field, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { Skeleton } from '@/components/ui/skeleton'
+  import { Spinner } from '@/components/ui/spinner'
   import { Textarea } from '@/components/ui/textarea'
   import type { CourseListResult } from '#shared/types/courses'
-  import { reviewCourseSchema } from '#shared/validation/courses'
+  import { reviewCourseSchema, type ReviewCourseValues } from '#shared/validation/courses'
 
   definePageMeta({ layout: 'workspace', middleware: 'admin' })
   useSeoMeta({ title: 'Course approvals · VertexAI' })
@@ -19,35 +22,47 @@
   })
   const comments = ref<Record<string, string>>({})
   const busyCourseId = shallowRef<string | null>(null)
-  const pageError = shallowRef('')
+  const busyDecision = shallowRef<'approved' | 'rejected' | null>(null)
   watch(data, (result) => {
     if (result && page.value > result.totalPages) page.value = result.totalPages
   })
 
+  const { mutateAsync: decideCourse } = useMutation({
+    mutationFn: ({ courseId, payload }: { courseId: string; payload: ReviewCourseValues }) =>
+      $fetch(`/api/admin/courses/${courseId}/decision`, {
+        method: 'POST',
+        body: payload
+      }),
+    onSuccess: async () => {
+      await refresh()
+      toast.success('Review saved.')
+    },
+    onError: async () => {
+      toast.error('The review could not be saved. The course may already have been reviewed.')
+      await refresh()
+    }
+  })
+
   async function decide(courseId: string, decision: 'approved' | 'rejected') {
-    pageError.value = ''
     const result = reviewCourseSchema.safeParse({
       decision,
       comment: comments.value[courseId] || null
     })
 
     if (!result.success) {
-      pageError.value = result.error.issues[0]?.message ?? 'Enter a valid review comment.'
+      toast.error(result.error.issues[0]?.message ?? 'Enter a valid review comment.')
       return
     }
 
     busyCourseId.value = courseId
+    busyDecision.value = decision
     try {
-      await $fetch(`/api/admin/courses/${courseId}/decision`, {
-        method: 'POST',
-        body: result.data
-      })
-      await refresh()
+      await decideCourse({ courseId, payload: result.data })
     } catch {
-      pageError.value = 'The review could not be saved. The course may already have been reviewed.'
-      await refresh()
+      // The mutation reports the failure.
     } finally {
       busyCourseId.value = null
+      busyDecision.value = null
     }
   }
 </script>
@@ -60,11 +75,11 @@
       <p class="max-w-2xl text-muted-foreground">Review pending course details and curriculum before publication.</p>
     </header>
 
-    <Alert v-if="error || pageError" variant="destructive">
-      <AlertTitle>{{ error ? 'Approval queue unavailable' : 'Review not saved' }}</AlertTitle>
+    <Alert v-if="error" variant="destructive">
+      <AlertTitle>Approval queue unavailable</AlertTitle>
       <AlertDescription>
-        {{ pageError || 'We could not load pending courses. Please try again.' }}
-        <Button v-if="error" size="sm" variant="outline" class="mt-3" @click="refresh()"> Retry </Button>
+        We could not load pending courses. Please try again.
+        <Button size="sm" variant="outline" class="mt-3" @click="refresh()"> Retry </Button>
       </AlertDescription>
     </Alert>
 
@@ -127,11 +142,13 @@
         <CardFooter>
           <div class="flex flex-wrap gap-3">
             <Button :disabled="busyCourseId !== null" @click="decide(course.id, 'approved')">
-              <CheckIcon data-icon="inline-start" />
-              {{ busyCourseId === course.id ? 'Saving…' : 'Approve course' }}
+              <Spinner v-if="busyCourseId === course.id && busyDecision === 'approved'" data-icon="inline-start" />
+              <CheckIcon v-else data-icon="inline-start" />
+              {{ busyCourseId === course.id && busyDecision === 'approved' ? 'Saving…' : 'Approve course' }}
             </Button>
             <Button variant="outline" :disabled="busyCourseId !== null" @click="decide(course.id, 'rejected')">
-              <XIcon data-icon="inline-start" />
+              <Spinner v-if="busyCourseId === course.id && busyDecision === 'rejected'" data-icon="inline-start" />
+              <XIcon v-else data-icon="inline-start" />
               Reject
             </Button>
           </div>

@@ -4,9 +4,10 @@
   import { Button } from '@/components/ui/button'
   import { Separator } from '@/components/ui/separator'
   import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { APP_ROLES } from '#shared/types/auth'
 
   const session = useAuthSessionState()
-  const isAdmin = computed(() => session.value?.user.role === 'admin')
+  const isAdmin = computed(() => session.value?.user.role === APP_ROLES.ADMIN)
 </script>
 
 <template>

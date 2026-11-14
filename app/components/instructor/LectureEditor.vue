@@ -1,16 +1,18 @@
 <script setup lang="ts">
-  import { shallowRef } from 'vue'
+  import { useMutation } from '@tanstack/vue-query'
+  import { revalidateLogic, useForm } from '@tanstack/vue-form'
+  import { watch } from 'vue'
+  import { toast } from 'vue-sonner'
   import { useInstructorDraft } from '@/composables/useInstructorDrafts'
   import type { LectureSummary } from '#shared/types/courses'
   import { createLectureSchema } from '#shared/validation/courses'
   import type { CreateLectureValues } from '#shared/validation/courses'
-  import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSet } from '@/components/ui/field'
   import { Input } from '@/components/ui/input'
+  import { Spinner } from '@/components/ui/spinner'
   import { Textarea } from '@/components/ui/textarea'
-  import { revalidateLogic, useForm } from '@tanstack/vue-form'
 
   const props = defineProps<{
     courseId: string
@@ -19,22 +21,37 @@
   }>()
 
   const emit = defineEmits<{ saved: [lecture: LectureSummary] }>()
-  const errorMessage = shallowRef('')
-  const saving = shallowRef(false)
   const durationPlaceholder = 'Optional'
   const videoUrlPlaceholder = '/videos/typescript/video.mp4'
 
-  const form = useForm({
-    defaultValues: {
-      title: props.lecture?.title ?? '',
-      videoUrl: props.lecture?.videoUrl ?? '',
-      transcript: props.lecture?.transcript ?? null,
-      durationSeconds: props.lecture?.durationSeconds ?? null
+  function toDefaults(lecture?: LectureSummary) {
+    return {
+      title: lecture?.title ?? '',
+      videoUrl: lecture?.videoUrl ?? '',
+      transcript: lecture?.transcript ?? null,
+      durationSeconds: lecture?.durationSeconds ?? null
+    }
+  }
+
+  const { mutateAsync: saveLectureRequest, isPending: isSaving } = useMutation({
+    mutationFn: (payload: CreateLectureValues) =>
+      props.lecture ? $fetch<LectureSummary>(`/api/courses/${props.courseId}/modules/${props.moduleId}/lectures/${props.lecture.id}`, { method: 'PUT', body: payload }) : $fetch<LectureSummary>(`/api/courses/${props.courseId}/modules/${props.moduleId}/lectures`, { method: 'POST', body: payload }),
+    onSuccess: (lecture) => {
+      toast.success(props.lecture ? 'Lecture saved.' : 'Lecture added.')
+      emit('saved', lecture)
+      if (props.lecture) form.reset(form.state.values)
+      else form.reset()
     },
+    onError: () => {
+      toast.error(`We could not ${props.lecture ? 'save' : 'add'} this lecture. Check the details and try again.`)
+    }
+  })
+
+  const form = useForm({
+    defaultValues: toDefaults(props.lecture),
     validationLogic: revalidateLogic(),
     validators: { onDynamic: createLectureSchema },
     onSubmit: async ({ value }) => {
-      errorMessage.value = ''
       const payload: CreateLectureValues = {
         ...value,
         transcript: value.transcript?.trim() || null,
@@ -42,22 +59,18 @@
       }
 
       try {
-        saving.value = true
-        const lecture =
-          props.lecture ?
-            await $fetch<LectureSummary>(`/api/courses/${props.courseId}/modules/${props.moduleId}/lectures/${props.lecture.id}`, { method: 'PUT', body: payload })
-          : await $fetch<LectureSummary>(`/api/courses/${props.courseId}/modules/${props.moduleId}/lectures`, { method: 'POST', body: payload })
-        emit('saved', lecture)
-        if (props.lecture) form.reset(value)
-        else form.reset()
+        await saveLectureRequest(payload)
       } catch {
-        errorMessage.value = `We could not ${props.lecture ? 'save' : 'add'} this lecture. Check the details and try again.`
-      } finally {
-        saving.value = false
+        // The mutation reports the failure.
       }
     }
   })
   useInstructorDraft(() => !form.state.isDefaultValue)
+
+  watch(
+    () => props.lecture,
+    (lecture) => form.reset(toDefaults(lecture))
+  )
 
   function toDuration(value: string | number) {
     if (value === '') return null
@@ -74,12 +87,7 @@
     </CardHeader>
     <CardContent>
       <form class="flex flex-col gap-5" novalidate @submit.prevent="form.handleSubmit()">
-        <FieldSet :disabled="saving">
-          <Alert v-if="errorMessage" variant="destructive">
-            <AlertTitle>Lecture was not saved</AlertTitle>
-            <AlertDescription>{{ errorMessage }}</AlertDescription>
-          </Alert>
-
+        <FieldSet :disabled="isSaving">
           <FieldGroup>
             <form.Field name="title">
               <template #default="{ field }">
@@ -145,6 +153,7 @@
 
           <form.Subscribe v-slot="{ isSubmitting }">
             <Button type="submit" :disabled="isSubmitting">
+              <Spinner v-if="isSubmitting" data-icon="inline-start" />
               {{
                 isSubmitting ? 'Saving…'
                 : lecture ? 'Save lecture'

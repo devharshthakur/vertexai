@@ -28,7 +28,7 @@
   const [{ data: courseData, pending, error }, { data: review, refresh: refreshReview }] = await Promise.all([courseRequest, reviewRequest])
   const course = computed(() => courseData.value?.course ?? null)
 
-  const { mutateAsync: submitCourse, isPending: isSubmitting } = useMutation({
+  const { mutate: submitCourse, isPending: isSubmitting } = useMutation({
     mutationFn: () => $fetch<CourseSummary>(`/api/courses/${courseId.value}/submit`, { method: 'POST', body: {} }),
     onSuccess: async (updated) => {
       if (courseData.value) courseData.value.course = updated
@@ -55,14 +55,6 @@
       toast.error('We could not save course details. Please try again.')
     }
   })
-
-  async function submitForReview() {
-    try {
-      await submitCourse()
-    } catch {
-      // The mutation reports the failure.
-    }
-  }
 
   async function updateCourse(values: CreateCourseValues) {
     try {
@@ -113,7 +105,7 @@
         <Button variant="outline" as-child>
           <NuxtLink :to="`/courses/${course!.id}`">Preview</NuxtLink>
         </Button>
-        <Button v-if="course!.status === 'draft' || course!.status === 'rejected'" :disabled="isSubmitting" @click="submitForReview">
+        <Button v-if="course!.status === 'draft' || course!.status === 'rejected'" :disabled="isSubmitting" @click="submitCourse()">
           <Spinner v-if="isSubmitting" data-icon="inline-start" />
           {{ course!.status === 'rejected' ? 'Resubmit for review' : 'Submit for review' }}
         </Button>

@@ -2,6 +2,7 @@
   import '@videojs/html/video/player'
   import '@videojs/html/video/neutral-skin'
   import type { VideoPlayerElement } from '@videojs/html/video'
+  import { useEventListener, useIntervalFn } from '@vueuse/core'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
   const props = defineProps<{ courseId: string; lectureId: string; videoUrl: string | null; title: string; positionSeconds: number }>()
@@ -9,17 +10,17 @@
   const error = shallowRef(false)
   const saveError = shallowRef(false)
   let unsubscribe: (() => void) | undefined
-  let timer: ReturnType<typeof setInterval> | undefined
   let hasPlayed = false
   let saveQueue: Promise<void> = Promise.resolve()
 
+  const { pause: pauseAutosave, resume: resumeAutosave, isActive: autosaveActive } = useIntervalFn(savePosition, 10000, { immediate: false })
+
   function startTimer() {
-    if (!timer) timer = setInterval(savePosition, 10000)
+    if (!autosaveActive.value) resumeAutosave()
   }
 
   function stopTimer() {
-    if (timer) clearInterval(timer)
-    timer = undefined
+    pauseAutosave()
   }
 
   function savePosition() {
@@ -99,14 +100,16 @@
 
     sync()
     unsubscribe = store.subscribe(sync)
-    window.addEventListener('pagehide', savePosition)
   })
+
+  if (import.meta.client) {
+    useEventListener(window, 'pagehide', savePosition)
+  }
 
   onBeforeUnmount(() => {
     savePosition()
     stopTimer()
     unsubscribe?.()
-    window.removeEventListener('pagehide', savePosition)
   })
 </script>
 

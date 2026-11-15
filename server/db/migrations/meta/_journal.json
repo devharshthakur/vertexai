@@ -71,6 +71,13 @@
       "when": 1794666053690,
       "tag": "0009_fresh_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794740647175,
+      "tag": "0010_clean_thunderball",
+      "breakpoints": true
     }
   ]
 }

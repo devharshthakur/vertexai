@@ -134,13 +134,17 @@ export async function updateLecture(courseId: string, moduleId: string, lectureI
 
   if (!existingLecture || existingLecture.moduleId !== existingModule.id) throw new ServiceError('not_found')
 
+  const transcriptChanged = input.transcript !== undefined && input.transcript !== existingLecture.transcript
+
   const [row] = await useDb()
     .update(lectures)
     .set({
       ...(input.title !== undefined && { title: input.title }),
       ...(input.videoUrl !== undefined && { videoUrl: input.videoUrl }),
       ...(input.transcript !== undefined && { transcript: input.transcript }),
-      ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds })
+      ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds }),
+      // A new transcript invalidates both the embedding and the cached summary.
+      ...(transcriptChanged && { embedding: null, embeddedAt: null, summary: null, summaryGeneratedAt: null })
     })
     .where(eq(lectures.id, existingLecture.id))
     .returning()

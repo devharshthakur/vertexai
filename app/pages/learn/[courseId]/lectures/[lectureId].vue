@@ -2,6 +2,8 @@
   import LearningPlayer from '@/components/learning/LearningPlayer.vue'
   import LectureTools from '@/components/learning/LectureTools.vue'
   import CertificateCard from '@/components/learning/CertificateCard.vue'
+  import AiTutorPanel from '@/components/learning/AiTutorPanel.vue'
+  import LectureSummaryCard from '@/components/learning/LectureSummaryCard.vue'
   import LecturePreviewPlayer from '@/components/course/LecturePreviewPlayer.vue'
   import { useLectureContent } from '@/composables/useLectureContent'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -9,6 +11,7 @@
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Progress } from '@/components/ui/progress'
+  import { Skeleton } from '@/components/ui/skeleton'
   import { Spinner } from '@/components/ui/spinner'
   import { useMutation, useQueryClient } from '@tanstack/vue-query'
   import { toast } from 'vue-sonner'
@@ -106,6 +109,12 @@
       <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(16rem,1fr)]">
         <div class="flex flex-col gap-4">
           <LearningPlayer ref="player" :key="current.id" :course-id="courseId" :lecture-id="current.id" :video-url="current.videoUrl" :title="current.title" :position-seconds="current.positionSeconds" />
+          <ClientOnly>
+            <AiTutorPanel :course-id="courseId" />
+            <template #fallback>
+              <Skeleton class="h-96 w-full" />
+            </template>
+          </ClientOnly>
           <LectureTools :key="`tools-${current.id}`" :course-id="courseId" :lecture-id="current.id" :get-current-time="getCurrentTime" @seek="seekTo" />
           <Alert v-if="materialsError">
             <AlertTitle>Course materials unavailable</AlertTitle>
@@ -139,6 +148,7 @@
           </Button>
         </div>
         <div class="flex flex-col gap-4">
+          <LectureSummaryCard :key="`summary-${current.id}`" :course-id="courseId" :lecture-id="current.id" />
           <Card>
             <CardHeader>
               <CardTitle>Course progress · {{ Math.round(data.progressPercent) }}%</CardTitle>

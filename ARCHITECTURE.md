@@ -101,32 +101,33 @@ Beyond the guards:
 
 Routes are grouped by domain, and every route delegates to a service.
 
-| Area        | Routes                                                                                                                                          | Access                                                                            |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Catalog     | `GET /api/courses`, `/api/courses/categories`, `/api/courses/[id]`                                                                              | Public; unapproved courses only for owner and admins                              |
-| Authoring   | `/api/courses` (create, mine), `/[id]` (update, submit, review), modules, lectures, reorder                                                     | Instructor or admin                                                               |
-| Enrollment  | `POST /api/courses/[id]/enroll`, `GET /api/enrollments/me`                                                                                      | Signed in; the course must be approved                                            |
-| Learning    | `GET /api/courses/[id]/learn`, progress, notes, bookmarks                                                                                       | Signed-in enrolled student                                                        |
-| Materials   | `/api/courses/[id]/materials` and `/[materialId]`                                                                                               | Owner or admin; enrolled students may read                                        |
-| Assignments | `/api/courses/[id]/assignments`, `/api/assignments/[id]/submit`, `/api/assignments/[id]/submissions`, `/api/submissions/[id]/grade` and `/file` | Owner/admin create and grade; enrolled students submit and read their own results |
-| Account     | `GET /api/me`, `/api/me/streak`                                                                                                                 | Signed in                                                                         |
-| Admin       | `GET /api/admin/courses/pending`, `POST /api/admin/courses/[id]/decision`                                                                       | Admin                                                                             |
-| Auth        | `/api/auth/**`, `GET /api/auth-providers`                                                                                                       | Better Auth; the provider list is public                                          |
-| Health      | `GET /api/health`                                                                                                                               | Public                                                                            |
+| Area        | Routes                                                                                                                                          | Access                                                                                       |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| Catalog     | `GET /api/courses`, `/api/courses/categories`, `/api/courses/[id]`                                                                              | Public; unapproved courses only for owner and admins                                         |
+| Authoring   | `/api/courses` (create, mine), `/[id]` (update, submit, review), modules, lectures, reorder                                                     | Instructor or admin                                                                          |
+| Enrollment  | `POST /api/courses/[id]/enroll`, `GET /api/enrollments/me`                                                                                      | Signed in; the course must be approved                                                       |
+| Learning    | `GET /api/courses/[id]/learn`, progress, notes, bookmarks                                                                                       | Signed-in enrolled student                                                                   |
+| Quizzes     | `/api/courses/[id]/quizzes`, `/api/quizzes/[id]`, `/api/quizzes/[id]/attempt`, `/api/attempts/[id]`, `/api/attempts/[id]/submit`                | Owner/admin create and inspect; enrolled students take, are auto-graded, and review attempts |
+| Materials   | `/api/courses/[id]/materials` and `/[materialId]`                                                                                               | Owner or admin; enrolled students may read                                                   |
+| Assignments | `/api/courses/[id]/assignments`, `/api/assignments/[id]/submit`, `/api/assignments/[id]/submissions`, `/api/submissions/[id]/grade` and `/file` | Owner/admin create and grade; enrolled students submit and read their own results            |
+| Account     | `GET /api/me`, `/api/me/streak`                                                                                                                 | Signed in                                                                                    |
+| Admin       | `GET /api/admin/courses/pending`, `POST /api/admin/courses/[id]/decision`                                                                       | Admin                                                                                        |
+| Auth        | `/api/auth/**`, `GET /api/auth-providers`                                                                                                       | Better Auth; the provider list is public                                                     |
+| Health      | `GET /api/health`                                                                                                                               | Public                                                                                       |
 
-Course logic is split by job under `server/services/courses/`: `queries` for reads, `commands` for writes and lifecycle transitions, `presenters` for turning database rows into shared response types, and `access` for ownership and visibility rules. The other services follow the same shape: `enrollment-service`, `progress-service`, `learning-tools-service`, and `course-materials`.
+Course logic is split by job under `server/services/courses/`: `queries` for reads, `commands` for writes and lifecycle transitions, `presenters` for turning database rows into shared response types, and `access` for ownership and visibility rules. The other services follow the same shape: `enrollment-service`, `progress-service`, `learning-tools-service`, `course-materials`, and `quizzes`.
 
 ## Data model
 
-| Group          | Tables                                           | Holds                                                                    |
-| -------------- | ------------------------------------------------ | ------------------------------------------------------------------------ |
-| Identity       | `users`, `sessions`, `accounts`, `verifications` | Better Auth accounts, sessions, and OAuth links                          |
-| Course content | `courses`, `modules`, `lectures`                 | The authoring tree, ordered by index                                     |
-| Review         | `course_approvals`                               | One row per review decision, with reviewer and comment                   |
-| Enrollment     | `enrollments`, `lecture_progress`                | Who is enrolled, cached percentage, watch position, completion           |
-| Learning tools | `notes`, `bookmarks`, `streaks`                  | Timestamped notes and bookmarks, daily streak counters                   |
-| Materials      | `course_materials`                               | File metadata and the storage key for a file on disk                     |
-| Assessment     | `assignments`, `assignment_submissions`          | Course rubrics/deadlines, each student's current upload and manual grade |
+| Group          | Tables                                                                                                                | Holds                                                                                                   |
+| -------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Identity       | `users`, `sessions`, `accounts`, `verifications`                                                                      | Better Auth accounts, sessions, and OAuth links                                                         |
+| Course content | `courses`, `modules`, `lectures`                                                                                      | The authoring tree, ordered by index                                                                    |
+| Review         | `course_approvals`                                                                                                    | One row per review decision, with reviewer and comment                                                  |
+| Enrollment     | `enrollments`, `lecture_progress`                                                                                     | Who is enrolled, cached percentage, watch position, completion                                          |
+| Learning tools | `notes`, `bookmarks`, `streaks`                                                                                       | Timestamped notes and bookmarks, daily streak counters                                                  |
+| Materials      | `course_materials`                                                                                                    | File metadata and the storage key for a file on disk                                                    |
+| Assessment     | `assignments`, `assignment_submissions`, `quizzes`, `quiz_questions`, `quiz_options`, `quiz_attempts`, `quiz_answers` | Course rubrics/deadlines and uploads; objective quizzes, their answer keys, and graded student attempts |
 
 Relationships:
 
@@ -139,6 +140,11 @@ Relationships:
 | `enrollments`                    | `lecture_progress`   | One row per lecture and enrollment (unique pair)                  |
 | `lectures`                       | `notes`, `bookmarks` | Per-user rows, removed with the lecture                           |
 | `users`                          | `streaks`            | One streak row per user                                           |
+| `modules`                        | `quizzes`            | A module owns its quizzes; deleting the module removes them       |
+| `quizzes`                        | `quiz_questions`     | Each question belongs to one quiz and carries ordered options     |
+| `quiz_questions`                 | `quiz_options`       | Options keep their order and the `is_correct` answer key          |
+| `quizzes`, `users`               | `quiz_attempts`      | One open attempt per student and quiz; submitted attempts remain  |
+| `quiz_attempts`                  | `quiz_answers`       | One graded answer per question, stored on submission              |
 | `courses`, `modules`, `lectures` | `course_materials`   | A material attaches to a module and optionally a lecture          |
 
 Design rules worth knowing:
@@ -188,6 +194,6 @@ Material bytes are deliberately kept out of PostgreSQL and out of the repository
 - `pnpm validate` runs the Prettier check, ESLint, and the Nuxt typecheck.
 - A Husky pre-commit hook runs `nano-staged`: ESLint with `--fix` and Prettier for code, Prettier for Markdown, JSON, CSS, and YAML.
 - No test runner is configured yet, so there are no automated tests to run.
-- Not implemented in this codebase: the AI tutor and its citations, auto-graded quizzes, certificates, achievement badges, and instructor analytics. See [`FEATURES.md`](FEATURES.md) for the available and planned lists. There is no AI provider integration yet.
+- Not implemented in this codebase: the AI tutor and its citations, certificates, achievement badges, and instructor analytics. See [`FEATURES.md`](FEATURES.md) for the available and planned lists. There is no AI provider integration yet.
 
 See [`SETUP.md`](SETUP.md) for running the app locally.

@@ -29,7 +29,7 @@ The goal is the familiar LMS loop — courses, lectures, assessments, certificat
 
 ## Features
 
-The app currently covers course authoring, a searchable catalog, enrollment, lecture progress, notes, bookmarks, learning streaks, and admin course approvals. AI tutoring, assessments, certificates, badges, and analytics are planned.
+The app currently covers course authoring, a searchable catalog, enrollment, lecture progress, quizzes, assignments, notes, bookmarks, learning streaks, certificates, badges, and admin course approvals. AI tutoring, adaptive study aids, and instructor analytics are planned.
 
 [FEATURES.md](./FEATURES.md) lists what works today and what is still to come.
 

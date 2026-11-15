@@ -19,6 +19,8 @@ VertexAI aims to cover the full teaching loop: authoring, publishing, learning, 
 | Notes and bookmarks | Timestamped notes and bookmarks attached to a lecture                                                                      |
 | Assignments         | Instructor rubrics and deadlines, enrolled-student file submissions, protected downloads, manual grading                   |
 | Learning streaks    | Current and longest daily streak per user                                                                                  |
+| Certificates        | On-demand PDF certificate once every lecture in a course is complete                                                       |
+| Achievement badges  | Milestones for finishing a course, scoring a perfect quiz, and a seven-day streak                                          |
 | Demo data           | Seeded accounts, three approved courses, and lecture assets                                                                |
 
 ## Planned
@@ -28,8 +30,6 @@ These come from the product requirements and are not implemented yet:
 - **AI tutor** grounded in course material, with citations back to the lecture.
 - **AI study aids**: lecture summaries, flashcards, and quiz drafts.
 - **Adaptive explanations** at beginner, intermediate, and advanced levels.
-- **Certificates** on course completion.
-- **Achievement badges.**
 - **Instructor analytics** showing where learners struggle.
 - **Admin moderation tools** beyond course approvals.
 

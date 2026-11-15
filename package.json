@@ -43,6 +43,7 @@
     "db:logs": "docker compose logs -f db",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:push": "drizzle-kit push",
     "db:seed": "tsx seed/index.ts",
     "db:check": "drizzle-kit check",
     "db:studio": "drizzle-kit studio",

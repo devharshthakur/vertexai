@@ -47,6 +47,11 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 5
   },
+  runtimeConfig: {
+    openaiApiKey: process.env.OPENAI_API_KEY ?? '',
+    aiChatModel: process.env.AI_CHAT_MODEL ?? 'gpt-5.4-mini',
+    aiEmbeddingModel: process.env.AI_EMBEDDING_MODEL ?? 'text-embedding-3-small'
+  },
   typescript: {
     nodeTsConfig: {
       include: ['../drizzle.config.ts', '../eslint.config.mjs', '../prettier.config.js', '../.nano-staged.mjs', '../scripts/*.ts', '../seed/*.ts'],

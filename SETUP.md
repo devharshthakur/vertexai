@@ -69,6 +69,11 @@ cp .env.example .env
 | ------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------ |
 | `COURSE_MATERIALS_DIR`                      | Absolute path where uploaded course files are stored       | `~/.local/share/vertexai/course-materials` |
 | `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub sign-in; the button stays hidden until both are set | Unset                                      |
+| `OPENAI_API_KEY`                            | OpenAI key for the AI tutor and lecture summaries          | Unset                                      |
+| `AI_CHAT_MODEL`                             | Optional chat model override                               | `gpt-5.4-mini`                             |
+| `AI_EMBEDDING_MODEL`                        | Optional transcript embedding model override               | `text-embedding-3-small`                   |
+
+Without `OPENAI_API_KEY`, the tutor and summary cards show an unavailable state and every other feature keeps working. Restart the dev server after changing it, because the value is read when the Nuxt config loads. The AI features send lecture transcripts to OpenAI, so use material you are allowed to share with that provider. The AI migration enables the `vector` extension and needs the `pgvector` image already used by Compose.
 
 Course materials — PDFs, slides, and uploaded videos — live on the filesystem, not in the database or the repository:
 

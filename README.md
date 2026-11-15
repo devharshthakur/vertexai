@@ -19,7 +19,7 @@ An AI-augmented learning management system with a tutor that knows your course.
 
 VertexAI is a learning management system built around one idea: the AI tutor should answer from _your_ course material, not from a generic chatbot.
 
-The goal is the familiar LMS loop — courses, lectures, assessments, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from. The LMS foundations work today; the tutor and assessment features are planned. See [FEATURES.md](./FEATURES.md) for the breakdown.
+The goal is the familiar LMS loop — courses, lectures, assessments, certificates — together with a tutor that reads the course before it replies and shows you where its answer came from. The LMS foundations and the course-grounded AI tutor work today; adaptive study aids and instructor analytics are planned. See [FEATURES.md](./FEATURES.md) for the breakdown.
 
 ## Who it's for
 
@@ -29,7 +29,7 @@ The goal is the familiar LMS loop — courses, lectures, assessments, certificat
 
 ## Features
 
-The app currently covers course authoring, a searchable catalog, enrollment, lecture progress, quizzes, assignments, notes, bookmarks, learning streaks, certificates, badges, and admin course approvals. AI tutoring, adaptive study aids, and instructor analytics are planned.
+The app currently covers course authoring, a searchable catalog, enrollment, lecture progress, quizzes, assignments, notes, bookmarks, learning streaks, certificates, badges, admin course approvals, a course-grounded AI tutor, and cached lecture summaries. Adaptive study aids and instructor analytics are planned.
 
 [FEATURES.md](./FEATURES.md) lists what works today and what is still to come.
 
@@ -39,7 +39,8 @@ The app currently covers course authoring, a searchable catalog, enrollment, lec
 | ----------- | ----------------------------------------------------- |
 | Framework   | Nuxt 4, Vue 3, TypeScript                             |
 | UI          | Tailwind CSS 4, shadcn-vue, Lucide icons, Video.js 10 |
-| Data        | PostgreSQL 17 (Docker Compose), Drizzle ORM           |
+| Data        | PostgreSQL 17 (Docker Compose, pgvector), Drizzle ORM |
+| AI          | OpenAI through the Vercel AI SDK 7                    |
 | Auth        | Better Auth (email + password, optional GitHub)       |
 | Validation  | Zod, with schemas shared by client and server         |
 | Client data | Nuxt `useFetch`, TanStack Vue Query                   |
@@ -54,7 +55,7 @@ Follow [SETUP.md](./SETUP.md) to run the app locally, then read [ARCHITECTURE.md
 - [SETUP.md](./SETUP.md) — local development setup
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — how the application is built
 - [FEATURES.md](./FEATURES.md) — what works today and what is planned
-- [docs/PRD/PRD.docx](./docs/PRD/PRD.docx) — the product requirements this is built from (readable copy in [PRD.html](./docs/PRD/PRD.html))
+- [docs/PRD/PRD.docx](./docs/PRD/PRD.docx) — the product requirements this is built from (readable copies in [PRD.md](./docs/PRD/PRD.md) and [PRD.html](./docs/PRD/PRD.html))
 
 ## Author
 

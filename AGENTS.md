@@ -4,12 +4,13 @@ Load the `defaults` skill at the start of every repository task. `ARCHITECTURE.m
 
 ## Architecture
 
-- The PRD (`docs/PRD/PRD.docx`; readable `docs/PRD/PRD.html`) defines product scope only; do not adopt its suggested React/Express stack. The `docs/PRD/PRD.md` path used by the defaults skill and some source comments is stale; that file was removed.
+- The PRD (`docs/PRD/PRD.docx`; readable `docs/PRD/PRD.md` and `docs/PRD/PRD.html`) defines product scope only; do not adopt its suggested React/Express stack.
 - `app/` is the Vue client, `server/` Nitro, and `shared/` Zod schemas/types. Use `@/` for `app/`, `#server/` for `server/`, and `#shared/` for `shared/` (from either side). App component and composable auto-import scanning is off (`components.dirs: []`, `imports.scan: false`); import them explicitly, while Nuxt's own composables remain auto-imported.
 - API routes are thin: guard with `requireSession`/`requireRole` (or `optionalSession` for public, session-aware routes), validate with the same `shared/validation` schema client forms use via `parseBody`/`parseQuery`/`parseParam`, delegate to `server/services`, and translate `ServiceError` at the route boundary. There is deliberately no global API auth middleware; it would also intercept `/api/auth/**`.
 - Client route middleware is not API protection. Every protected API route must guard itself.
 - New tables use UUID primary keys, but foreign keys to Better Auth's `users` stay `text`. Roles, statuses, and difficulty values live in `shared/`, not PostgreSQL enums. Export every schema module from `server/db/schema/index.ts`.
 - Uploaded material and submission bytes live outside the checkout under `COURSE_MATERIALS_DIR` (default `~/.local/share/vertexai/course-materials`); PostgreSQL stores metadata only.
+- AI generation lives in `server/services/ai` behind the Vercel AI SDK; `OPENAI_API_KEY` is optional, and its absence returns 503 without affecting other routes. AI rate limiting is in memory and therefore per instance.
 
 ## Workflow
 

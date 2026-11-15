@@ -1,5 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai'
 import { useRuntimeConfig } from 'nitropack/runtime'
+import { parseRuntimeConfig } from '~~/config/runtime'
 import { ServiceError } from './service-error'
 
 /**
@@ -9,17 +10,24 @@ import { ServiceError } from './service-error'
  * them without rebuilding the app. `OPENAI_API_KEY` in `.env` is enough for
  * local development; `NUXT_OPENAI_API_KEY` overrides the runtime default.
  *
- * A missing key is a configuration state, not a crash: every AI route raises a
- * `ServiceError('unavailable')` that the boundary translates to a 503, so the
- * rest of the LMS keeps working.
+ * Parsing here validates the effective values, including `NUXT_*` overrides
+ * that bypass the checks in `nuxt.config.ts`. A missing key is a configuration
+ * state, not a crash: every AI route raises a `ServiceError('unavailable')`
+ * that the boundary translates to a 503, so the rest of the LMS keeps working.
  */
 function aiConfig() {
   const config = useRuntimeConfig()
 
+  const values = parseRuntimeConfig({
+    openaiApiKey: config.openaiApiKey || process.env.OPENAI_API_KEY,
+    aiChatModel: config.aiChatModel,
+    aiEmbeddingModel: config.aiEmbeddingModel
+  })
+
   return {
-    apiKey: (config.openaiApiKey as string | undefined) || process.env.OPENAI_API_KEY || '',
-    chatModel: (config.aiChatModel as string | undefined) || 'gpt-5.4-mini',
-    embeddingModel: (config.aiEmbeddingModel as string | undefined) || 'text-embedding-3-small'
+    apiKey: values.openaiApiKey,
+    chatModel: values.aiChatModel,
+    embeddingModel: values.aiEmbeddingModel
   }
 }
 

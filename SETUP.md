@@ -203,11 +203,15 @@ pnpm dlx auth@1.7.18 create-admin --config server/utils/auth.ts \
 
 ## Database commands
 
-| Command            | What it does                                  |
-| ------------------ | --------------------------------------------- |
-| `pnpm db:migrate`  | Apply pending migrations                      |
-| `pnpm db:generate` | Write a new migration from `server/db/schema` |
-| `pnpm db:check`    | Validate the migration history                |
-| `pnpm db:studio`   | Browse the database in Drizzle Studio         |
+| Command            | What it does                                        |
+| ------------------ | --------------------------------------------------- |
+| `pnpm db:migrate`  | Apply pending migrations                            |
+| `pnpm db:generate` | Write a new migration from `server/db/schema`       |
+| `pnpm db:push`     | Push the schema straight to the database (dev only) |
+| `pnpm db:check`    | Validate the migration history                      |
+| `pnpm db:studio`   | Browse the database in Drizzle Studio               |
 
 Migrations are read from `server/db/migrations` and applied to the database in `DATABASE_URL`.
+
+> [!WARNING]
+> `pnpm db:push` syncs `server/db/schema` directly and writes no migration files, so Drizzle's history no longer reflects the database. Use it only for throwaway local databases; use `db:generate` followed by `db:migrate` for anything you keep.

@@ -2,17 +2,12 @@ import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 import { defineEventHandler } from 'nuxt/server'
 import { sendStream, setResponseHeader, type H3Event } from 'h3'
+import { create as contentDisposition } from 'content-disposition'
 import { getAssignmentSubmissionFile } from '#server/services/assignments'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
 import { parseParam } from '#server/utils/validate'
 import { assignmentSubmissionIdSchema } from '#shared/validation/assignments'
-
-function contentDisposition(filename: string): string {
-  const fallback = filename.replace(/[^\x20-\x7e]/g, '_').replace(/["\\]/g, '_')
-  const encoded = encodeURIComponent(filename).replace(/[!'()*]/g, (character) => `%${character.charCodeAt(0).toString(16).toUpperCase()}`)
-  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`
-}
 
 export default defineEventHandler(async (event) => {
   const session = await requireSession(event)

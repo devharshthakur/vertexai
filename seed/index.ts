@@ -4,7 +4,7 @@ import { DEMO_COURSES, DEMO_VIDEO_SLUGS, LEGACY_DEMO_COURSE_TITLES } from './cou
 import { loadDemoVideos, type DemoVideoContent } from './load-demo-video'
 import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 import { useDb } from '../server/db'
-import { courseApprovals, courses, enrollments, lectures, modules, sessions, users } from '../server/db/schema'
+import { courseApprovals, courses, enrollments, lectures, modules, quizOptions, quizQuestions, quizzes, sessions, users } from '../server/db/schema'
 import { auth } from '../server/utils/auth'
 
 const DEMO_PASSWORD = DEFAULT_DEMO_PASSWORD
@@ -161,6 +161,40 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
         })
 
         await tx.insert(lectures).values(lectureValues)
+
+        for (const demoQuiz of demoModule.quizzes ?? []) {
+          const [insertedQuiz] = await tx
+            .insert(quizzes)
+            .values({
+              moduleId: insertedModule!.id,
+              title: demoQuiz.title,
+              passingScore: demoQuiz.passingScore
+            })
+            .returning({ id: quizzes.id })
+
+          for (const [questionIndex, question] of demoQuiz.questions.entries()) {
+            const [insertedQuestion] = await tx
+              .insert(quizQuestions)
+              .values({
+                quizId: insertedQuiz!.id,
+                questionText: question.questionText,
+                questionType: question.questionType,
+                points: question.points.toFixed(2),
+                explanation: question.explanation,
+                orderIndex: questionIndex
+              })
+              .returning({ id: quizQuestions.id })
+
+            await tx.insert(quizOptions).values(
+              question.options.map((option, optionIndex) => ({
+                questionId: insertedQuestion!.id,
+                optionText: option.optionText,
+                isCorrect: option.isCorrect,
+                orderIndex: optionIndex
+              }))
+            )
+          }
+        }
       }
 
       if (demoCourse.approval) {
@@ -201,6 +235,8 @@ async function seed() {
   console.info(`Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`)
   console.info(`Loaded ${demoVideos.size} demo video assets from public/videos/.`)
   console.info(`Seeded ${DEMO_COURSES.length} demo courses (all approved and enrolled for the demo student).`)
+  const demoQuizCount = DEMO_COURSES.flatMap((course) => course.modules.flatMap((module) => module.quizzes ?? [])).length
+  console.info(`Seeded ${demoQuizCount} demo quizzes with questions and options.`)
   console.info('All demo accounts use the predefined password.')
 }
 

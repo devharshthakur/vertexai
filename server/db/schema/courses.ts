@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm'
-import { index, integer, numeric, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { index, integer, numeric, pgTable, text, timestamp, uuid, varchar, vector } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 import { COURSE_STATUSES } from '../../../shared/validation/courses'
 
@@ -65,9 +65,15 @@ export const lectures = pgTable(
     resourceUrls: text('resource_urls')
       .array()
       .default(sql`'{}'::text[]`)
-      .notNull()
+      .notNull(),
+    /** One embedding per transcript, filled lazily by the AI tutor. */
+    embedding: vector('embedding', { dimensions: 1536 }),
+    embeddedAt: timestamp('embedded_at', { withTimezone: true }),
+    /** Cached AI summary of the transcript. */
+    summary: text('summary'),
+    summaryGeneratedAt: timestamp('summary_generated_at', { withTimezone: true })
   },
-  (table) => [index('lectures_moduleId_idx').on(table.moduleId)]
+  (table) => [index('lectures_moduleId_idx').on(table.moduleId), index('lectures_embedding_hnsw_idx').using('hnsw', table.embedding.op('vector_cosine_ops'))]
 )
 
 export const coursesRelations = relations(courses, ({ one, many }) => ({

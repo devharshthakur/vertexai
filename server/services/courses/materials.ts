@@ -5,8 +5,8 @@ import type { CourseMaterialSummary } from '#shared/types/course-materials'
 import type { CourseMaterialUploadFields } from '#shared/validation/course-materials'
 import { MAX_COURSE_MATERIAL_BYTES } from '#shared/validation/course-materials'
 import { ServiceError } from '#server/utils/service-error'
-import { assertCanManageCourse, canManageCourse, type CourseActor } from './courses/access'
-import { deleteCourseMaterialFile, getCourseMaterialPath, writeCourseMaterial } from './course-material-storage'
+import { assertCanManageCourse, canManageCourse, type CourseActor } from './access'
+import { deleteCourseMaterialFile, getCourseMaterialPath, writeCourseMaterial } from './material-storage'
 
 const MATERIAL_TYPES: Record<string, { contentType: string; signature: (data: Buffer) => boolean }> = {
   '.pdf': { contentType: 'application/pdf', signature: (data) => data.subarray(0, 5).toString('ascii') === '%PDF-' },

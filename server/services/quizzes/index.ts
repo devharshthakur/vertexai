@@ -4,8 +4,8 @@ import { courses, enrollments, modules, quizAnswers, quizAttempts, quizOptions, 
 import type { QuizAttemptDetail, QuizDetailForStudent, QuizGradedAnswerItem, QuizInstructorOption, QuizInstructorQuestion, QuizStudentQuestion, QuizStudentSummary } from '#shared/types/quizzes'
 import type { CreateQuizValues, SubmitQuizAttemptValues } from '#shared/validation/quizzes'
 import { ServiceError } from '#server/utils/service-error'
-import { assertCanManageCourse, canManageCourse, type CourseActor } from './courses/access'
-import { awardBadges } from './achievements'
+import { assertCanManageCourse, canManageCourse, type CourseActor } from '../courses/access'
+import { awardBadges } from '../achievements'
 
 type QuizRow = typeof quizzes.$inferSelect
 type QuestionRow = typeof quizQuestions.$inferSelect

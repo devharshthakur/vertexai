@@ -4,8 +4,8 @@ import { assignmentSubmissions, assignments, courses, enrollments, users } from 
 import type { AssignmentInstructorSubmission, AssignmentSubmissionSummary, AssignmentSummary } from '#shared/types/assignments'
 import type { CreateAssignmentValues, GradeAssignmentSubmissionValues } from '#shared/validation/assignments'
 import { ServiceError } from '#server/utils/service-error'
-import { assertCanManageCourse, canManageCourse, type CourseActor } from './courses/access'
-import { deleteCourseMaterialFile, getCourseMaterialPath, writeCourseMaterial } from './course-material-storage'
+import { assertCanManageCourse, canManageCourse, type CourseActor } from '../courses/access'
+import { deleteCourseMaterialFile, getCourseMaterialPath, writeCourseMaterial } from '../courses/material-storage'
 
 export const MAX_ASSIGNMENT_FILE_BYTES = 100 * 1024 * 1024
 

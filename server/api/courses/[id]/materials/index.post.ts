@@ -1,6 +1,6 @@
 import { createError, defineEventHandler, setResponseStatus } from 'nuxt/server'
 import { getRequestHeader, readMultipartFormData, type H3Event } from 'h3'
-import { addCourseMaterial } from '#server/services/course-materials'
+import { addCourseMaterial } from '#server/services/courses/materials'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireRole } from '#server/utils/require-session'
 import { parseParam } from '#server/utils/validate'

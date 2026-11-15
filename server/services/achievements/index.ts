@@ -4,8 +4,8 @@ import { certificates, userBadges, users } from '#server/db/schema'
 import { ServiceError } from '#server/utils/service-error'
 import type { MyBadges } from '#shared/types/achievements'
 import { BADGE_DEFINITIONS, type BadgeSlug } from '#shared/validation/achievements'
-import type { CourseActor } from './courses/access'
-import { certificateFileName, renderCertificatePdf } from './certificate-pdf'
+import type { CourseActor } from '../courses/access'
+import { certificateFileName, renderCertificatePdf } from './pdf'
 
 /** A transaction handle, so rewards commit with the fact that earned them. */
 type Transaction = Parameters<Parameters<Db['transaction']>[0]>[0]

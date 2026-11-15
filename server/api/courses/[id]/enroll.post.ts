@@ -1,6 +1,6 @@
 import { defineEventHandler, setResponseStatus } from 'nuxt/server'
 import { courseIdSchema, enrollCourseSchema } from '#shared/validation/courses'
-import { enrollStudent } from '#server/services/enrollment-service'
+import { enrollStudent } from '#server/services/courses/enrollments'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
 import { parseBody, parseParam } from '#server/utils/validate'

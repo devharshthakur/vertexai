@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { updateLectureProgress } from '#server/services/progress-service'
+import { updateLectureProgress } from '#server/services/courses/progress'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
 import { parseBody, parseParam } from '#server/utils/validate'

@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { listMyEnrollments } from '#server/services/enrollment-service'
+import { listMyEnrollments } from '#server/services/courses/enrollments'
 import { requireSession } from '#server/utils/require-session'
 
 /**

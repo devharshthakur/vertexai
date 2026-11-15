@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { createLectureNote } from '#server/services/learning-tools-service'
+import { createLectureNote } from '#server/services/courses/learning-tools'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
 import { parseBody, parseParam } from '#server/utils/validate'

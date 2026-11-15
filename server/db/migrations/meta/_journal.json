@@ -64,6 +64,13 @@
       "when": 1794396348476,
       "tag": "0008_nervous_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794666053690,
+      "tag": "0009_fresh_nitro",
+      "breakpoints": true
     }
   ]
 }

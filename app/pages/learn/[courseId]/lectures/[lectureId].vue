@@ -81,9 +81,17 @@
 
 <template>
   <div class="flex flex-col gap-6">
-    <Button variant="outline" as-child>
-      <NuxtLink to="/dashboard">Back to dashboard</NuxtLink>
-    </Button>
+    <div class="flex flex-wrap items-center gap-3">
+      <Button variant="outline" as-child>
+        <NuxtLink to="/dashboard">Back to dashboard</NuxtLink>
+      </Button>
+      <Button variant="outline" as-child>
+        <NuxtLink :to="`/learn/${courseId}/quizzes`">Quizzes</NuxtLink>
+      </Button>
+      <Button variant="outline" as-child>
+        <NuxtLink :to="`/learn/${courseId}/assignments`">Assignments</NuxtLink>
+      </Button>
+    </div>
     <p v-if="pending">Loading your course…</p>
     <Alert v-else-if="error || !data || !current">
       <AlertTitle>Unable to open this lecture</AlertTitle>

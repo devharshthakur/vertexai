@@ -42,6 +42,7 @@
       <div class="flex flex-wrap items-center gap-4">
         <NuxtLink :to="`/learn/${enrollment.course.id}`" class="text-sm font-medium underline-offset-4 hover:underline">Continue learning</NuxtLink>
         <NuxtLink :to="`/learn/${enrollment.course.id}/assignments`" class="text-sm font-medium underline-offset-4 hover:underline">Assignments</NuxtLink>
+        <NuxtLink :to="`/learn/${enrollment.course.id}/quizzes`" class="text-sm font-medium underline-offset-4 hover:underline">Quizzes</NuxtLink>
       </div>
     </CardFooter>
   </Card>

@@ -5,6 +5,7 @@ import type { QuizAttemptDetail, QuizDetailForStudent, QuizGradedAnswerItem, Qui
 import type { CreateQuizValues, SubmitQuizAttemptValues } from '#shared/validation/quizzes'
 import { ServiceError } from '#server/utils/service-error'
 import { assertCanManageCourse, canManageCourse, type CourseActor } from './courses/access'
+import { awardBadges } from './achievements'
 
 type QuizRow = typeof quizzes.$inferSelect
 type QuestionRow = typeof quizQuestions.$inferSelect
@@ -496,6 +497,8 @@ export async function submitQuizAttempt(attemptId: string, values: SubmitQuizAtt
         pointsEarned: answer.pointsEarned.toFixed(2)
       }))
     )
+
+    if (totalPoints > 0 && earnedPoints === totalPoints) await awardBadges(tx, actor.id, ['quiz_perfect'])
   })
 
   return getQuizAttempt(attempt.id, actor)

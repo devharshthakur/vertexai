@@ -1,7 +1,8 @@
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 import { useDb } from '#server/db'
-import { courses, enrollments, lectureProgress, lectures, modules, streaks } from '#server/db/schema'
+import { certificates, courses, enrollments, lectureProgress, lectures, modules, streaks } from '#server/db/schema'
 import { ServiceError } from '#server/utils/service-error'
+import { awardBadges, issueCourseCertificate } from '#server/services/achievements'
 import { recordDailyStreakActivity } from '#server/services/streaks'
 import type { LearningCourse } from '#shared/types/learning'
 import type { ProgressUpdate } from '#shared/validation/progress'
@@ -36,10 +37,16 @@ export async function getLearningCourse(courseId: string, userId: string): Promi
   }))
   const ordered = resultModules.flatMap((module) => module.lectures)
   const latest = progress.filter((row) => ordered.some((lecture) => lecture.id === row.lectureId)).sort((a, b) => b.viewedAt.getTime() - a.viewedAt.getTime())[0]
+  const [certificate] = await db
+    .select({ id: certificates.id, courseTitle: certificates.courseTitle, issuedAt: certificates.issuedAt })
+    .from(certificates)
+    .where(and(eq(certificates.courseId, courseId), eq(certificates.userId, userId)))
+    .limit(1)
   return {
     title: enrollment.title,
     resumeLectureId: latest?.lectureId ?? ordered[0]?.id ?? null,
     progressPercent: ordered.length ? (ordered.filter((lecture) => lecture.completed).length / ordered.length) * 100 : 0,
+    certificate: certificate ? { id: certificate.id, courseTitle: certificate.courseTitle, issuedAt: certificate.issuedAt.toISOString() } : null,
     modules: resultModules
   }
 }
@@ -83,6 +90,7 @@ export async function updateLectureProgress(courseId: string, lectureId: string,
       if (streak.lastActiveDate !== today) {
         const updated = recordDailyStreakActivity({ currentStreak: streak.currentStreak, longestStreak: streak.longestStreak, lastActiveDate: streak.lastActiveDate }, today)
         await tx.update(streaks).set(updated).where(eq(streaks.userId, userId))
+        if (updated.currentStreak >= 7) await awardBadges(tx, userId, ['streak_7'])
       }
     }
 
@@ -98,6 +106,11 @@ export async function updateLectureProgress(courseId: string, lectureId: string,
         .update(enrollments)
         .set({ progressPercent: percent.toFixed(2) })
         .where(eq(enrollments.id, enrollment.id))
+
+      if (counts?.total && counts.completed === counts.total) {
+        const [course] = await tx.select({ title: courses.title }).from(courses).where(eq(courses.id, courseId)).limit(1)
+        if (course) await issueCourseCertificate(tx, { userId, courseId, courseTitle: course.title })
+      }
     }
   })
 }

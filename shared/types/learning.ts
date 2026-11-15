@@ -1,3 +1,5 @@
+import type { CertificateSummary } from '#shared/types/achievements'
+
 export interface LearningLecture {
   id: string
   title: string
@@ -10,6 +12,8 @@ export interface LearningCourse {
   title: string
   resumeLectureId: string | null
   progressPercent: number
+  /** Present once the student has completed every lecture in the course. */
+  certificate: CertificateSummary | null
   modules: { id: string; title: string; lectures: LearningLecture[] }[]
 }
 

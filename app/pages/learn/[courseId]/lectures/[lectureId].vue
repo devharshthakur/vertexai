@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import LearningPlayer from '@/components/learning/LearningPlayer.vue'
   import LectureTools from '@/components/learning/LectureTools.vue'
+  import CertificateCard from '@/components/learning/CertificateCard.vue'
   import LecturePreviewPlayer from '@/components/course/LecturePreviewPlayer.vue'
   import { useLectureContent } from '@/composables/useLectureContent'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -137,25 +138,28 @@
             {{ current.completed ? 'Completed' : 'Mark complete' }}
           </Button>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Course progress · {{ Math.round(data.progressPercent) }}%</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div class="flex flex-col gap-5">
-              <Progress :model-value="data.progressPercent" aria-label="Course progress" />
-              <div v-for="module in data.modules" :key="module.id" class="flex flex-col gap-2">
-                <h2 class="font-semibold">{{ module.title }}</h2>
-                <ul class="flex flex-col gap-2">
-                  <li v-for="lecture in module.lectures" :key="lecture.id" class="flex items-center justify-between gap-2">
-                    <NuxtLink :to="`/learn/${courseId}/lectures/${lecture.id}`" :aria-current="lecture.id === lectureId ? 'page' : undefined" class="text-sm underline-offset-4 hover:underline">{{ lecture.title }}</NuxtLink>
-                    <Badge v-if="lecture.completed" variant="secondary">Done</Badge>
-                  </li>
-                </ul>
+        <div class="flex flex-col gap-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Course progress · {{ Math.round(data.progressPercent) }}%</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="flex flex-col gap-5">
+                <Progress :model-value="data.progressPercent" aria-label="Course progress" />
+                <div v-for="module in data.modules" :key="module.id" class="flex flex-col gap-2">
+                  <h2 class="font-semibold">{{ module.title }}</h2>
+                  <ul class="flex flex-col gap-2">
+                    <li v-for="lecture in module.lectures" :key="lecture.id" class="flex items-center justify-between gap-2">
+                      <NuxtLink :to="`/learn/${courseId}/lectures/${lecture.id}`" :aria-current="lecture.id === lectureId ? 'page' : undefined" class="text-sm underline-offset-4 hover:underline">{{ lecture.title }}</NuxtLink>
+                      <Badge v-if="lecture.completed" variant="secondary">Done</Badge>
+                    </li>
+                  </ul>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+          <CertificateCard v-if="data.certificate" :certificate="data.certificate" />
+        </div>
       </div>
     </template>
   </div>

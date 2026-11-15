@@ -56,6 +56,8 @@
     "prepare": "husky && nuxt prepare"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.118",
+    "@ai-sdk/vue": "^4.0.173",
     "@better-auth/drizzle-adapter": "1.7.19",
     "@lucide/vue": "1.70.0",
     "@nuxt/devtools": "4.1.0",
@@ -67,6 +69,7 @@
     "@tanstack/vue-query": "5.107.1",
     "@videojs/html": "10.3.0",
     "@vueuse/core": "15.0.0",
+    "ai": "^7.0.173",
     "better-auth": "1.7.19",
     "class-variance-authority": "0.7.1",
     "cn": "0.5.2",

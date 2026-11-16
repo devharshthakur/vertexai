@@ -35,8 +35,9 @@ export async function getLectureSummary(courseId: string, lectureId: string, act
 export async function startLectureSummary(courseId: string, lectureId: string, input: LectureSummaryRequestValues, actor: CourseActor, abortSignal?: AbortSignal) {
   const course = await requireAiCourse(courseId, actor)
   const lecture = await requireLecture(courseId, lectureId)
+  const transcript = lecture.transcript
 
-  if (!lecture.transcript?.trim()) {
+  if (!transcript?.trim()) {
     throw new ServiceError('invalid_input', 'This lecture has no transcript to summarize.')
   }
 
@@ -51,14 +52,18 @@ export async function startLectureSummary(courseId: string, lectureId: string, i
   const result = streamText({
     model: getChatModel(),
     instructions: SUMMARY_INSTRUCTIONS,
-    prompt: `Lecture: ${lecture.title}\n\nTranscript:\n${lecture.transcript}`,
+    prompt: `Lecture: ${lecture.title}\n\nTranscript:\n${transcript}`,
     abortSignal,
     onEnd: async ({ text }) => {
       const summary = text.trim()
 
       if (!summary) return
 
-      await useDb().update(lectures).set({ summary, summaryGeneratedAt: new Date() }).where(eq(lectures.id, lecture.id))
+      // Do not restore a summary after the transcript changed mid-generation.
+      await useDb()
+        .update(lectures)
+        .set({ summary, summaryGeneratedAt: new Date() })
+        .where(and(eq(lectures.id, lecture.id), eq(lectures.transcript, transcript)))
     }
   })
 

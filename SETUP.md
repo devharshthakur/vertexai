@@ -151,9 +151,9 @@ public/videos/<slug>/
 
 The demo slugs are `typescript`, `react`, and `tailwind`. For each folder:
 
-- Add exactly one MP4 video. The seed prefers `video.mp4` and otherwise uses the first `.mp4` file. Video files are ignored by Git, so add them locally before seeding.
-- Keep `about.md` starting with `# Lecture title`; the remaining text becomes the plain-text course description.
 - Keep `transcript.txt` beside the video; it becomes the seeded lecture transcript.
+- Keep `about.md` starting with `# Lecture title`; the remaining text becomes the plain-text course description.
+- Add an MP4 video if you want the lecture to play. Video files are ignored by Git, so they are not in a fresh checkout, and the seed creates the lecture without a video when the file is missing. `pnpm demo:assets` downloads them.
 
 The seed validates every folder before it changes any database row. See [`public/videos/README.md`](public/videos/README.md) for the source videos, the download archive, and the encoding guidance.
 

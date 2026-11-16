@@ -18,13 +18,25 @@ public/videos/<slug>/
 The links identify the intended source videos. Download them only if you have
 permission to use and redistribute the content.
 
-The folders are committed; video files are ignored by Git and must be added
-locally before running `pnpm db:seed`. Everything in `public/videos/` is
-publicly served by Nuxt, so use demo material you are allowed to distribute.
+The folders are committed; video files are ignored by Git. `transcript.txt` and
+`about.md` are enough to seed the demo — the lecture is then created without a
+video and the player shows its "no video" state. Run `pnpm demo:assets` to add
+the video files. Everything in `public/videos/` is publicly served by Nuxt, so
+use demo material you are allowed to distribute.
 
 ## Obtaining the videos
 
-Download the archive from the
+The easiest path is the download script, which fetches the release archive,
+verifies its checksum, and installs the video files:
+
+```bash
+pnpm demo:assets
+```
+
+It is a no-op when the videos are already in place, and `pnpm demo:assets
+--force` downloads them again.
+
+The archive is also published on the
 [demo-videos-v1 release](https://github.com/devharshthakur/vertexai/releases/download/demo-videos-v1/vertexai-demo-videos-v1.zip)
 (~630 MB). It contains one `video.mp4` per course under `public/videos/<slug>/`.
 
@@ -44,9 +56,10 @@ Only download and redistribute these videos where you have permission to do so.
 
 ## Video file
 
-Each folder must contain one MP4 video. The seed uses `video.mp4` when present
-and otherwise the first `.mp4` file in the folder. Use MP4 with H.264 video and
-AAC audio so it plays in every modern browser. Other video formats are ignored.
+The video file is optional. The seed uses `video.mp4` when present and otherwise
+the first `.mp4` file in the folder; without one, the lecture is seeded with no
+video. Use MP4 with H.264 video and AAC audio so it plays in every modern
+browser. Other video formats are ignored.
 
 ## `about.md`
 

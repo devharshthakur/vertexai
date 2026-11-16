@@ -7,15 +7,19 @@ const demoVideosDirectory = fileURLToPath(new URL('../public/videos/', import.me
 /**
  * Returns the MP4 to serve: `video.mp4` when present, otherwise the first MP4
  * in the folder.
+ *
+ * The video files are not committed to Git, so a folder may hold only the
+ * transcript and the course description. That is a valid demo: the lecture is
+ * seeded without a video and the player shows its "no video" state.
  */
-async function findVideoFile(directory: string, slug: string): Promise<string> {
+async function findVideoFile(directory: string, slug: string): Promise<string | null> {
   let files: string[]
 
   try {
     files = (await readdir(directory, { withFileTypes: true })).filter((entry) => entry.isFile()).map(({ name }) => name)
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      throw new Error(`Missing public/videos/${slug}/. Add video.mp4, transcript.txt, and about.md before running the seed.`, { cause: error })
+      throw new Error(`Missing public/videos/${slug}/. Add transcript.txt and about.md before running the seed.`, { cause: error })
     }
 
     throw error
@@ -24,7 +28,7 @@ async function findVideoFile(directory: string, slug: string): Promise<string> {
   const videos = files.filter((name) => !name.startsWith('.') && name.toLowerCase().endsWith('.mp4'))
 
   if (videos.length === 0) {
-    throw new Error(`Missing public/videos/${slug}/video.mp4. Add an MP4 file before running the seed.`)
+    return null
   }
 
   return videos.includes('video.mp4') ? 'video.mp4' : videos.sort()[0]!
@@ -32,7 +36,8 @@ async function findVideoFile(directory: string, slug: string): Promise<string> {
 
 export interface DemoVideoContent {
   slug: string
-  videoUrl: string
+  /** `null` when the folder holds no video file. */
+  videoUrl: string | null
   lectureTitle: string
   courseDescription: string
   transcript: string
@@ -69,10 +74,10 @@ async function readRequiredFile(path: string, label: string): Promise<string> {
 /**
  * Loads one demo lecture from `public/videos/<slug>/`.
  *
- * The folder holds an MP4 video (`video.mp4` or another `.mp4` name), its
- * plain-text transcript, and `about.md` whose first heading is the lecture
- * title and whose remaining text is the course description. Videos are not
- * committed to Git.
+ * The folder holds a plain-text transcript and an `about.md` whose first
+ * heading is the lecture title and whose remaining text is the course
+ * description. A video file (`video.mp4` or another `.mp4` name) is optional:
+ * videos are not committed to Git, and `pnpm demo:assets` fetches them.
  */
 export async function loadDemoVideo(slug: string): Promise<DemoVideoContent> {
   if (!/^[a-z0-9-]+$/.test(slug)) {
@@ -90,7 +95,7 @@ export async function loadDemoVideo(slug: string): Promise<DemoVideoContent> {
 
   return {
     slug,
-    videoUrl: `/videos/${slug}/${encodeURIComponent(videoFile)}`,
+    videoUrl: videoFile ? `/videos/${slug}/${encodeURIComponent(videoFile)}` : null,
     transcript: transcriptText,
     ...parseAbout(about, slug)
   }

@@ -233,7 +233,8 @@ async function seed() {
   await seedDemoCourses(userIds.get('instructor')!, userIds.get('admin')!, userIds.get('student')!, demoVideos)
 
   console.info(`Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`)
-  console.info(`Loaded ${demoVideos.size} demo video assets from public/videos/.`)
+  const withVideo = [...demoVideos.values()].filter((video) => video.videoUrl).length
+  console.info(`Loaded ${demoVideos.size} demo lecture assets from public/videos/ (${withVideo} with a video file).`)
   console.info(`Seeded ${DEMO_COURSES.length} demo courses (all approved and enrolled for the demo student).`)
   const demoQuizCount = DEMO_COURSES.flatMap((course) => course.modules.flatMap((module) => module.quizzes ?? [])).length
   console.info(`Seeded ${demoQuizCount} demo quizzes with questions and options.`)

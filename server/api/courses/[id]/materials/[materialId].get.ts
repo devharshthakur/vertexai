@@ -1,7 +1,7 @@
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
-import { defineEventHandler, setResponseStatus } from 'nuxt/server'
-import { createError, getRequestHeader, sendStream, setResponseHeader, type H3Event } from 'h3'
+import { Readable } from 'node:stream'
+import { createError, defineEventHandler } from 'nuxt/server'
 import { create as contentDisposition } from 'content-disposition'
 import rangeParser from 'range-parser'
 import { getCourseMaterialFile } from '#server/services/courses/materials'
@@ -24,33 +24,32 @@ export default defineEventHandler(async (event) => {
   const materialId = parseParam(event, 'materialId', courseMaterialIdSchema)
 
   return withServiceErrors(async () => {
-    const h3Event = event as unknown as H3Event
     const { material, filePath } = await getCourseMaterialFile(courseId, materialId, { id: session.user.id, role: session.user.role })
     const details = await stat(filePath)
     const isVideo = material.contentType.startsWith('video/')
-    const rangeHeader = isVideo ? getRequestHeader(h3Event, 'range') : undefined
+    const rangeHeader = isVideo ? event.req.headers.get('range') : undefined
 
-    setResponseHeader(h3Event, 'Content-Type', material.contentType)
-    setResponseHeader(h3Event, 'Content-Disposition', contentDisposition(material.originalFilename, { type: isVideo ? 'inline' : 'attachment' }))
-    setResponseHeader(h3Event, 'Cache-Control', 'private, no-store')
-    setResponseHeader(h3Event, 'X-Content-Type-Options', 'nosniff')
-    if (isVideo) setResponseHeader(h3Event, 'Accept-Ranges', 'bytes')
+    event.res.headers.set('Content-Type', material.contentType)
+    event.res.headers.set('Content-Disposition', contentDisposition(material.originalFilename, { type: isVideo ? 'inline' : 'attachment' }))
+    event.res.headers.set('Cache-Control', 'private, no-store')
+    event.res.headers.set('X-Content-Type-Options', 'nosniff')
+    if (isVideo) event.res.headers.set('Accept-Ranges', 'bytes')
 
     if (!rangeHeader) {
-      setResponseHeader(h3Event, 'Content-Length', details.size)
-      return sendStream(h3Event, createReadStream(filePath))
+      event.res.headers.set('Content-Length', String(details.size))
+      return Readable.toWeb(createReadStream(filePath))
     }
 
     const ranges = rangeParser(details.size, rangeHeader, { combine: true })
     if (ranges === -1 || ranges === -2 || ranges.type !== 'bytes' || ranges.length === 0) {
-      setResponseHeader(h3Event, 'Content-Range', `bytes */${details.size}`)
-      throw createError({ statusCode: 416, statusMessage: 'Requested range is not satisfiable.' })
+      event.res.headers.set('Content-Range', `bytes */${details.size}`)
+      throw createError({ status: 416, statusText: 'Requested range is not satisfiable.' })
     }
 
     const { start, end } = ranges[0]!
-    setResponseStatus(event, 206)
-    setResponseHeader(h3Event, 'Content-Range', `bytes ${start}-${end}/${details.size}`)
-    setResponseHeader(h3Event, 'Content-Length', end - start + 1)
-    return sendStream(h3Event, createReadStream(filePath, { start, end }))
+    event.res.status = 206
+    event.res.headers.set('Content-Range', `bytes ${start}-${end}/${details.size}`)
+    event.res.headers.set('Content-Length', String(end - start + 1))
+    return Readable.toWeb(createReadStream(filePath, { start, end }))
   })
 })

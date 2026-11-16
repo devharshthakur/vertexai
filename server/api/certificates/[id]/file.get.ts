@@ -1,5 +1,4 @@
 import { defineEventHandler } from 'nuxt/server'
-import { setResponseHeader, type H3Event } from 'h3'
 import { create as contentDisposition } from 'content-disposition'
 import { getCertificateDownload } from '#server/services/achievements'
 import { withServiceErrors } from '#server/utils/errors'
@@ -20,14 +19,13 @@ export default defineEventHandler(async (event) => {
 
   return withServiceErrors(async () => {
     const { filename, pdf } = await getCertificateDownload(certificateId, { id: session.user.id, role: session.user.role })
-    const h3Event = event as unknown as H3Event
 
-    setResponseHeader(h3Event, 'Content-Type', 'application/pdf')
-    setResponseHeader(h3Event, 'Content-Disposition', contentDisposition(filename))
-    setResponseHeader(h3Event, 'Cache-Control', 'private, no-store')
-    setResponseHeader(h3Event, 'X-Content-Type-Options', 'nosniff')
-    setResponseHeader(h3Event, 'Content-Length', pdf.length)
+    event.res.headers.set('Content-Type', 'application/pdf')
+    event.res.headers.set('Content-Disposition', contentDisposition(filename))
+    event.res.headers.set('Cache-Control', 'private, no-store')
+    event.res.headers.set('X-Content-Type-Options', 'nosniff')
+    event.res.headers.set('Content-Length', String(pdf.length))
 
-    return pdf
+    return new Response(new Uint8Array(pdf))
   })
 })

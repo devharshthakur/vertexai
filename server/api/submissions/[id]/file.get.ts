@@ -1,7 +1,7 @@
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
+import { Readable } from 'node:stream'
 import { defineEventHandler } from 'nuxt/server'
-import { sendStream, setResponseHeader, type H3Event } from 'h3'
 import { create as contentDisposition } from 'content-disposition'
 import { getAssignmentSubmissionFile } from '#server/services/assignments'
 import { withServiceErrors } from '#server/utils/errors'
@@ -16,12 +16,11 @@ export default defineEventHandler(async (event) => {
     const actor = { id: session.user.id, role: session.user.role }
     const { submission, filePath } = await getAssignmentSubmissionFile(submissionId, actor)
     const details = await stat(filePath)
-    const h3Event = event as unknown as H3Event
-    setResponseHeader(h3Event, 'Content-Type', submission.contentType)
-    setResponseHeader(h3Event, 'Content-Disposition', contentDisposition(submission.originalFilename))
-    setResponseHeader(h3Event, 'Cache-Control', 'private, no-store')
-    setResponseHeader(h3Event, 'X-Content-Type-Options', 'nosniff')
-    setResponseHeader(h3Event, 'Content-Length', details.size)
-    return sendStream(h3Event, createReadStream(filePath))
+    event.res.headers.set('Content-Type', submission.contentType)
+    event.res.headers.set('Content-Disposition', contentDisposition(submission.originalFilename))
+    event.res.headers.set('Cache-Control', 'private, no-store')
+    event.res.headers.set('X-Content-Type-Options', 'nosniff')
+    event.res.headers.set('Content-Length', String(details.size))
+    return Readable.toWeb(createReadStream(filePath))
   })
 })

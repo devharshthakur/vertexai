@@ -5,13 +5,14 @@ import type { AssignmentInstructorSubmission, AssignmentSubmissionSummary, Assig
 import type { CreateAssignmentValues, GradeAssignmentSubmissionValues } from '#shared/validation/assignments'
 import { ServiceError } from '#server/utils/service-error'
 import { assertCanManageCourse, canManageCourse, type CourseActor } from '../courses/access'
-import { deleteCourseMaterialFile, getCourseMaterialPath, writeCourseMaterial } from '../courses/material-storage'
+import { containsNullByte, deleteCourseMaterialFile, getCourseMaterialPath, readCourseMaterialHeader } from '../courses/material-storage'
 
 export const MAX_ASSIGNMENT_FILE_BYTES = 100 * 1024 * 1024
 
 interface UploadedAssignmentFile {
   filename: string
-  data: Buffer
+  storageKey: string
+  sizeBytes: number
 }
 
 const CODE_EXTENSIONS = new Set(['.c', '.cc', '.cpp', '.cs', '.go', '.h', '.hpp', '.html', '.java', '.js', '.jsx', '.kt', '.md', '.php', '.py', '.rb', '.rs', '.sh', '.sql', '.ts', '.tsx', '.txt', '.vue', '.xml', '.yaml', '.yml'])
@@ -42,7 +43,7 @@ function toAssignmentSummary(row: typeof assignments.$inferSelect, submission: A
   }
 }
 
-function validateAssignmentFile(file: UploadedAssignmentFile) {
+async function validateAssignmentFile(file: UploadedAssignmentFile) {
   const filename = file.filename
     .split(/[\\/]/)
     .at(-1)
@@ -57,12 +58,14 @@ function validateAssignmentFile(file: UploadedAssignmentFile) {
   if (!filename || filename.length > 255 || !extension || (!['.pdf', '.zip'].includes(extension) && !CODE_EXTENSIONS.has(extension))) {
     throw new ServiceError('invalid_input', 'Choose a PDF, ZIP, or supported source-code file.')
   }
-  if (file.data.length === 0) throw new ServiceError('invalid_input', 'The selected file is empty.')
-  if (file.data.length > MAX_ASSIGNMENT_FILE_BYTES) throw new ServiceError('invalid_input', 'Files must be 100 MiB or smaller.')
-  if (extension === '.pdf' && file.data.subarray(0, 5).toString('ascii') !== '%PDF-') {
+  if (file.sizeBytes === 0) throw new ServiceError('invalid_input', 'The selected file is empty.')
+  if (file.sizeBytes > MAX_ASSIGNMENT_FILE_BYTES) throw new ServiceError('invalid_input', 'Files must be 100 MiB or smaller.')
+
+  const header = await readCourseMaterialHeader(file.storageKey, 8)
+  if (extension === '.pdf' && header.subarray(0, 5).toString('ascii') !== '%PDF-') {
     throw new ServiceError('invalid_input', 'The file contents do not match a PDF file.')
   }
-  const zipSignature = file.data.subarray(0, 4)
+  const zipSignature = header.subarray(0, 4)
   const isZip = [
     [0x50, 0x4b, 0x03, 0x04], // Local file header.
     [0x50, 0x4b, 0x05, 0x06], // Empty archive end record.
@@ -71,7 +74,7 @@ function validateAssignmentFile(file: UploadedAssignmentFile) {
   if (extension === '.zip' && !isZip) {
     throw new ServiceError('invalid_input', 'The file contents do not match a ZIP file.')
   }
-  if (CODE_EXTENSIONS.has(extension) && file.data.includes(0)) {
+  if (CODE_EXTENSIONS.has(extension) && (await containsNullByte(file.storageKey))) {
     throw new ServiceError('invalid_input', 'Source-code uploads must be plain text.')
   }
 
@@ -165,28 +168,26 @@ export async function listAssignmentSubmissions(assignmentId: string, actor: Cou
 
 /** Creates or replaces the student's ungraded submission before the deadline. */
 export async function submitAssignment(assignmentId: string, file: UploadedAssignmentFile, actor: CourseActor): Promise<AssignmentSubmissionSummary> {
-  await assertCanSubmit(assignmentId, actor)
-  const validated = validateAssignmentFile(file)
-  const db = useDb()
-  const [existing] = await db
-    .select()
-    .from(assignmentSubmissions)
-    .where(and(eq(assignmentSubmissions.assignmentId, assignmentId), eq(assignmentSubmissions.userId, actor.id)))
-    .limit(1)
-  if (existing?.gradedAt) throw new ServiceError('conflict', 'A graded submission cannot be replaced.')
-
-  const storageKey = await writeCourseMaterial(file.data)
-  let saved: typeof assignmentSubmissions.$inferSelect | undefined
   try {
-    const [row] =
+    await assertCanSubmit(assignmentId, actor)
+    const validated = await validateAssignmentFile(file)
+    const db = useDb()
+    const [existing] = await db
+      .select()
+      .from(assignmentSubmissions)
+      .where(and(eq(assignmentSubmissions.assignmentId, assignmentId), eq(assignmentSubmissions.userId, actor.id)))
+      .limit(1)
+    if (existing?.gradedAt) throw new ServiceError('conflict', 'A graded submission cannot be replaced.')
+
+    const [saved] =
       existing ?
         await db
           .update(assignmentSubmissions)
           .set({
-            storageKey,
+            storageKey: file.storageKey,
             originalFilename: validated.filename,
             contentType: validated.contentType,
-            sizeBytes: file.data.length,
+            sizeBytes: file.sizeBytes,
             submittedAt: new Date()
           })
           .where(and(eq(assignmentSubmissions.id, existing.id), eq(assignmentSubmissions.storageKey, existing.storageKey), isNull(assignmentSubmissions.gradedAt)))
@@ -196,26 +197,26 @@ export async function submitAssignment(assignmentId: string, file: UploadedAssig
           .values({
             assignmentId,
             userId: actor.id,
-            storageKey,
+            storageKey: file.storageKey,
             originalFilename: validated.filename,
             contentType: validated.contentType,
-            sizeBytes: file.data.length
+            sizeBytes: file.sizeBytes
           })
           .returning()
-    if (!row) throw new ServiceError('conflict', 'The assignment submission can no longer be changed.')
-    saved = row
+    if (!saved) throw new ServiceError('conflict', 'The assignment submission can no longer be changed.')
+
+    if (existing) {
+      await deleteCourseMaterialFile(existing.storageKey).catch((cleanupError) => {
+        console.error('[assignments] Failed to remove a replaced submission.', cleanupError)
+      })
+    }
+    return toSubmissionSummary(saved)
   } catch (error) {
-    await deleteCourseMaterialFile(storageKey).catch((cleanupError) => {
+    await deleteCourseMaterialFile(file.storageKey).catch((cleanupError) => {
       console.error('[assignments] Failed to remove an unrecorded submission.', cleanupError)
     })
     throw error
   }
-  if (existing) {
-    await deleteCourseMaterialFile(existing.storageKey).catch((cleanupError) => {
-      console.error('[assignments] Failed to remove a replaced submission.', cleanupError)
-    })
-  }
-  return toSubmissionSummary(saved!)
 }
 
 /** Grades a submission using the assignment rubric maximum. */

@@ -58,6 +58,7 @@
   "dependencies": {
     "@ai-sdk/vue": "^4.0.173",
     "@better-auth/drizzle-adapter": "1.7.19",
+    "@fastify/busboy": "3.2.5",
     "@lucide/vue": "1.70.0",
     "@nuxt/devtools": "4.1.0",
     "@nuxt/fonts": "1.2.0",

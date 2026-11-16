@@ -6,7 +6,7 @@ import type { CourseMaterialUploadFields } from '#shared/validation/course-mater
 import { MAX_COURSE_MATERIAL_BYTES } from '#shared/validation/course-materials'
 import { ServiceError } from '#server/utils/service-error'
 import { assertCanManageCourse, canManageCourse, type CourseActor } from './access'
-import { deleteCourseMaterialFile, getCourseMaterialPath, writeCourseMaterial } from './material-storage'
+import { deleteCourseMaterialFile, getCourseMaterialPath, readCourseMaterialHeader } from './material-storage'
 
 const MATERIAL_TYPES: Record<string, { contentType: string; signature: (data: Buffer) => boolean }> = {
   '.pdf': { contentType: 'application/pdf', signature: (data) => data.subarray(0, 5).toString('ascii') === '%PDF-' },
@@ -19,7 +19,8 @@ const MATERIAL_TYPES: Record<string, { contentType: string; signature: (data: Bu
 
 interface UploadedMaterial {
   filename: string
-  data: Buffer
+  storageKey: string
+  sizeBytes: number
 }
 
 function toSummary(row: typeof courseMaterials.$inferSelect): CourseMaterialSummary {
@@ -35,7 +36,7 @@ function toSummary(row: typeof courseMaterials.$inferSelect): CourseMaterialSumm
   }
 }
 
-function validateUploadedMaterial(file: UploadedMaterial) {
+async function validateUploadedMaterial(file: UploadedMaterial) {
   const filename = file.filename
     .split(/[\\/]/)
     .at(-1)
@@ -52,9 +53,10 @@ function validateUploadedMaterial(file: UploadedMaterial) {
   if (!filename || filename.length > 255 || !type) {
     throw new ServiceError('invalid_input', 'Choose a PDF, PowerPoint, or video file.')
   }
-  if (file.data.length === 0) throw new ServiceError('invalid_input', 'The selected file is empty.')
-  if (file.data.length > MAX_COURSE_MATERIAL_BYTES) throw new ServiceError('invalid_input', 'Files must be 100 MiB or smaller.')
-  if (!type.signature(file.data)) throw new ServiceError('invalid_input', 'The file contents do not match the selected file type.')
+  if (file.sizeBytes === 0) throw new ServiceError('invalid_input', 'The selected file is empty.')
+  if (file.sizeBytes > MAX_COURSE_MATERIAL_BYTES) throw new ServiceError('invalid_input', 'Files must be 100 MiB or smaller.')
+  const header = await readCourseMaterialHeader(file.storageKey, 8)
+  if (!type.signature(header)) throw new ServiceError('invalid_input', 'The file contents do not match the selected file type.')
 
   return { filename, contentType: type.contentType }
 }
@@ -106,15 +108,14 @@ export async function listCourseMaterials(courseId: string, actor: CourseActor):
   return rows.map(toSummary)
 }
 
-/** Stores an instructor's validated file and its course/module/lecture metadata. */
+/** Records an instructor's already-streamed, validated file for a module/lecture. */
 export async function addCourseMaterial(courseId: string, fields: CourseMaterialUploadFields, file: UploadedMaterial, actor: CourseActor): Promise<CourseMaterialSummary> {
-  const course = await requireCourse(courseId)
-  assertCanManageCourse(course.instructorId, actor)
-  await assertValidTarget(courseId, fields)
-  const validatedFile = validateUploadedMaterial(file)
-  const storageKey = await writeCourseMaterial(file.data)
-
   try {
+    const course = await requireCourse(courseId)
+    assertCanManageCourse(course.instructorId, actor)
+    await assertValidTarget(courseId, fields)
+    const validatedFile = await validateUploadedMaterial(file)
+
     const [row] = await useDb()
       .insert(courseMaterials)
       .values({
@@ -123,15 +124,15 @@ export async function addCourseMaterial(courseId: string, fields: CourseMaterial
         lectureId: fields.lectureId ?? null,
         originalFilename: validatedFile.filename,
         contentType: validatedFile.contentType,
-        sizeBytes: file.data.length,
-        storageKey
+        sizeBytes: file.sizeBytes,
+        storageKey: file.storageKey
       })
       .returning()
 
     if (!row) throw new Error('The course material record was not created.')
     return toSummary(row)
   } catch (error) {
-    await deleteCourseMaterialFile(storageKey).catch((cleanupError) => {
+    await deleteCourseMaterialFile(file.storageKey).catch((cleanupError) => {
       console.error('[course-materials] Failed to remove an unrecorded upload.', cleanupError)
     })
     throw error

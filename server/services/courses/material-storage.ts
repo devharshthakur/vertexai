@@ -3,6 +3,7 @@ import { constants } from 'node:fs'
 import { lstat, mkdir, open, realpath, unlink } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import type { Readable } from 'node:stream'
 
 const STORAGE_DIRECTORY_ENV = 'COURSE_MATERIALS_DIR'
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -68,13 +69,39 @@ function getStorageKey(): string {
   return randomUUID()
 }
 
-export async function writeCourseMaterial(data: Buffer): Promise<string> {
+/** Thrown when a streamed upload grows past its route's file-size cap. */
+export class CourseMaterialTooLargeError extends Error {
+  constructor() {
+    super('The uploaded file is too large.')
+    this.name = 'CourseMaterialTooLargeError'
+  }
+}
+
+/**
+ * Streams an upload into its final external location without buffering it.
+ *
+ * A unique server-owned key is chosen before reading. The partial file is
+ * removed on any failure, including exceeding `maxBytes`.
+ */
+export async function writeCourseMaterialStream(data: Readable, maxBytes: number): Promise<{ storageKey: string; sizeBytes: number }> {
   const storageKey = getStorageKey()
   const filePath = join(await ensureStorageDirectory(), storageKey)
   const file = await open(filePath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600)
+  let sizeBytes = 0
 
   try {
-    await file.writeFile(data)
+    for await (const chunk of data) {
+      const bytes = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+      sizeBytes += bytes.length
+      if (sizeBytes > maxBytes) throw new CourseMaterialTooLargeError()
+
+      let offset = 0
+      while (offset < bytes.length) {
+        const { bytesWritten } = await file.write(bytes, offset, bytes.length - offset)
+        if (!bytesWritten) throw new Error('The uploaded file could not be written.')
+        offset += bytesWritten
+      }
+    }
     await file.close()
   } catch (error) {
     await file.close().catch(() => undefined)
@@ -82,7 +109,38 @@ export async function writeCourseMaterial(data: Buffer): Promise<string> {
     throw error
   }
 
-  return storageKey
+  return { storageKey, sizeBytes }
+}
+
+/** Reads at most `length` leading bytes from a stored upload. */
+export async function readCourseMaterialHeader(storageKey: string, length: number): Promise<Buffer> {
+  const filePath = await getCourseMaterialPath(storageKey)
+  const file = await open(filePath, 'r')
+
+  try {
+    const buffer = Buffer.alloc(length)
+    const { bytesRead } = await file.read(buffer, 0, length, 0)
+    return buffer.subarray(0, bytesRead)
+  } finally {
+    await file.close()
+  }
+}
+
+/** Scans a stored text upload for a NUL byte without loading it into memory. */
+export async function containsNullByte(storageKey: string): Promise<boolean> {
+  const filePath = await getCourseMaterialPath(storageKey)
+  const file = await open(filePath, 'r')
+
+  try {
+    const buffer = Buffer.alloc(64 * 1024)
+    while (true) {
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, null)
+      if (!bytesRead) return false
+      if (buffer.subarray(0, bytesRead).includes(0)) return true
+    }
+  } finally {
+    await file.close()
+  }
 }
 
 export async function getCourseMaterialPath(storageKey: string): Promise<string> {

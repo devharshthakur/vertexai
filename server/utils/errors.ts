@@ -17,15 +17,18 @@ export function toHttpError(error: unknown): unknown {
       : error.code === 'rate_limited' ? 429
       : 404
 
+    const statusText =
+      error.code === 'invalid_input' ? 'Bad Request'
+      : error.code === 'forbidden' ? 'Forbidden'
+      : error.code === 'conflict' ? 'Conflict'
+      : error.code === 'unavailable' ? 'Service Unavailable'
+      : error.code === 'rate_limited' ? 'Too Many Requests'
+      : 'Not Found'
+
     return createError({
       status,
-      statusText:
-        error.code === 'invalid_input' ? 'Bad Request'
-        : error.code === 'forbidden' ? 'Forbidden'
-        : error.code === 'conflict' ? 'Conflict'
-        : error.code === 'unavailable' ? 'Service Unavailable'
-        : error.code === 'rate_limited' ? 'Too Many Requests'
-        : 'Not Found'
+      statusText,
+      ...(error.message === error.code ? {} : { message: error.message })
     })
   }
 

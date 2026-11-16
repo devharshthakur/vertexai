@@ -39,6 +39,7 @@
     "db:down": "docker compose down",
     "demo:setup": "tsx demo/setup.ts",
     "demo:assets": "tsx scripts/download-demo-videos.ts",
+    "setup": "tsx scripts/setup.ts",
     "db:start": "docker compose start db",
     "db:stop": "docker compose stop db",
     "db:logs": "docker compose logs -f db",

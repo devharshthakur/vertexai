@@ -1,54 +1,59 @@
-import { and, cosineDistance, eq, isNotNull } from 'drizzle-orm'
+import { cosineDistance, eq } from 'drizzle-orm'
 import { useDb } from '#server/db'
-import { lectures, modules } from '#server/db/schema'
+import { lectureChunks, lectures } from '#server/db/schema'
 import { embedText } from '#server/utils/ai'
 
-/** One lecture selected as grounding material for a tutor answer. */
-export interface RetrievedLecture {
-  id: string
-  title: string
-  transcript: string
+/** How many transcript passages one answer may be grounded in. */
+const retrievedPassages = 6
+
+/** One passage of a lecture selected as grounding material for a tutor answer. */
+export interface RetrievedPassage {
+  lectureId: string
+  lectureTitle: string
+  /** Position of the passage inside the transcript, from zero. */
+  position: number
+  content: string
   excerpt: string
 }
 
 /**
- * Finds the three lectures closest to the question, scoped to one course.
+ * Finds the transcript passages closest to the question, scoped to one course.
  *
- * Each lecture has a single embedding, so the cosine query compares against
- * whole transcripts rather than chunks. The transcripts themselves become the
- * grounded prompt context.
+ * Lectures are indexed in chunks, so the cosine query compares the question
+ * against passages instead of whole transcripts. The passages that match best
+ * become the grounded context of the answer.
  */
-export async function retrieveCourseLectures(courseId: string, question: string): Promise<RetrievedLecture[]> {
+export async function retrieveCoursePassages(courseId: string, question: string): Promise<RetrievedPassage[]> {
   const embedding = await embedText(question)
   const rows = await useDb()
-    .select({ id: lectures.id, title: lectures.title, transcript: lectures.transcript })
-    .from(lectures)
-    .innerJoin(modules, eq(modules.id, lectures.moduleId))
-    .where(and(eq(modules.courseId, courseId), isNotNull(lectures.embedding), isNotNull(lectures.transcript)))
-    .orderBy(cosineDistance(lectures.embedding, embedding))
-    .limit(3)
+    .select({
+      lectureId: lectureChunks.lectureId,
+      position: lectureChunks.position,
+      content: lectureChunks.content,
+      lectureTitle: lectures.title
+    })
+    .from(lectureChunks)
+    .innerJoin(lectures, eq(lectures.id, lectureChunks.lectureId))
+    .where(eq(lectureChunks.courseId, courseId))
+    .orderBy(cosineDistance(lectureChunks.embedding, embedding))
+    .limit(retrievedPassages)
 
-  return rows.flatMap((row) =>
-    row.transcript ?
-      [
-        {
-          id: row.id,
-          title: row.title,
-          transcript: row.transcript,
-          excerpt: buildExcerpt(row.transcript, question)
-        }
-      ]
-    : []
-  )
+  return rows.map((row) => ({
+    lectureId: row.lectureId,
+    lectureTitle: row.lectureTitle,
+    position: row.position,
+    content: row.content,
+    excerpt: buildExcerpt(row.content, question)
+  }))
 }
 
 /** Builds the strict grounding instructions shared by chat answers. */
-export function buildTutorInstructions(courseTitle: string, retrieved: RetrievedLecture[]): string {
-  const context = retrieved.length ? retrieved.map((lecture, index) => `[${index + 1}] Lecture: ${lecture.title}\n${lecture.transcript}`).join('\n\n') : 'No lecture transcript is available for this course.'
+export function buildTutorInstructions(courseTitle: string, passages: RetrievedPassage[]): string {
+  const context = passages.length ? passages.map((passage, index) => `[${index + 1}] Lecture: ${passage.lectureTitle} (passage ${passage.position + 1})\n${passage.content}`).join('\n\n') : 'No lecture transcript is available for this course.'
 
   return [
     `You are the AI tutor for the course "${courseTitle}".`,
-    'Answer only from the lecture transcripts in the course context below. Do not use outside knowledge.',
+    'Answer only from the lecture passages in the course context below. Do not use outside knowledge.',
     'If the context does not contain the answer, say that the course material does not cover it, and do not guess.',
     'Do not invent lecture titles, facts, or quotations. Refer to the lectures you used by title.',
     'Keep answers clear and concise. Use short paragraphs and simple hyphen bullets when a list helps.',
@@ -63,10 +68,10 @@ export function buildTutorInstructions(courseTitle: string, retrieved: Retrieved
  *
  * It prefers a window around a question keyword, so the quote is usually the
  * passage the answer drew on. The window is always a contiguous slice of the
- * transcript, with ellipses only when the text was clipped.
+ * passage, with ellipses only when the text was clipped.
  */
-function buildExcerpt(transcript: string, question: string, maxLength = 240): string {
-  const text = transcript.replace(/\s+/g, ' ').trim()
+function buildExcerpt(passage: string, question: string, maxLength = 240): string {
+  const text = passage.replace(/\s+/g, ' ').trim()
   const words = question
     .toLowerCase()
     .split(/[^\p{L}\p{N}]+/u)

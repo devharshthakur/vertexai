@@ -11,7 +11,7 @@ import type { CourseActor } from '#server/services/courses/access'
 import { requireAiCourse } from './access'
 import { acquireChatThread, ChatThreadConflictError, mergeSubmittedChatMessages, prepareChatRegeneration } from './chat-thread'
 import { indexCourseLectures } from './indexing'
-import { buildTutorInstructions, retrieveCourseLectures, type RetrievedLecture } from './retrieval'
+import { buildTutorInstructions, retrieveCoursePassages, type RetrievedPassage } from './retrieval'
 
 /**
  * Reserves the next turn for one actor's conversation. The route releases the
@@ -46,11 +46,18 @@ export async function startAiChat(courseId: string, input: AiChatRequestValues, 
 
   enforceAiRateLimit(actor.id)
 
-  let retrieved: RetrievedLecture[]
+  let passages: RetrievedPassage[]
 
   try {
-    await indexCourseLectures(courseId)
-    retrieved = await retrieveCourseLectures(courseId, question)
+    const indexing = await indexCourseLectures(courseId)
+
+    // Every transcript of the course was rejected, so there is nothing to
+    // ground an answer in. The other lectures of the course are unaffected.
+    if (indexing.available === 0 && indexing.failed > 0) {
+      throw new ServiceError('unavailable', 'The AI tutor could not index the lecture material of this course.')
+    }
+
+    passages = await retrieveCoursePassages(courseId, question)
   } catch (error) {
     if (error instanceof ServiceError) throw error
 
@@ -58,16 +65,38 @@ export async function startAiChat(courseId: string, input: AiChatRequestValues, 
     throw new ServiceError('unavailable', 'The AI tutor could not prepare this course.')
   }
 
-  const citations: AiCitation[] = retrieved.map((lecture) => ({ lectureId: lecture.id, title: lecture.title, excerpt: lecture.excerpt }))
+  const citations = buildCitations(passages)
 
   const result = streamText({
     model: getChatModel(),
-    instructions: buildTutorInstructions(course.title, retrieved),
+    instructions: buildTutorInstructions(course.title, passages),
     messages: await convertToModelMessages(messages),
     abortSignal
   })
 
   return { result, messages, citations }
+}
+
+/**
+ * Builds the citation chips of an answer.
+ *
+ * One chip per lecture, taken from the passage that matched the question
+ * best, so several passages of the same lecture do not repeat the title.
+ */
+function buildCitations(passages: RetrievedPassage[]): AiCitation[] {
+  const seen = new Set<string>()
+  const citations: AiCitation[] = []
+
+  for (const passage of passages) {
+    if (seen.has(passage.lectureId)) continue
+
+    seen.add(passage.lectureId)
+    citations.push({ lectureId: passage.lectureId, title: passage.lectureTitle, excerpt: passage.excerpt })
+
+    if (citations.length === 3) break
+  }
+
+  return citations
 }
 
 /**

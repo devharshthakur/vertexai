@@ -1,10 +1,12 @@
 import { and, eq, inArray } from 'drizzle-orm'
-import { DEMO_COURSES, DEMO_VIDEO_SLUGS, LEGACY_DEMO_COURSE_TITLES } from './courses'
-import { loadDemoVideos, type DemoVideoContent } from './assets'
-import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
+// The demo seed runs from the command line as well as from the server, and the
+// command line resolves no Nuxt aliases, so its neighbours are imported by path.
 import { useDb } from '../server/db'
 import { courseApprovals, courses, enrollments, lectures, modules, quizOptions, quizQuestions, quizzes, sessions, users } from '../server/db/schema'
 import { auth } from '../server/utils/auth'
+import { loadDemoVideos, type DemoVideoContent } from './assets'
+import { DEMO_COURSES, DEMO_VIDEO_SLUGS, LEGACY_DEMO_COURSE_TITLES } from './courses'
+import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 
 const DEMO_PASSWORD = DEFAULT_DEMO_PASSWORD
 const DEMO_USERS = [
@@ -217,6 +219,20 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
 }
 
 /**
+ * Reports whether the demo courses are already in the database.
+ *
+ * The container seeds the demo data only when it is missing, so a restart
+ * never throws away the progress a reviewer made in the demo courses.
+ */
+export async function hasDemoData(): Promise<boolean> {
+  const db = useDb()
+  const titles = DEMO_COURSES.map(({ title }) => title)
+  const rows = await db.select({ id: courses.id }).from(courses).where(inArray(courses.title, titles)).limit(1)
+
+  return rows.length > 0
+}
+
+/**
  * Seeds the demo accounts, courses, lectures, and quizzes.
  *
  * The seed is idempotent: it recreates the demo courses, resets the demo
@@ -237,7 +253,7 @@ export async function seedDemoData(): Promise<void> {
 
   console.info(`Seeded demo accounts: ${DEMO_USERS.map(({ email }) => email).join(', ')}`)
   const withVideo = [...demoVideos.values()].filter((video) => video.videoUrl).length
-  console.info(`Loaded ${demoVideos.size} demo lecture assets from public/videos/ (${withVideo} with a video file).`)
+  console.info(`Loaded ${demoVideos.size} demo lecture assets (${withVideo} with a video file).`)
   console.info(`Seeded ${DEMO_COURSES.length} demo courses (all approved and enrolled for the demo student).`)
   const demoQuizCount = DEMO_COURSES.flatMap((course) => course.modules.flatMap((module) => module.quizzes ?? [])).length
   console.info(`Seeded ${demoQuizCount} demo quizzes with questions and options.`)

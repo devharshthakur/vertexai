@@ -15,7 +15,7 @@ export async function requireSession(event: RequestEvent) {
   const session = await auth.api.getSession({ headers: event.req.headers })
 
   if (!session) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    throw createError({ status: 401, statusText: 'Unauthorized' })
   }
 
   return session
@@ -40,7 +40,7 @@ export async function requireRole(event: RequestEvent, ...roles: AppRole[]) {
   const role = session.user.role
 
   if (!role || !roles.includes(role as AppRole)) {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+    throw createError({ status: 403, statusText: 'Forbidden' })
   }
 
   return session

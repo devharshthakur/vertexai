@@ -9,7 +9,7 @@ import { ServiceError } from './service-error'
  */
 export function toHttpError(error: unknown): unknown {
   if (error instanceof ServiceError) {
-    const statusCode =
+    const status =
       error.code === 'invalid_input' ? 400
       : error.code === 'forbidden' ? 403
       : error.code === 'conflict' ? 409
@@ -18,8 +18,8 @@ export function toHttpError(error: unknown): unknown {
       : 404
 
     return createError({
-      statusCode,
-      statusMessage:
+      status,
+      statusText:
         error.code === 'invalid_input' ? 'Bad Request'
         : error.code === 'forbidden' ? 'Forbidden'
         : error.code === 'conflict' ? 'Conflict'

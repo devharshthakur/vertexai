@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Format, lint, typecheck, and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm build
+        env:
+          # The build does not need real secrets; the runtime reads them from
+          # the environment.
+          BETTER_AUTH_SECRET: ci-build-placeholder-secret-ci-build-placeholder
+
+  stack:
+    name: Build and start the Compose stack
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the image and start the stack
+        env:
+          BETTER_AUTH_SECRET: ci-stack-placeholder-secret-ci-stack-placeholder
+        run: |
+          docker compose up -d --build --wait --wait-timeout 300
+      - name: Check that the app answers
+        run: |
+          curl --fail --silent --show-error http://localhost:3000/api/health
+          echo
+      - name: Check that the demo courses are seeded
+        run: |
+          docker compose exec -T db psql -U vertexai -d vertexai -t -A \
+            -c "select count(*) from courses where status = 'approved';" | grep -qx 3
+      - name: Check that a demo account can sign in
+        run: |
+          curl --fail --silent --show-error \
+            -X POST http://localhost:3000/api/auth/sign-in/email \
+            -H 'content-type: application/json' \
+            -d '{"email":"student@example.com","password":"password@1234"}' \
+            | grep -q '"role":"student"'
+      - name: Show the logs
+        if: always()
+        run: docker compose logs --no-color app
+      - name: Stop the stack
+        if: always()
+        run: docker compose down --volumes

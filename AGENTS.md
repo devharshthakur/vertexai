@@ -14,7 +14,7 @@ Load the `defaults` skill at the start of every repository task. `ARCHITECTURE.m
 
 ## Workflow
 
-- The dev server uses port 5173; Compose PostgreSQL publishes 5433. `pnpm validate` is the full gate: Prettier check, then ESLint, then Nuxt typecheck. Focused checks: `pnpm exec eslint <files>` and `pnpm exec prettier --check <files>`. There is no test runner, test script, or CI.
+- The dev server uses port 5173; Compose PostgreSQL publishes 5433. `pnpm validate` is the full gate: Prettier check, then ESLint, then Nuxt typecheck. Focused checks: `pnpm exec eslint <files>` and `pnpm exec prettier --check <files>`. There is no test runner or test script; CI lives in `.github/workflows/ci.yml`.
 - `demo/` holds the demo data and the demo setup: the course fixtures, the asset loading, the seed, and the `demo:setup` command. The seed runs from the command line and from the server (the container seeds itself at startup), so its imports stay relative.
 - `pnpm demo:setup` deletes the Compose project's containers and volumes before migrating and seeding; running it is the approval. It needs the demo assets in `public/videos/<slug>/` (the transcript and `about.md`; the MP4 is optional) and builds its connection from `POSTGRES_*`/`POSTGRES_PORT`, not `DATABASE_URL`.
 - `pnpm db:seed` (after migrations) needs the same assets, resets demo account passwords, and signs those accounts out.

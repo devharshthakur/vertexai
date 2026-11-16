@@ -22,7 +22,9 @@ const FONT_PREFIX = 'certificate-fonts/'
 let pdfmakeConfiguration: Promise<void> | undefined
 
 function configurePdfmake(): Promise<void> {
-  pdfmakeConfiguration ??= (async () => {
+  if (pdfmakeConfiguration) return pdfmakeConfiguration
+
+  const configuration = (async () => {
     // The document is text and embedded fonts only, so pdfmake never needs to
     // fetch a URL or read a local file. Denying both also silences its startup
     // reminder about unset access policies.
@@ -38,8 +40,12 @@ function configurePdfmake(): Promise<void> {
 
     pdfmake.setFonts({ Roboto: { normal: Buffer.from(regular), bold: Buffer.from(bold) } })
   })()
+  pdfmakeConfiguration = configuration
+  configuration.catch(() => {
+    if (pdfmakeConfiguration === configuration) pdfmakeConfiguration = undefined
+  })
 
-  return pdfmakeConfiguration
+  return configuration
 }
 
 /** A filename safe to send in `Content-Disposition`, derived from the course title. */

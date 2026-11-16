@@ -39,13 +39,31 @@ function aiConfig() {
   return {
     apiKey: values.aiGatewayApiKey,
     chatModel: values.aiChatModel,
-    embeddingModel: values.aiEmbeddingModel
+    embeddingModel: values.aiEmbeddingModel,
+    embeddingMaxInputTokens: values.aiEmbeddingMaxInputTokens,
+    embeddingChunkTokens: values.aiEmbeddingChunkTokens
   }
 }
 
 /** Reports whether an AI Gateway key is configured, without exposing it. */
 export function isAiConfigured(): boolean {
   return Boolean(aiConfig().apiKey)
+}
+
+/**
+ * The token budgets that bound one embedding request.
+ *
+ * The chunk budget sizes the pieces a transcript is split into, and the input
+ * budget is the window the configured model accepts. Chunks must stay below the
+ * input budget, which `config/runtime.ts` enforces when it parses the config.
+ */
+export function getAiEmbeddingBudget() {
+  const { embeddingChunkTokens, embeddingMaxInputTokens } = aiConfig()
+
+  return {
+    chunkTokens: embeddingChunkTokens,
+    maxInputTokens: embeddingMaxInputTokens
+  }
 }
 
 /** Builds the gateway provider and the configured model ids, or raises 503. */

@@ -12,7 +12,7 @@ VertexAI is a Nuxt 4 application: Vue 3 pages rendered on the server, a Nitro AP
 | Framework   | Nuxt 4 with Nitro, Vue 3, TypeScript                               |
 | UI          | Tailwind CSS 4, shadcn-vue, Lucide icons, Video.js 10              |
 | Data        | PostgreSQL 17 (`pgvector` image), Drizzle ORM                      |
-| AI          | OpenAI through the Vercel AI SDK 7 (optional)                      |
+| AI          | Vercel AI Gateway through the Vercel AI SDK 7 (optional)           |
 | Auth        | Better Auth 1.7 with the admin plugin                              |
 | Validation  | Zod schemas shared by client and server                            |
 | Client data | Nuxt `useFetch` for page data, TanStack Vue Query for shared cache |
@@ -27,7 +27,7 @@ Nuxt configuration lives in `nuxt.config.ts`. Auto-import scanning for this proj
 - **Authentication.** Better Auth owns `/api/auth/**` through one catch-all route; `/api/auth-providers` reports which sign-in methods are enabled. GitHub OAuth is registered only when its credentials exist.
 - **Course materials.** PostgreSQL stores file metadata; the bytes live on the server's filesystem under `COURSE_MATERIALS_DIR` and are served through an authenticated route.
 - **Assignment submissions.** PostgreSQL stores assignment/rubric and submission metadata; uploaded PDF, ZIP, and source-code files use the same private local storage directory and protected download policy as course materials.
-- **AI tutor.** A signed-in student, the course owner, or an admin can chat with a tutor grounded in the course's lecture transcripts. OpenAI is called through the Vercel AI SDK; PostgreSQL stores one transcript embedding per lecture, the cached lecture summaries, and one implicit conversation thread per user and course.
+- **AI tutor.** A signed-in student, the course owner, or an admin can chat with a tutor grounded in the course's lecture transcripts. Inference goes through the Vercel AI Gateway using the Vercel AI SDK; PostgreSQL stores one transcript embedding per lecture, the cached lecture summaries, and one implicit conversation thread per user and course.
 - **Static files.** Everything in `public/`, including the demo lecture videos, is served directly by Nuxt.
 
 ## Request lifecycle
@@ -190,14 +190,14 @@ Material bytes are deliberately kept out of PostgreSQL and out of the repository
 
 ## AI tutor
 
-The tutor is deliberately small: streaming, provider calls, embeddings, chat state, and completion state all come from the Vercel AI SDK (packages `ai` 7, `@ai-sdk/openai` 4, and `@ai-sdk/vue` 4). The application owns access control, grounding data, persistence, and the UI.
+The tutor is deliberately small: streaming, provider calls, embeddings, chat state, and completion state all come from the Vercel AI SDK (packages `ai` 7, `@ai-sdk/gateway` 4, and `@ai-sdk/vue` 4). The application owns access control, grounding data, persistence, and the UI.
 
-- **Configuration.** `server/utils/ai.ts` builds the OpenAI provider from Nuxt runtime config. `OPENAI_API_KEY` in `.env` is enough locally; `NUXT_OPENAI_API_KEY` overrides it at runtime. `AI_CHAT_MODEL` (default `gpt-5.4-mini`) and `AI_EMBEDDING_MODEL` (default `text-embedding-3-small`) are optional overrides. Without a key, the AI routes answer `503` and the tutor renders an explicit unavailable state; the rest of the app is unaffected.
-- **Indexing.** On first use of a course, `server/services/ai/indexing.ts` embeds each transcript that has no vector yet with `text-embedding-3-small` (1536 dimensions). One lecture has one vector; there is no chunk table, queue, or backfill script. Concurrent chat requests for the same course share one indexing run, and a transcript edit clears both the embedding and the cached summary.
+- **Configuration.** `server/utils/ai.ts` builds the Vercel AI Gateway provider from Nuxt runtime config. `AI_GATEWAY_API_KEY` in `.env` is enough locally; `NUXT_AI_GATEWAY_API_KEY` overrides it at runtime. `AI_CHAT_MODEL` (default `openai/gpt-6-luna`) and `AI_EMBEDDING_MODEL` (default `openai/text-embedding-3-large`) are optional overrides and use the gateway `provider/model` format. Without a key, the AI routes answer `503` and the tutor renders an explicit unavailable state; the rest of the app is unaffected.
+- **Indexing.** On first use of a course, `server/services/ai/indexing.ts` embeds each transcript that has no vector yet with `openai/text-embedding-3-large` (1536 dimensions). One lecture has one vector; there is no chunk table, queue, or backfill script. Concurrent chat requests for the same course share one indexing run, and a transcript edit clears both the embedding and the cached summary. Every embedding request asks for 1536 dimensions, which is the width of the `vector(1536)` column, so a model with a larger native width still fits.
 - **Retrieval and grounding.** A single cosine-distance query over the course's lecture vectors selects the top three lectures, and their full transcripts become the model context. The instructions forbid outside knowledge and require the tutor to say when the course material does not cover the question.
 - **Chat.** `GET` returns the signed-in user's stored thread; `POST` validates the AI SDK message list, indexes lazily, streams a grounded answer with `streamText`, and attaches citations (lecture id, title, and a quoted excerpt) through `messageMetadata`. `toUIMessageStream` persistence writes the thread when the stream ends, including a partial answer that the student stopped. The client uses `useChat` with `DefaultChatTransport`.
 - **Summaries.** A lecture summary is generated on demand and cached in `lectures.summary`/`summary_generated_at`. Students receive the cached text; the course owner and admins may force regeneration. The client uses `useCompletion` with the plain-text stream protocol.
-- **Limits.** `server/utils/rate-limit.ts` allows 20 AI generation requests per user per minute. The counter is in memory, so the limit is per process; a multi-instance deployment needs shared storage. Missing keys and provider failures never block the LMS. OpenAI's embedding model accepts up to 8,192 input tokens, so a transcript longer than that cannot be embedded under the one-vector-per-lecture design and surfaces as an AI error.
+- **Limits.** `server/utils/rate-limit.ts` allows 20 AI generation requests per user per minute. The counter is in memory, so the limit is per process; a multi-instance deployment needs shared storage. Missing keys and provider failures never block the LMS. The embedding model accepts up to 8,192 input tokens, so a transcript longer than that cannot be embedded under the one-vector-per-lecture design and surfaces as an AI error. Vectors from different embedding models are not comparable, so changing `AI_EMBEDDING_MODEL` requires clearing the stored vectors before the course is indexed again.
 
 This deviates from PRD §5.2/§9 by design: there is no Python/FastAPI service, Redis/BullMQ worker, LangChain/LlamaIndex, document-chunk table, or separate chat-session table. Study aids beyond lecture summaries (flashcards, quiz drafts, study plans, adaptive modes, mastery scoring) are not implemented.
 
@@ -223,7 +223,7 @@ Certificates are rows, not files: `server/services/achievements/pdf.ts` renders 
 - `pnpm validate` runs the Prettier check, ESLint, and the Nuxt typecheck.
 - A Husky pre-commit hook runs `nano-staged`: ESLint with `--fix` and Prettier for code, Prettier for Markdown, JSON, CSS, and YAML.
 - No test runner is configured yet, so there are no automated tests to run.
-- The AI tutor requires an `OPENAI_API_KEY`; without one its routes return 503 and the rest of the app still works. It sends full transcripts to OpenAI, so use material you are allowed to share with that provider.
+- The AI tutor requires an `AI_GATEWAY_API_KEY`; without one its routes return 503 and the rest of the app still works. It sends full transcripts to the model provider behind the Vercel AI Gateway, so use material you are allowed to share with that provider.
 - Not implemented in this codebase: instructor analytics, moderation beyond course approvals, and the AI study aids listed above. See [`FEATURES.md`](FEATURES.md) for the available and planned lists.
 
 See [`SETUP.md`](SETUP.md) for running the app locally.

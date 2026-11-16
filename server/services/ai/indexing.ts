@@ -1,8 +1,7 @@
 import { and, eq, isNotNull, isNull } from 'drizzle-orm'
-import { embed } from 'ai'
 import { useDb } from '#server/db'
 import { lectures, modules } from '#server/db/schema'
-import { getEmbeddingModel } from '#server/utils/ai'
+import { embedText } from '#server/utils/ai'
 
 /** Embeddings that are currently being generated, keyed by course. */
 const inFlight = new Map<string, Promise<void>>()
@@ -38,10 +37,8 @@ async function embedPendingLectures(courseId: string): Promise<void> {
 
   if (!transcripts.length) return
 
-  const model = getEmbeddingModel()
-
   for (const lecture of transcripts) {
-    const { embedding } = await embed({ model, value: lecture.transcript })
+    const embedding = await embedText(lecture.transcript)
 
     // Skip the write if the transcript changed while it was being embedded.
     await db

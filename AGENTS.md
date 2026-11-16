@@ -10,7 +10,7 @@ Load the `defaults` skill at the start of every repository task. `ARCHITECTURE.m
 - Client route middleware is not API protection. Every protected API route must guard itself.
 - New tables use UUID primary keys, but foreign keys to Better Auth's `users` stay `text`. Roles, statuses, and difficulty values live in `shared/`, not PostgreSQL enums. Export every schema module from `server/db/schema/index.ts`.
 - Uploaded material and submission bytes live outside the checkout under `COURSE_MATERIALS_DIR` (default `~/.local/share/vertexai/course-materials`); PostgreSQL stores metadata only.
-- AI generation lives in `server/services/ai` behind the Vercel AI SDK; `OPENAI_API_KEY` is optional, and its absence returns 503 without affecting other routes. AI rate limiting is in memory and therefore per instance.
+- AI generation lives in `server/services/ai` behind the Vercel AI SDK and the Vercel AI Gateway; `AI_GATEWAY_API_KEY` is optional, and its absence returns 503 without affecting other routes. AI rate limiting is in memory and therefore per instance.
 
 ## Workflow
 

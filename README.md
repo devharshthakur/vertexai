@@ -40,7 +40,7 @@ The app currently covers course authoring, a searchable catalog, enrollment, lec
 | Framework   | Nuxt 4, Vue 3, TypeScript                             |
 | UI          | Tailwind CSS 4, shadcn-vue, Lucide icons, Video.js 10 |
 | Data        | PostgreSQL 17 (Docker Compose, pgvector), Drizzle ORM |
-| AI          | OpenAI through the Vercel AI SDK 7                    |
+| AI          | Vercel AI Gateway through the Vercel AI SDK 7         |
 | Auth        | Better Auth (email + password, optional GitHub)       |
 | Validation  | Zod, with schemas shared by client and server         |
 | Client data | Nuxt `useFetch`, TanStack Vue Query                   |

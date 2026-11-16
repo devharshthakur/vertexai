@@ -34,7 +34,7 @@ These come from the product requirements and are not implemented yet:
 - **Instructor analytics** showing where learners struggle.
 - **Admin moderation tools** beyond course approvals.
 
-The AI tutor and lecture summaries need an `OPENAI_API_KEY`. Without one they show an unavailable state; the rest of the app keeps working.
+The AI tutor and lecture summaries need an `AI_GATEWAY_API_KEY` for the Vercel AI Gateway. Without one they show an unavailable state; the rest of the app keeps working.
 
 ## See also
 

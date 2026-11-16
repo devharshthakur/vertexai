@@ -65,15 +65,17 @@ cp .env.example .env
 
 ### Optional variables
 
-| Variable                                    | Purpose                                                    | Default                                    |
-| ------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------ |
-| `COURSE_MATERIALS_DIR`                      | Absolute path where uploaded course files are stored       | `~/.local/share/vertexai/course-materials` |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub sign-in; the button stays hidden until both are set | Unset                                      |
-| `OPENAI_API_KEY`                            | OpenAI key for the AI tutor and lecture summaries          | Unset                                      |
-| `AI_CHAT_MODEL`                             | Optional chat model override                               | `gpt-5.4-mini`                             |
-| `AI_EMBEDDING_MODEL`                        | Optional transcript embedding model override               | `text-embedding-3-small`                   |
+| Variable                                    | Purpose                                                      | Default                                    |
+| ------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+| `COURSE_MATERIALS_DIR`                      | Absolute path where uploaded course files are stored         | `~/.local/share/vertexai/course-materials` |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | GitHub sign-in; the button stays hidden until both are set   | Unset                                      |
+| `AI_GATEWAY_API_KEY`                        | Vercel AI Gateway key for the AI tutor and lecture summaries | Unset                                      |
+| `AI_CHAT_MODEL`                             | Optional chat model override                                 | `openai/gpt-6-luna`                        |
+| `AI_EMBEDDING_MODEL`                        | Optional transcript embedding model override                 | `openai/text-embedding-3-large`            |
 
-Without `OPENAI_API_KEY`, the tutor and summary cards show an unavailable state and every other feature keeps working. Restart the dev server after changing it, because the value is read when the Nuxt config loads. The AI features send lecture transcripts to OpenAI, so use material you are allowed to share with that provider. The AI migration enables the `vector` extension and needs the `pgvector` image already used by Compose.
+Without `AI_GATEWAY_API_KEY`, the tutor and summary cards show an unavailable state and every other feature keeps working. Restart the dev server after changing it, because the value is read when the Nuxt config loads. Model overrides use the gateway `provider/model` format, for example `anthropic/claude-sonnet-5.5`. The AI features send lecture transcripts to the model provider behind the gateway, so use material you are allowed to share with that provider. The AI migration enables the `vector` extension and needs the `pgvector` image already used by Compose.
+
+Lecture vectors are stored with 1536 dimensions, so every embedding request asks the model for that width. Vectors from different embedding models are not comparable: if you change `AI_EMBEDDING_MODEL`, clear the stored vectors with `UPDATE lectures SET embedding = NULL, embedded_at = NULL;` so the tutor re-indexes the course with the new model.
 
 Course materials — PDFs, slides, and uploaded videos — live on the filesystem, not in the database or the repository:
 

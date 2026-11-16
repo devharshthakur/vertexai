@@ -1,8 +1,7 @@
 import { and, cosineDistance, eq, isNotNull } from 'drizzle-orm'
-import { embed } from 'ai'
 import { useDb } from '#server/db'
 import { lectures, modules } from '#server/db/schema'
-import { getEmbeddingModel } from '#server/utils/ai'
+import { embedText } from '#server/utils/ai'
 
 /** One lecture selected as grounding material for a tutor answer. */
 export interface RetrievedLecture {
@@ -20,7 +19,7 @@ export interface RetrievedLecture {
  * grounded prompt context.
  */
 export async function retrieveCourseLectures(courseId: string, question: string): Promise<RetrievedLecture[]> {
-  const { embedding } = await embed({ model: getEmbeddingModel(), value: question })
+  const embedding = await embedText(question)
   const rows = await useDb()
     .select({ id: lectures.id, title: lectures.title, transcript: lectures.transcript })
     .from(lectures)

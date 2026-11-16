@@ -1,16 +1,21 @@
 import { z } from 'zod'
 
-const defaultAiChatModel = 'gpt-5.4-mini'
-const defaultAiEmbeddingModel = 'text-embedding-3-small'
+const defaultAiChatModel = 'openai/gpt-6-luna'
+const defaultAiEmbeddingModel = 'openai/text-embedding-3-large'
 
-const modelSchema = z.string().trim().min(1, 'Model identifiers must not be blank.')
+/** Vercel AI Gateway model ids are always `provider/model`. */
+const modelSchema = z
+  .string()
+  .trim()
+  .min(1, 'Model identifiers must not be blank.')
+  .regex(/^[^/\s]+\/[^/\s]+$/, 'Model identifiers must use the gateway "provider/model" format.')
 
 /**
  * Nuxt reads these variables while loading `nuxt.config.ts`, so invalid values
  * fail before the app starts.
  */
 export const runtimeEnvironmentSchema = z.object({
-  OPENAI_API_KEY: z.string().trim().default(''),
+  AI_GATEWAY_API_KEY: z.string().trim().default(''),
   AI_CHAT_MODEL: modelSchema.default(defaultAiChatModel),
   AI_EMBEDDING_MODEL: modelSchema.default(defaultAiEmbeddingModel)
 })
@@ -20,7 +25,7 @@ export const runtimeEnvironmentSchema = z.object({
  * because `NUXT_*` variables override the config generated at build time.
  */
 export const runtimeConfigSchema = z.object({
-  openaiApiKey: z.string().trim().default(''),
+  aiGatewayApiKey: z.string().trim().default(''),
   aiChatModel: modelSchema.default(defaultAiChatModel),
   aiEmbeddingModel: modelSchema.default(defaultAiEmbeddingModel)
 })
@@ -33,7 +38,7 @@ export function createRuntimeConfig(environment: RuntimeEnvironment = process.en
   const values = runtimeEnvironmentSchema.parse(environment)
 
   return {
-    openaiApiKey: values.OPENAI_API_KEY,
+    aiGatewayApiKey: values.AI_GATEWAY_API_KEY,
     aiChatModel: values.AI_CHAT_MODEL,
     aiEmbeddingModel: values.AI_EMBEDDING_MODEL
   }

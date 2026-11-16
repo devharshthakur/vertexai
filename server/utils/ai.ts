@@ -1,14 +1,26 @@
-import { createOpenAI } from '@ai-sdk/openai'
+import { createGateway, embed } from 'ai'
 import { useRuntimeConfig } from 'nitropack/runtime'
 import { parseRuntimeConfig } from '~~/config/runtime'
 import { ServiceError } from './service-error'
 
 /**
- * OpenAI provider used by the AI tutor.
+ * Dimensions of the stored lecture vectors.
+ *
+ * The embedding model can return more dimensions than that, so every embedding
+ * request asks for this width. It must stay equal to the `vector(1536)`
+ * column in `server/db/schema/courses.ts`.
+ */
+const aiEmbeddingDimensions = 1536
+
+/**
+ * Vercel AI Gateway provider used by the AI tutor.
  *
  * The key and models come from Nuxt runtime config so a deployment can change
- * them without rebuilding the app. `OPENAI_API_KEY` in `.env` is enough for
- * local development; `NUXT_OPENAI_API_KEY` overrides the runtime default.
+ * them without rebuilding the app. `AI_GATEWAY_API_KEY` in `.env` is enough for
+ * local development; `NUXT_AI_GATEWAY_API_KEY` overrides the runtime default.
+ *
+ * Gateway model ids are `provider/model` pairs, so the chat and embedding
+ * defaults are prefixed (`openai/gpt-6-luna`, `openai/text-embedding-3-large`).
  *
  * Parsing here validates the effective values, including `NUXT_*` overrides
  * that bypass the checks in `nuxt.config.ts`. A missing key is a configuration
@@ -19,24 +31,24 @@ function aiConfig() {
   const config = useRuntimeConfig()
 
   const values = parseRuntimeConfig({
-    openaiApiKey: config.openaiApiKey || process.env.OPENAI_API_KEY,
+    aiGatewayApiKey: config.aiGatewayApiKey || process.env.AI_GATEWAY_API_KEY,
     aiChatModel: config.aiChatModel,
     aiEmbeddingModel: config.aiEmbeddingModel
   })
 
   return {
-    apiKey: values.openaiApiKey,
+    apiKey: values.aiGatewayApiKey,
     chatModel: values.aiChatModel,
     embeddingModel: values.aiEmbeddingModel
   }
 }
 
-/** Reports whether an OpenAI key is configured, without exposing it. */
+/** Reports whether an AI Gateway key is configured, without exposing it. */
 export function isAiConfigured(): boolean {
   return Boolean(aiConfig().apiKey)
 }
 
-/** Builds the provider and the configured model ids, or raises 503. */
+/** Builds the gateway provider and the configured model ids, or raises 503. */
 export function getAiModels() {
   const { apiKey, chatModel, embeddingModel } = aiConfig()
 
@@ -44,10 +56,10 @@ export function getAiModels() {
     throw new ServiceError('unavailable', 'The AI tutor is not configured.')
   }
 
-  const openai = createOpenAI({ apiKey })
+  const gateway = createGateway({ apiKey })
 
   return {
-    openai,
+    gateway,
     chatModel,
     embeddingModel
   }
@@ -55,14 +67,26 @@ export function getAiModels() {
 
 /** The language model used for grounded answers and summaries. */
 export function getChatModel() {
-  const { openai, chatModel } = getAiModels()
+  const { gateway, chatModel } = getAiModels()
 
-  return openai(chatModel)
+  return gateway(chatModel)
 }
 
 /** The embedding model used to index lecture transcripts. */
-export function getEmbeddingModel() {
-  const { openai, embeddingModel } = getAiModels()
+function getEmbeddingModel() {
+  const { gateway, embeddingModel } = getAiModels()
 
-  return openai.embedding(embeddingModel)
+  return gateway.embeddingModel(embeddingModel)
+}
+
+/**
+ * Embeds one value with the configured embedding model.
+ *
+ * The requested width matches the stored vector column, so a model that
+ * returns more dimensions still produces values PostgreSQL accepts.
+ */
+export async function embedText(value: string): Promise<number[]> {
+  const { embedding } = await embed({ model: getEmbeddingModel(), value, dimensions: aiEmbeddingDimensions })
+
+  return embedding
 }

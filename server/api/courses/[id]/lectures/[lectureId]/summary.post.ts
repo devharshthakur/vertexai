@@ -1,9 +1,9 @@
-import { defineEventHandler } from 'nuxt/server'
+import { defineEventHandler, readValidatedBody } from 'nuxt/server'
 import { createTextStreamResponse, toTextStream } from 'ai'
 import { startLectureSummary } from '#server/services/ai/summary'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
-import { parseBody, parseParam } from '#server/utils/validate'
+import { parseParam } from '#server/utils/validate'
 import { lectureSummaryRequestSchema } from '#shared/validation/ai'
 import { courseIdSchema, lectureIdSchema } from '#shared/validation/courses'
 
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireSession(event)
   const courseId = parseParam(event, 'id', courseIdSchema)
   const lectureId = parseParam(event, 'lectureId', lectureIdSchema)
-  const body = await parseBody(event, lectureSummaryRequestSchema)
+  const body = await readValidatedBody(event, lectureSummaryRequestSchema)
   const summary = await withServiceErrors(() => startLectureSummary(courseId, lectureId, body, { id: session.user.id, role: session.user.role }, event.req.signal))
 
   if (summary.kind === 'cached') {

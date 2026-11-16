@@ -1,8 +1,8 @@
-import { defineEventHandler } from 'nuxt/server'
+import { defineEventHandler, readValidatedBody } from 'nuxt/server'
 import { updateLectureNote } from '#server/services/courses/learning-tools'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireSession } from '#server/utils/require-session'
-import { parseBody, parseParam } from '#server/utils/validate'
+import { parseParam } from '#server/utils/validate'
 import { courseIdSchema, lectureIdSchema } from '#shared/validation/courses'
 import { learningNoteIdSchema, updateLectureNoteSchema } from '#shared/validation/learning'
 
@@ -11,6 +11,6 @@ export default defineEventHandler(async (event) => {
   const courseId = parseParam(event, 'id', courseIdSchema)
   const lectureId = parseParam(event, 'lectureId', lectureIdSchema)
   const noteId = parseParam(event, 'noteId', learningNoteIdSchema)
-  const input = await parseBody(event, updateLectureNoteSchema)
+  const input = await readValidatedBody(event, updateLectureNoteSchema)
   return withServiceErrors(() => updateLectureNote(courseId, lectureId, noteId, session.user.id, input))
 })

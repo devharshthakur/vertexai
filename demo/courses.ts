@@ -1,5 +1,7 @@
-import type { CourseDifficulty, CourseStatus } from '../shared/validation/courses.ts'
-import type { QuizQuestionType } from '../shared/validation/quizzes.ts'
+// The demo seed runs from the command line as well as from the server, and the
+// command line resolves no Nuxt aliases, so the shared schemas are imported by path.
+import type { CourseDifficulty, CourseStatus } from '../shared/validation/courses'
+import type { QuizQuestionType } from '../shared/validation/quizzes'
 
 interface DemoLecture {
   /** Folder under `public/videos/` holding an MP4, `transcript.txt`, and `about.md`. */

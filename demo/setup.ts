@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import { spawnSync } from 'node:child_process'
+import { loadDemoVideos } from './assets'
 import { DEMO_VIDEO_SLUGS } from './courses'
-import { loadDemoVideos } from './load-demo-video'
 import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 
 const COMPOSE_PROJECT = 'vertexai'

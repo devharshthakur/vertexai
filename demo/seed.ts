@@ -1,7 +1,6 @@
-import 'dotenv/config'
 import { and, eq, inArray } from 'drizzle-orm'
 import { DEMO_COURSES, DEMO_VIDEO_SLUGS, LEGACY_DEMO_COURSE_TITLES } from './courses'
-import { loadDemoVideos, type DemoVideoContent } from './load-demo-video'
+import { loadDemoVideos, type DemoVideoContent } from './assets'
 import { DEFAULT_DEMO_PASSWORD, validateDemoSeedPassword } from './password'
 import { useDb } from '../server/db'
 import { courseApprovals, courses, enrollments, lectures, modules, quizOptions, quizQuestions, quizzes, sessions, users } from '../server/db/schema'
@@ -217,10 +216,14 @@ async function seedDemoCourses(instructorId: string, adminId: string, studentId:
   })
 }
 
-async function seed() {
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('The demo seed is disabled in production.')
-  }
+/**
+ * Seeds the demo accounts, courses, lectures, and quizzes.
+ *
+ * The seed is idempotent: it recreates the demo courses, resets the demo
+ * passwords, and signs the demo accounts out, so it can run again on a
+ * populated database.
+ */
+export async function seedDemoData(): Promise<void> {
   validateDemoSeedPassword(DEMO_PASSWORD)
 
   const demoVideos = await loadDemoVideos(DEMO_VIDEO_SLUGS)
@@ -240,14 +243,3 @@ async function seed() {
   console.info(`Seeded ${demoQuizCount} demo quizzes with questions and options.`)
   console.info('All demo accounts use the predefined password.')
 }
-
-void (async () => {
-  try {
-    await seed()
-  } catch (error: unknown) {
-    console.error('Demo seed failed:', error)
-    process.exitCode = 1
-  } finally {
-    await useDb().$client.end()
-  }
-})()

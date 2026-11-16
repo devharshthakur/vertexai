@@ -1,6 +1,6 @@
 # Setup
 
-Run VertexAI on your machine: install the dependencies, start a Docker-hosted PostgreSQL database, apply the schema, and open the Nuxt dev server.
+Two ways to run VertexAI: the container stack, which brings up the app and its database with one command, and the local development setup, which runs the Nuxt dev server against a Docker-hosted PostgreSQL.
 
 > [!TIP]
 > The steps below are in the order you need them. Each one assumes the previous step is complete.
@@ -8,27 +8,119 @@ Run VertexAI on your machine: install the dependencies, start a Docker-hosted Po
 ## Contents
 
 - [Requirements](#requirements)
-- [Install](#install)
-- [Environment](#environment)
-- [Database](#database)
-- [Schema and demo data](#schema-and-demo-data)
-  - [Option A: demo data](#option-a-demo-data)
-  - [Option B: empty database](#option-b-empty-database)
-- [Run the app](#run-the-app)
-- [Authentication](#authentication)
-- [Database commands](#database-commands)
+- [The container stack](#the-container-stack)
+- [Local development](#local-development)
+  - [Install](#install)
+  - [Environment](#environment)
+  - [Database](#database)
+  - [Schema and demo data](#schema-and-demo-data)
+    - [Option A: demo data](#option-a-demo-data)
+    - [Option B: empty database](#option-b-empty-database)
+  - [Run the app](#run-the-app)
+  - [Authentication](#authentication)
+  - [Database commands](#database-commands)
 
 ## Requirements
 
-| Tool                                          | Version         | Used for                            |
-| --------------------------------------------- | --------------- | ----------------------------------- |
-| [Node.js](https://nodejs.org)                 | 20 or newer     | Nuxt 4 and the project scripts      |
-| [pnpm](https://pnpm.io)                       | 11.15 or newer  | Dependencies and every command here |
-| [Docker](https://docs.docker.com/get-docker/) | Current release | The local PostgreSQL container      |
+| Tool                                          | Version         | Used for                             |
+| --------------------------------------------- | --------------- | ------------------------------------ |
+| [Node.js](https://nodejs.org)                 | 20 or newer     | Nuxt 4 and the project scripts       |
+| [pnpm](https://pnpm.io)                       | 11.15 or newer  | Dependencies and every command here  |
+| [Docker](https://docs.docker.com/get-docker/) | Current release | The database and the container stack |
 
 You do not need a PostgreSQL install on your machine; the database runs in Docker.
 
-## Install
+## The container stack
+
+`docker-compose.yml` defines two services: `db` (PostgreSQL with pgvector, published on `5433`) and `app` (the production build, published on `3000`). The app applies the migrations and seeds the demo content itself on the first start, so the stack is usable as soon as it is up.
+
+```bash
+pnpm install
+pnpm setup
+docker compose up --build
+```
+
+Open [http://localhost:3000](http://localhost:3000). The demo accounts are listed under [Option A: demo data](#option-a-demo-data).
+
+`pnpm setup` creates `.env` from the template and fills in a generated auth secret. To do it by hand instead, copy `.env.example` to `.env` and put a `BETTER_AUTH_SECRET` value in it.
+
+> [!NOTE]
+> The stack itself does not need the dependencies on your machine — the image installs them. The install is only needed for `pnpm setup` and `pnpm demo:assets`.
+
+> [!IMPORTANT]
+> The image build compiles the application inside the container. Give Docker at least 4 GB of memory — with the default 2 GB limit the build is killed with `cannot allocate memory`. Docker Desktop: **Settings → Resources → Memory**.
+
+> [!NOTE]
+> `BETTER_AUTH_SECRET` is required. Without it the app refuses to start and says so in its log. `AI_GATEWAY_API_KEY` is optional: without it the AI tutor shows its unavailable state and every other feature keeps working.
+
+### What the stack reads from `.env`
+
+| Variable                              | Default                         | Effect                                         |
+| ------------------------------------- | ------------------------------- | ---------------------------------------------- |
+| `BETTER_AUTH_SECRET`                  | —                               | Required. The app exits without it             |
+| `AI_GATEWAY_API_KEY`                  | empty                           | Enables the AI tutor and the lecture summaries |
+| `APP_PORT`                            | `3000`                          | Host port the app is published on              |
+| `APP_URL`                             | `http://localhost:3000`         | Base URL Better Auth builds its links from     |
+| `POSTGRES_USER` / `_PASSWORD` / `_DB` | `vertexai`                      | Credentials for the database                   |
+| `POSTGRES_PORT`                       | `5433`                          | Host port the database is published on         |
+| `AI_CHAT_MODEL`                       | `openai/gpt-6-luna`             | Chat model for the tutor and the summaries     |
+| `AI_EMBEDDING_MODEL`                  | `openai/text-embedding-3-large` | Model that indexes the transcripts             |
+
+### The demo lecture videos
+
+The videos are about 630 MB and are not in the repository. The stack mounts `public/videos/` into the container and copies the videos into the volume it serves them from, so they are never baked into the image.
+
+Add them with:
+
+```bash
+pnpm demo:assets
+docker compose up --build
+```
+
+Without them the demo still works: the lectures are seeded from their transcripts, and the player shows its "no video" state.
+
+> [!WARNING]
+> Docker Desktop only mounts directories it has been given access to. If `public/videos/` lives on a volume Docker Desktop does not share — an external drive, for example — the container sees an empty folder and the videos are missing. Move the checkout into a shared directory, or add the drive under **Settings → Resources → File sharing**.
+
+### Working with the stack
+
+| Command                      | Effect                                                       |
+| ---------------------------- | ------------------------------------------------------------ |
+| `docker compose up --build`  | Build the image and start both services                      |
+| `docker compose up -d`       | Start the stack in the background                            |
+| `docker compose logs -f app` | Follow the application log                                   |
+| `docker compose ps`          | Show the services and their health                           |
+| `docker compose down`        | Stop the stack; the database and the demo data stay          |
+| `docker compose down -v`     | Stop the stack and delete the volumes: a clean demo database |
+
+The application has a health check, so `docker compose ps` reports `healthy` once the stack is usable:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+```json
+{ "status": "ok", "database": "up" }
+```
+
+A restart keeps the demo data: the seed only runs when the demo courses are missing, so the progress you made in them survives `docker compose restart`. Use `docker compose down -v` for a clean slate.
+
+### How the stack starts
+
+`server/plugins/bootstrap.ts` runs as a Nitro plugin, before the first request is served:
+
+1. It checks that `DATABASE_URL` and `BETTER_AUTH_SECRET` are set and stops with a clear message if not.
+2. It waits for the database to accept queries.
+3. With `DB_AUTO_MIGRATE=true` it applies the committed migrations from `server/db/migrations`.
+4. With `DEMO_SEED=true` it prepares the demo assets and seeds the demo content, unless the demo courses are already there.
+
+Both steps are opt-in through environment variables, so the same image runs against an existing database without touching it.
+
+## Local development
+
+The steps below run the Nuxt dev server on your machine against a Docker-hosted PostgreSQL.
+
+### Install
 
 ```bash
 pnpm install
@@ -36,12 +128,18 @@ pnpm install
 
 This also installs the Git hooks (Husky) and generates Nuxt's TypeScript types.
 
-## Environment
+### Environment
 
 Create your local environment file from the template:
 
 ```bash
 cp .env.example .env
+```
+
+`pnpm setup` does the same and generates the auth secret for you:
+
+```bash
+pnpm setup
 ```
 
 ### Required variables
@@ -88,7 +186,7 @@ Course materials — PDFs, slides, and uploaded videos — live on the filesyste
 - Each upload is limited to 100 MiB.
 - This storage belongs to one app instance. Multi-instance deployments need shared storage instead.
 
-## Database
+### Database
 
 Start PostgreSQL in Docker:
 
@@ -108,11 +206,11 @@ The container publishes the database on `localhost:5433` by default and keeps it
 > [!NOTE]
 > `db:up` creates the container if it does not exist; `db:start` only restarts one that already exists. Use `db:up` on a fresh checkout.
 
-## Schema and demo data
+### Schema and demo data
 
 Tables are defined in `server/db/schema`, and migrations are committed in `server/db/migrations`. Choose one of the two paths below.
 
-### Option A: demo data
+#### Option A: demo data
 
 The demo dataset is the fastest way to see a populated app. Add the lecture videos described below first, then run:
 
@@ -135,10 +233,12 @@ Demo accounts, all using the password `password@1234`:
 
 The seed creates three approved courses and enrolls the demo student. Running `pnpm db:seed` re-applies the demo password, signs those accounts out, and rebuilds the demo courses and enrollment without touching the container or its volume.
 
+All of the demo content lives in `demo/`: the course fixtures in `demo/courses.ts`, the asset loader in `demo/assets.ts`, the seed in `demo/seed.ts`, and the setup command in `demo/setup.ts`. The container seeds itself with that same code, so the demo behaves the same in both setups.
+
 > [!NOTE]
 > `demo:setup` builds its connection from `POSTGRES_*` and `POSTGRES_PORT`, not from `DATABASE_URL`. Keep them consistent.
 
-#### Demo lecture assets
+##### Demo lecture assets
 
 The seeded courses read their lectures from `public/videos/`:
 
@@ -160,7 +260,7 @@ The seed validates every folder before it changes any database row. See [`public
 > [!IMPORTANT]
 > Everything under `public/videos/` is served publicly by the app. Use demo material you are allowed to distribute.
 
-### Option B: empty database
+#### Option B: empty database
 
 If you do not need demo content, apply the committed migrations instead:
 
@@ -172,7 +272,7 @@ This uses the database configured by `DATABASE_URL`. Once the app is running, cr
 
 You can add the demo content later without resetting the database: add the lecture assets described in Option A, then run `pnpm db:seed`.
 
-## Run the app
+### Run the app
 
 ```bash
 pnpm dev
@@ -194,7 +294,7 @@ A healthy setup returns `200` with:
 
 When the probe fails, the endpoint returns `503` with `{ "status": "error", "database": "down" }`. Check the container with `pnpm db:logs`.
 
-## Authentication
+### Authentication
 
 [Better Auth](https://better-auth.com) handles sign-in, sessions, and roles. The server instance lives in `server/utils/auth.ts` and is mounted on `/api/auth/**` by `server/api/auth/[...all].ts`.
 
@@ -212,7 +312,7 @@ pnpm dlx auth@1.7.18 create-admin --config server/utils/auth.ts \
 > [!NOTE]
 > Keep the `auth` CLI version in these commands aligned with the installed `better-auth` version (`1.7.18` in `package.json`).
 
-## Database commands
+### Database commands
 
 | Command            | What it does                                        |
 | ------------------ | --------------------------------------------------- |

@@ -74,8 +74,7 @@ A short description of the course and what students will learn.
 
 ## `transcript.txt`
 
-Plain-text transcript of the lecture. It is stored on the seeded lecture and is
-required by the demo seed and is the transcript stored on the seeded lecture.
+Plain-text transcript of the lecture. It is required by the demo seed and is the transcript stored on the seeded lecture.
 
 ## Seeding
 
@@ -84,3 +83,7 @@ then deletes the Compose project's containers and volumes, creates a database,
 applies migrations, and seeds it. All existing data in those volumes is lost.
 For an existing migrated database, use `pnpm db:seed` instead. Missing or
 malformed files stop either command with the affected path.
+
+The container stack mounts this folder into the app container, which copies the
+videos into the volume it serves them from. The videos are therefore never
+baked into the image, and a rebuild keeps them.

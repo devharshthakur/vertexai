@@ -30,6 +30,25 @@ Nuxt configuration lives in `nuxt.config.ts`. Auto-import scanning for this proj
 - **AI tutor.** A signed-in student, the course owner, or an admin can chat with a tutor grounded in the course's lecture transcripts. Inference goes through the Vercel AI Gateway using the Vercel AI SDK; PostgreSQL stores the indexed transcript passages, the cached lecture summaries, and one implicit conversation thread per user and course.
 - **Static files.** Everything in `public/`, including the demo lecture videos, is served directly by Nuxt.
 
+## The container stack
+
+`docker-compose.yml` runs two services: `db` (PostgreSQL 17 with pgvector, published on `5433`) and `app` (the production Nitro build, published on `3000`).
+
+The image is built in stages: the dependencies are installed from the committed lockfile before the source is copied, the application is built, and only `.output`, the migrations, and the demo text assets are copied into a small runtime image that runs as a non-root user. The image holds no lecture videos — they are mounted at runtime, so the image stays small and the videos stay replaceable.
+
+`server/plugins/bootstrap.ts` is a Nitro plugin, so the application prepares its own database before it serves the first request:
+
+1. It checks that `DATABASE_URL` and `BETTER_AUTH_SECRET` are set and stops with a clear message when they are not.
+2. It waits for the database to accept queries, because the database container may still be starting.
+3. `DB_AUTO_MIGRATE` applies the committed migrations with the Drizzle migrator. The runtime image carries `server/db/migrations` and does not need `drizzle-kit`.
+4. `DEMO_SEED` prepares the demo assets and seeds the demo content, but only when the demo courses are missing, so a restart keeps the progress a reviewer made.
+
+Both steps are opt-in, so the same image runs against an existing database without touching it.
+
+The demo assets are put in place by the same code the command line uses: the transcripts and course descriptions travel in the image under `demo-assets`, the videos arrive in a mounted inbox, and both are merged into the folder the application serves them from. The folder is a named volume rather than a bind mount, so the application can write into it while the inbox stays read-only.
+
+The database and the uploaded course materials keep their own volumes, so `docker compose down` keeps the data and `docker compose down -v` resets the demo to a clean state.
+
 ## Request lifecycle
 
 1. **Route handler.** A file under `server/api/`; the filename suffix (`.get.ts`, `.post.ts`, `.put.ts`, `.delete.ts`) is the HTTP method.
@@ -71,9 +90,15 @@ A typical route is `server/api/courses/[id].get.ts`: it parses the id, reads an 
 ├── shared/                  code used by both sides
 │   ├── types/               response shapes shared by client and server
 │   └── validation/          Zod schemas and allowed values
-├── seed/                    demo data scripts
-└── public/
-    └── videos/              demo lecture assets served as static files
+├── demo/                    demo data and the demo setup
+│   ├── courses.ts           the demo course fixtures
+│   ├── assets.ts            loads and prepares the demo lecture assets
+│   ├── seed.ts              writes the demo accounts, courses, and quizzes
+│   ├── index.ts             the `pnpm db:seed` command
+│   └── setup.ts             the `pnpm demo:setup` command
+├── scripts/                 one-off project scripts (setup, demo assets)
+├── Dockerfile               the production image
+└── docker-compose.yml       the database and the application
 ```
 
 Both sides import through the aliases `#server/*` and `#shared/*`; the client uses `@/` for `app/`.
@@ -209,6 +234,10 @@ Certificates are rows, not files: `server/services/achievements/pdf.ts` renders 
 
 `public/videos/` holds one folder per demo course slug, each with a video, `transcript.txt`, and `about.md`. Nuxt serves everything in `public/` directly, so those files are public: use material you are allowed to distribute. The demo seed reads and validates the folders before writing any rows, and refuses to run in production.
 
+The video files are ignored by Git, so a fresh checkout has the transcripts and the course descriptions but no videos. That is a valid demo: a lecture without a video file is seeded without one and the player shows its empty state. `pnpm demo:assets` downloads them.
+
+Everything about the demo lives in `demo/`: the fixtures, the asset loader, the seed, and the setup command. The seed is used from two places — the `pnpm db:seed` command and the container's bootstrap plugin — so the demo behaves the same however it is started. Because the command line resolves no Nuxt aliases, those files import their neighbours by relative path.
+
 ## Conventions to preserve
 
 1. Routes stay thin: guard, validate, call a service, translate errors.
@@ -223,7 +252,9 @@ Certificates are rows, not files: `server/services/achievements/pdf.ts` renders 
 - `pnpm validate` runs the Prettier check, ESLint, and the Nuxt typecheck.
 - A Husky pre-commit hook runs `nano-staged`: ESLint with `--fix` and Prettier for code, Prettier for Markdown, JSON, CSS, and YAML.
 - No test runner is configured yet, so there are no automated tests to run.
+- `.github/workflows/ci.yml` runs the same checks in a `check` job and builds and starts the Compose stack in a `stack` job, which checks the health endpoint and the seeded courses.
+- The image build compiles the application inside the container, so Docker needs at least 4 GB of memory.
 - The AI tutor requires an `AI_GATEWAY_API_KEY`; without one its routes return 503 and the rest of the app still works. It sends full transcripts to the model provider behind the Vercel AI Gateway, so use material you are allowed to share with that provider.
 - Not implemented in this codebase: instructor analytics, moderation beyond course approvals, and the AI study aids listed above. See [`FEATURES.md`](FEATURES.md) for the available and planned lists.
 
-See [`SETUP.md`](SETUP.md) for running the app locally.
+See [`SETUP.md`](SETUP.md) for running the app locally, and [`docs/REVIEW.md`](docs/REVIEW.md) for a guided tour of the codebase.

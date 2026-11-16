@@ -1,9 +1,10 @@
-import { and, desc, eq, sql } from 'drizzle-orm'
+import { and, desc, eq } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { courses, enrollments, lectureProgress, lectures, modules } from '#server/db/schema'
 import type { CourseStatus } from '#shared/validation/courses'
 import type { EnrollmentSummary } from '#shared/types/courses'
 import { ServiceError } from '#server/utils/service-error'
+import { courseProgressCounts, courseProgressPercent } from './progress-counts'
 
 /**
  * Enrollment business logic.
@@ -72,17 +73,24 @@ export async function enrollStudent(courseId: string, userId: string): Promise<E
 export async function listMyEnrollments(userId: string): Promise<EnrollmentSummary[]> {
   const db = useDb()
 
-  const rows = await db.select({ enrollment: enrollments, course: courses }).from(enrollments).innerJoin(courses, eq(enrollments.courseId, courses.id)).where(eq(enrollments.userId, userId)).orderBy(desc(enrollments.enrolledAt))
-
-  return Promise.all(
-    rows.map(async (row) => {
-      const [counts] = await db
-        .select({ total: sql<number>`count(*)::int`, completed: sql<number>`count(${lectureProgress.id}) filter (where ${lectureProgress.completed})::int` })
-        .from(lectures)
-        .innerJoin(modules, eq(modules.id, lectures.moduleId))
-        .leftJoin(lectureProgress, and(eq(lectureProgress.lectureId, lectures.id), eq(lectureProgress.enrollmentId, row.enrollment.id)))
-        .where(eq(modules.courseId, row.course.id))
-      return { ...toEnrollmentSummary(row.enrollment, row.course), progressPercent: counts?.total ? (counts.completed / counts.total) * 100 : 0 }
+  const rows = await db
+    .select({
+      enrollment: enrollments,
+      course: courses,
+      total: courseProgressCounts.total,
+      completed: courseProgressCounts.completed
     })
-  )
+    .from(enrollments)
+    .innerJoin(courses, eq(enrollments.courseId, courses.id))
+    .leftJoin(modules, eq(modules.courseId, courses.id))
+    .leftJoin(lectures, eq(lectures.moduleId, modules.id))
+    .leftJoin(lectureProgress, and(eq(lectureProgress.lectureId, lectures.id), eq(lectureProgress.enrollmentId, enrollments.id)))
+    .where(eq(enrollments.userId, userId))
+    .groupBy(enrollments.id, courses.id)
+    .orderBy(desc(enrollments.enrolledAt))
+
+  return rows.map((row) => ({
+    ...toEnrollmentSummary(row.enrollment, row.course),
+    progressPercent: courseProgressPercent(row.total, row.completed)
+  }))
 }

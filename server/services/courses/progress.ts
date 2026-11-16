@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, eq, inArray } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { certificates, courses, enrollments, lectureProgress, lectures, modules, streaks } from '#server/db/schema'
 import { ServiceError } from '#server/utils/service-error'
@@ -6,6 +6,7 @@ import { awardBadges, issueCourseCertificate } from '#server/services/achievemen
 import { recordDailyStreakActivity } from '#server/services/streaks'
 import type { LearningCourse } from '#shared/types/learning'
 import type { ProgressUpdate } from '#shared/validation/progress'
+import { courseProgressCounts, courseProgressPercent } from './progress-counts'
 
 export async function getLearningCourse(courseId: string, userId: string): Promise<LearningCourse> {
   const db = useDb()
@@ -96,12 +97,12 @@ export async function updateLectureProgress(courseId: string, lectureId: string,
 
     if (input.action === 'complete') {
       const [counts] = await tx
-        .select({ total: sql<number>`count(*)::int`, completed: sql<number>`count(${lectureProgress.id}) filter (where ${lectureProgress.completed})::int` })
+        .select({ total: courseProgressCounts.total, completed: courseProgressCounts.completed })
         .from(lectures)
         .innerJoin(modules, eq(modules.id, lectures.moduleId))
         .leftJoin(lectureProgress, and(eq(lectureProgress.lectureId, lectures.id), eq(lectureProgress.enrollmentId, enrollment.id)))
         .where(eq(modules.courseId, courseId))
-      const percent = counts?.total ? (counts.completed / counts.total) * 100 : 0
+      const percent = courseProgressPercent(counts?.total, counts?.completed)
       await tx
         .update(enrollments)
         .set({ progressPercent: percent.toFixed(2) })

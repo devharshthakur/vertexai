@@ -93,7 +93,7 @@ async function main(): Promise<void> {
       return
     }
 
-    force = values.force
+    force = values.force ?? false
   } catch (error) {
     die(`${(error as Error).message} (try --help)`)
   }

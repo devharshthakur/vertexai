@@ -6,10 +6,12 @@ import type { AiChatMessage } from '#shared/types/ai'
  *
  * The chat body is the AI SDK's UI message list. Its shape is checked again by
  * `validateUIMessages` in the service; the schema here rejects empty and
- * oversized payloads before they reach it.
+ * oversized payloads before they reach it. `DefaultChatTransport` also sends
+ * the request trigger, which distinguishes a new prompt from a regeneration.
  */
 export const aiChatRequestSchema = z.object({
-  messages: z.array(z.custom<AiChatMessage>()).min(1, 'Send at least one message.').max(100)
+  messages: z.array(z.custom<AiChatMessage>()).min(1, 'Send at least one message.').max(100),
+  trigger: z.enum(['submit-message', 'regenerate-message']).default('submit-message')
 })
 
 /**

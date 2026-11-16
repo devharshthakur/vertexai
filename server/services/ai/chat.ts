@@ -9,31 +9,37 @@ import type { AiChatHistory, AiChatMessage, AiCitation } from '#shared/types/ai'
 import type { AiChatRequestValues } from '#shared/validation/ai'
 import type { CourseActor } from '#server/services/courses/access'
 import { requireAiCourse } from './access'
+import { acquireChatThread, ChatThreadConflictError, mergeSubmittedChatMessages, prepareChatRegeneration } from './chat-thread'
 import { indexCourseLectures } from './indexing'
 import { buildTutorInstructions, retrieveCourseLectures, type RetrievedLecture } from './retrieval'
+
+/**
+ * Reserves the next turn for one actor's conversation. The route releases the
+ * returned lease after stream persistence settles.
+ */
+export function acquireAiChatThread(courseId: string, userId: string, abortSignal?: AbortSignal): Promise<() => void> {
+  return acquireChatThread(`${courseId}:${userId}`, abortSignal)
+}
 
 /** Returns the stored conversation for the signed-in actor and course. */
 export async function getAiChatHistory(courseId: string, actor: CourseActor): Promise<AiChatHistory> {
   await requireAiCourse(courseId, actor)
 
-  const rows = await useDb()
-    .select({ message: aiChatMessages.message })
-    .from(aiChatMessages)
-    .where(and(eq(aiChatMessages.userId, actor.id), eq(aiChatMessages.courseId, courseId)))
-    .orderBy(asc(aiChatMessages.createdAt), asc(aiChatMessages.id))
-
-  return { messages: rows.map((row) => row.message as AiChatMessage), available: isAiConfigured() }
+  return { messages: await loadChatMessages(courseId, actor.id), available: isAiConfigured() }
 }
 
 /**
  * Verifies access, indexes the course lazily, and starts a grounded answer.
  *
- * The route owns the HTTP stream and persistence callback; this service returns
- * the AI SDK result plus the citations that belong in the answer metadata.
+ * The route owns the per-thread lock, HTTP stream, and persistence callback.
+ * Under that lock this service reconciles the submitted messages with the latest
+ * stored thread, then returns the AI SDK result plus answer citations.
  */
 export async function startAiChat(courseId: string, input: AiChatRequestValues, actor: CourseActor, abortSignal?: AbortSignal) {
   const course = await requireAiCourse(courseId, actor)
-  const messages = await validateChatMessages(input.messages)
+  const requested = await validateChatMessages(input.messages)
+  const stored = await loadChatMessages(courseId, actor.id)
+  const messages = reconcileChatMessages(stored, requested, input.trigger)
   const question = lastUserMessageText(messages)
 
   if (!question) throw new ServiceError('invalid_input', 'Ask a question about the course.')
@@ -67,6 +73,7 @@ export async function startAiChat(courseId: string, input: AiChatRequestValues, 
 /**
  * Replaces the stored thread with the messages the stream ended with.
  *
+ * The route holds the per-thread lock from reconciliation through this call.
  * A stopped or partial answer is still worth keeping, so the route calls this
  * with whatever messages the stream produced. Rows are inserted in array order
  * with increasing timestamps so the thread reads back in the same order.
@@ -80,6 +87,28 @@ export async function saveAiChatHistory(courseId: string, userId: string, messag
     await tx.delete(aiChatMessages).where(and(eq(aiChatMessages.userId, userId), eq(aiChatMessages.courseId, courseId)))
     if (values.length) await tx.insert(aiChatMessages).values(values)
   })
+}
+
+/** Loads one actor's conversation in display order. */
+async function loadChatMessages(courseId: string, userId: string): Promise<AiChatMessage[]> {
+  const rows = await useDb()
+    .select({ message: aiChatMessages.message })
+    .from(aiChatMessages)
+    .where(and(eq(aiChatMessages.userId, userId), eq(aiChatMessages.courseId, courseId)))
+    .orderBy(asc(aiChatMessages.createdAt), asc(aiChatMessages.id))
+
+  return rows.map((row) => row.message as AiChatMessage)
+}
+
+/** Merges a request against server-owned history or reports a stale conflict. */
+function reconcileChatMessages(stored: AiChatMessage[], requested: AiChatMessage[], trigger: AiChatRequestValues['trigger']): AiChatMessage[] {
+  try {
+    return trigger === 'regenerate-message' ? prepareChatRegeneration(stored, requested) : mergeSubmittedChatMessages(stored, requested)
+  } catch (error) {
+    if (error instanceof ChatThreadConflictError) throw new ServiceError('conflict', error.message)
+
+    throw error
+  }
 }
 
 /** Validates the AI SDK message list and normalises its metadata type. */

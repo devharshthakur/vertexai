@@ -167,6 +167,8 @@ export async function removeCourseMaterial(courseId: string, materialId: string,
     .limit(1)
   if (!row) throw new ServiceError('not_found')
 
-  await deleteCourseMaterialFile(row.storageKey)
   await useDb().delete(courseMaterials).where(eq(courseMaterials.id, row.id))
+  await deleteCourseMaterialFile(row.storageKey).catch((cleanupError) => {
+    console.error('[course-materials] Failed to remove a deleted material file.', cleanupError)
+  })
 }

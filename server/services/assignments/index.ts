@@ -189,7 +189,7 @@ export async function submitAssignment(assignmentId: string, file: UploadedAssig
             sizeBytes: file.data.length,
             submittedAt: new Date()
           })
-          .where(and(eq(assignmentSubmissions.id, existing.id), isNull(assignmentSubmissions.gradedAt)))
+          .where(and(eq(assignmentSubmissions.id, existing.id), eq(assignmentSubmissions.storageKey, existing.storageKey), isNull(assignmentSubmissions.gradedAt)))
           .returning()
       : await db
           .insert(assignmentSubmissions)

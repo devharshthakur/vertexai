@@ -56,7 +56,6 @@
     "prepare": "husky && nuxt prepare"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.118",
     "@ai-sdk/vue": "^4.0.173",
     "@better-auth/drizzle-adapter": "1.7.19",
     "@lucide/vue": "1.70.0",

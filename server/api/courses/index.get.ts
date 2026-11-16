@@ -1,7 +1,6 @@
-import { defineEventHandler } from 'nuxt/server'
+import { defineEventHandler, getValidatedQuery } from 'nuxt/server'
 import { courseQuerySchema } from '#shared/validation/courses'
 import { listPublishedCourses } from '#server/services/courses/queries'
-import { parseQuery } from '#server/utils/validate'
 
 /**
  * The public course catalog.
@@ -10,7 +9,7 @@ import { parseQuery } from '#server/utils/validate'
  * validated with the shared schema before the service runs.
  */
 export default defineEventHandler(async (event) => {
-  const query = parseQuery(event, courseQuerySchema)
+  const query = await getValidatedQuery(event, courseQuerySchema)
 
   return listPublishedCourses(query)
 })

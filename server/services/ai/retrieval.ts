@@ -1,7 +1,7 @@
 import { cosineDistance, eq } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { lectureChunks, lectures } from '#server/db/schema'
-import { embedText } from '#server/utils/ai'
+import { embedTexts } from '#server/utils/ai'
 import type { AiExplanationDepth } from '#shared/validation/ai'
 
 /** How many transcript passages one answer may be grounded in. */
@@ -25,7 +25,7 @@ export interface RetrievedPassage {
  * become the grounded context of the answer.
  */
 export async function retrieveCoursePassages(courseId: string, question: string): Promise<RetrievedPassage[]> {
-  const embedding = await embedText(question)
+  const [embedding] = await embedTexts([question])
   const rows = await useDb()
     .select({
       lectureId: lectureChunks.lectureId,
@@ -36,7 +36,7 @@ export async function retrieveCoursePassages(courseId: string, question: string)
     .from(lectureChunks)
     .innerJoin(lectures, eq(lectures.id, lectureChunks.lectureId))
     .where(eq(lectureChunks.courseId, courseId))
-    .orderBy(cosineDistance(lectureChunks.embedding, embedding))
+    .orderBy(cosineDistance(lectureChunks.embedding, embedding!))
     .limit(retrievedPassages)
 
   return rows.map((row) => ({

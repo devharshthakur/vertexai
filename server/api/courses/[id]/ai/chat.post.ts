@@ -27,14 +27,14 @@ export default defineEventHandler(async (event) => {
         } catch (error) {
           console.error('[ai] failed to save the chat conversation', error)
         } finally {
-          release()
+          await release()
         }
       }
     })
 
     return createUIMessageStreamResponse({ stream, consumeSseStream: consumeStream })
   } catch (error) {
-    release()
+    await release()
     throw error
   }
 })

@@ -17,7 +17,7 @@ import { buildTutorInstructions, retrieveCoursePassages, type RetrievedPassage }
  * Reserves the next turn for one actor's conversation. The route releases the
  * returned lease after stream persistence settles.
  */
-export function acquireAiChatThread(courseId: string, userId: string, abortSignal?: AbortSignal): Promise<() => void> {
+export function acquireAiChatThread(courseId: string, userId: string, abortSignal?: AbortSignal): Promise<() => Promise<void>> {
   return acquireChatThread(`${courseId}:${userId}`, abortSignal)
 }
 
@@ -44,7 +44,7 @@ export async function startAiChat(courseId: string, input: AiChatRequestValues, 
 
   if (!question) throw new ServiceError('invalid_input', 'Ask a question about the course.')
 
-  enforceAiRateLimit(actor.id)
+  await enforceAiRateLimit(actor.id)
 
   let passages: RetrievedPassage[]
 

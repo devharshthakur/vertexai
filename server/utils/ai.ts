@@ -1,5 +1,5 @@
-import { createGateway, embed } from 'ai'
-import { useRuntimeConfig } from 'nitropack/runtime'
+import { createGateway, embedMany } from 'ai'
+import { useRuntimeConfig } from 'nuxt/server'
 import { parseRuntimeConfig } from '~~/config/runtime'
 import { ServiceError } from './service-error'
 
@@ -33,7 +33,8 @@ function aiConfig() {
   const values = parseRuntimeConfig({
     aiGatewayApiKey: config.aiGatewayApiKey || process.env.AI_GATEWAY_API_KEY,
     aiChatModel: config.aiChatModel,
-    aiEmbeddingModel: config.aiEmbeddingModel
+    aiEmbeddingModel: config.aiEmbeddingModel,
+    aiGenerationMaxTranscriptCharacters: config.aiGenerationMaxTranscriptCharacters
   })
 
   return {
@@ -41,7 +42,8 @@ function aiConfig() {
     chatModel: values.aiChatModel,
     embeddingModel: values.aiEmbeddingModel,
     embeddingMaxInputTokens: values.aiEmbeddingMaxInputTokens,
-    embeddingChunkTokens: values.aiEmbeddingChunkTokens
+    embeddingChunkTokens: values.aiEmbeddingChunkTokens,
+    generationMaxTranscriptCharacters: values.aiGenerationMaxTranscriptCharacters
   }
 }
 
@@ -64,6 +66,11 @@ export function getAiEmbeddingBudget() {
     chunkTokens: embeddingChunkTokens,
     maxInputTokens: embeddingMaxInputTokens
   }
+}
+
+/** Character cap for one summary or quiz-draft model request. */
+export function getAiGenerationTranscriptCharacterLimit(): number {
+  return aiConfig().generationMaxTranscriptCharacters
 }
 
 /** Builds the gateway provider and the configured model ids, or raises 503. */
@@ -98,13 +105,20 @@ function getEmbeddingModel() {
 }
 
 /**
- * Embeds one value with the configured embedding model.
+ * Embeds a batch with the configured model and bounded concurrency.
  *
  * The requested width matches the stored vector column, so a model that
  * returns more dimensions still produces values PostgreSQL accepts.
  */
-export async function embedText(value: string): Promise<number[]> {
-  const { embedding } = await embed({ model: getEmbeddingModel(), value, dimensions: aiEmbeddingDimensions })
+export async function embedTexts(values: string[]): Promise<number[][]> {
+  if (!values.length) return []
 
-  return embedding
+  const { embeddings } = await embedMany({
+    model: getEmbeddingModel(),
+    values,
+    dimensions: aiEmbeddingDimensions,
+    maxParallelCalls: 2
+  })
+
+  return embeddings
 }

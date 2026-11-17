@@ -1,35 +1,28 @@
+import { lt, or, sql } from 'drizzle-orm'
+import { useDb } from '#server/db'
+import { aiRateLimits } from '#server/db/schema'
 import { ServiceError } from './service-error'
 
-const WINDOW_MS = 60_000
+const WINDOW_SECONDS = 60
 const MAX_REQUESTS = 20
-const buckets = new Map<string, { count: number; resetAt: number }>()
+const windowCutoff = sql`now() - make_interval(secs => ${WINDOW_SECONDS})`
 
 /**
  * Fixed-window limit for AI generation: 20 requests per user per minute.
- *
- * The counter lives in this process, which is enough for the single-instance
- * local deployment. A multi-instance deployment must move the bucket to shared
- * storage (for example Redis); otherwise each instance allows its own 20.
  */
-export function enforceAiRateLimit(userId: string): void {
-  const now = Date.now()
+export async function enforceAiRateLimit(userId: string): Promise<void> {
+  const [bucket] = await useDb()
+    .insert(aiRateLimits)
+    .values({ userId, windowStartedAt: sql`now()`, count: 1 })
+    .onConflictDoUpdate({
+      target: aiRateLimits.userId,
+      set: {
+        windowStartedAt: sql`case when ${aiRateLimits.windowStartedAt} <= ${windowCutoff} then now() else ${aiRateLimits.windowStartedAt} end`,
+        count: sql`case when ${aiRateLimits.windowStartedAt} <= ${windowCutoff} then 1 else ${aiRateLimits.count} + 1 end`
+      },
+      setWhere: or(sql`${aiRateLimits.windowStartedAt} <= ${windowCutoff}`, lt(aiRateLimits.count, MAX_REQUESTS))
+    })
+    .returning({ count: aiRateLimits.count })
 
-  if (buckets.size > 1000) {
-    for (const [key, value] of buckets) {
-      if (value.resetAt <= now) buckets.delete(key)
-    }
-  }
-
-  const bucket = buckets.get(userId)
-
-  if (!bucket || bucket.resetAt <= now) {
-    buckets.set(userId, { count: 1, resetAt: now + WINDOW_MS })
-    return
-  }
-
-  if (bucket.count >= MAX_REQUESTS) {
-    throw new ServiceError('rate_limited', 'Too many AI requests. Try again shortly.')
-  }
-
-  bucket.count += 1
+  if (!bucket) throw new ServiceError('rate_limited', 'Too many AI requests. Try again shortly.')
 }

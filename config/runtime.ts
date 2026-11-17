@@ -15,6 +15,7 @@ const defaultAiEmbeddingMaxInputTokens = 8_192
  * a lecture of any length is split into inputs the model accepts.
  */
 const defaultAiEmbeddingChunkTokens = 1_500
+const defaultAiGenerationMaxTranscriptCharacters = 64_000
 
 /** Vercel AI Gateway model ids are always `provider/model`. */
 const modelSchema = z
@@ -36,7 +37,8 @@ export const runtimeEnvironmentSchema = z
     AI_CHAT_MODEL: modelSchema.default(defaultAiChatModel),
     AI_EMBEDDING_MODEL: modelSchema.default(defaultAiEmbeddingModel),
     AI_EMBEDDING_MAX_INPUT_TOKENS: tokenBudgetSchema.default(defaultAiEmbeddingMaxInputTokens),
-    AI_EMBEDDING_CHUNK_TOKENS: tokenBudgetSchema.default(defaultAiEmbeddingChunkTokens)
+    AI_EMBEDDING_CHUNK_TOKENS: tokenBudgetSchema.default(defaultAiEmbeddingChunkTokens),
+    AI_GENERATION_MAX_TRANSCRIPT_CHARACTERS: tokenBudgetSchema.default(defaultAiGenerationMaxTranscriptCharacters)
   })
   .refine((values) => values.AI_EMBEDDING_CHUNK_TOKENS < values.AI_EMBEDDING_MAX_INPUT_TOKENS, {
     path: ['AI_EMBEDDING_CHUNK_TOKENS'],
@@ -53,7 +55,8 @@ export const runtimeConfigSchema = z
     aiChatModel: modelSchema.default(defaultAiChatModel),
     aiEmbeddingModel: modelSchema.default(defaultAiEmbeddingModel),
     aiEmbeddingMaxInputTokens: tokenBudgetSchema.default(defaultAiEmbeddingMaxInputTokens),
-    aiEmbeddingChunkTokens: tokenBudgetSchema.default(defaultAiEmbeddingChunkTokens)
+    aiEmbeddingChunkTokens: tokenBudgetSchema.default(defaultAiEmbeddingChunkTokens),
+    aiGenerationMaxTranscriptCharacters: tokenBudgetSchema.default(defaultAiGenerationMaxTranscriptCharacters)
   })
   .refine((values) => values.aiEmbeddingChunkTokens < values.aiEmbeddingMaxInputTokens, {
     path: ['aiEmbeddingChunkTokens'],
@@ -72,7 +75,8 @@ export function createRuntimeConfig(environment: RuntimeEnvironment = process.en
     aiChatModel: values.AI_CHAT_MODEL,
     aiEmbeddingModel: values.AI_EMBEDDING_MODEL,
     aiEmbeddingMaxInputTokens: values.AI_EMBEDDING_MAX_INPUT_TOKENS,
-    aiEmbeddingChunkTokens: values.AI_EMBEDDING_CHUNK_TOKENS
+    aiEmbeddingChunkTokens: values.AI_EMBEDDING_CHUNK_TOKENS,
+    aiGenerationMaxTranscriptCharacters: values.AI_GENERATION_MAX_TRANSCRIPT_CHARACTERS
   }
 }
 

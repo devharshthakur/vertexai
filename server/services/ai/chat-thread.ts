@@ -1,12 +1,5 @@
 import type { AiChatMessage } from '#shared/types/ai'
-
-type ChatThreadEntry = {
-  tail: Promise<void>
-  holders: number
-}
-
-/** In-flight conversations, keyed by user and course. */
-const threads = new Map<string, ChatThreadEntry>()
+import { useAiChatLockPool } from '#server/db'
 
 /** Thrown when a submitted transcript cannot be merged safely with stored history. */
 export class ChatThreadConflictError extends Error {
@@ -17,43 +10,51 @@ export class ChatThreadConflictError extends Error {
 }
 
 /**
- * Waits for the previous request in one user/course thread and reserves the
- * next turn. The returned release function is idempotent and must be called
- * only after the response stream and its persistence callback have settled.
+ * Acquires a PostgreSQL session lock for one user/course thread. The returned
+ * release function is idempotent and must be called after stream persistence.
  */
-export async function acquireChatThread(key: string, abortSignal?: AbortSignal): Promise<() => void> {
-  const entry = threads.get(key) ?? { tail: Promise.resolve(), holders: 0 }
-  const previous = entry.tail
+export async function acquireChatThread(key: string, abortSignal?: AbortSignal): Promise<() => Promise<void>> {
+  const pool = useAiChatLockPool()
 
-  entry.holders += 1
-  threads.set(key, entry)
+  while (!abortSignal?.aborted) {
+    const client = await pool.connect()
 
-  let releaseTurn!: () => void
-  const turn = new Promise<void>((resolve) => {
-    releaseTurn = resolve
-  })
+    if (abortSignal?.aborted) {
+      client.release()
+      break
+    }
 
-  entry.tail = previous.then(() => turn)
+    let locked: boolean
+    try {
+      const result = await client.query<{ locked: boolean }>('select pg_try_advisory_lock(hashtextextended($1, 0)) as locked', [key])
+      locked = result.rows[0]?.locked ?? false
+    } catch (error) {
+      client.release(error instanceof Error ? error : new Error('Failed to acquire the AI chat lock.'))
+      throw error
+    }
 
-  let released = false
-  const release = () => {
-    if (released) return
+    if (locked) {
+      let released = false
 
-    released = true
-    releaseTurn()
-    entry.holders -= 1
+      return async () => {
+        if (released) return
+        released = true
 
-    if (entry.holders === 0 && threads.get(key) === entry) threads.delete(key)
+        try {
+          await client.query('select pg_advisory_unlock(hashtextextended($1, 0))', [key])
+          client.release()
+        } catch (error) {
+          client.release(error instanceof Error ? error : new Error('Failed to release the AI chat lock.'))
+          throw error
+        }
+      }
+    }
+
+    client.release()
+    await waitBeforeRetry(abortSignal)
   }
 
-  try {
-    await waitForTurn(previous, abortSignal)
-  } catch (error) {
-    release()
-    throw error
-  }
-
-  return release
+  throw abortSignal?.reason ?? new DOMException('The chat request was cancelled.', 'AbortError')
 }
 
 /**
@@ -94,16 +95,23 @@ export function prepareChatRegeneration(stored: AiChatMessage[], requested: AiCh
   return stored.slice(0, requested.length)
 }
 
-/** Waits for the preceding turn without leaving an abort listener behind. */
-function waitForTurn(previous: Promise<void>, abortSignal?: AbortSignal): Promise<void> {
-  if (!abortSignal) return previous
+/** Retries a busy thread without leaving an abort listener or timer behind. */
+function waitBeforeRetry(abortSignal?: AbortSignal): Promise<void> {
+  if (!abortSignal) return new Promise((resolve) => setTimeout(resolve, 100))
 
-  return new Promise<void>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup()
+      resolve()
+    }, 100)
     const onAbort = () => {
       cleanup()
       reject(abortSignal.reason ?? new DOMException('The chat request was cancelled.', 'AbortError'))
     }
-    const cleanup = () => abortSignal.removeEventListener('abort', onAbort)
+    const cleanup = () => {
+      clearTimeout(timer)
+      abortSignal.removeEventListener('abort', onAbort)
+    }
 
     if (abortSignal.aborted) {
       onAbort()
@@ -111,15 +119,5 @@ function waitForTurn(previous: Promise<void>, abortSignal?: AbortSignal): Promis
     }
 
     abortSignal.addEventListener('abort', onAbort, { once: true })
-    previous.then(
-      () => {
-        cleanup()
-        resolve()
-      },
-      (error) => {
-        cleanup()
-        reject(error)
-      }
-    )
   })
 }

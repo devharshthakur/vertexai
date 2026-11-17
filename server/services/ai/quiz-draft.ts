@@ -8,6 +8,7 @@ import { enforceAiRateLimit } from '#server/utils/rate-limit'
 import { ServiceError } from '#server/utils/service-error'
 import { assertCanManageCourse, type CourseActor } from '#server/services/courses/access'
 import { requireAiCourse } from './access'
+import { assertAiTranscriptWithinBudget } from './input'
 import type { QuizDraft, QuizDraftQuestion } from '#shared/types/quizzes'
 
 /**
@@ -64,8 +65,9 @@ export async function generateQuizDraft(courseId: string, lectureId: string, act
   if (!lecture.transcript?.trim()) {
     throw new ServiceError('invalid_input', 'This lecture has no transcript to draft a quiz from.')
   }
+  assertAiTranscriptWithinBudget(lecture.transcript)
 
-  enforceAiRateLimit(actor.id)
+  await enforceAiRateLimit(actor.id)
 
   const { output } = await generateText({
     model: getChatModel(),

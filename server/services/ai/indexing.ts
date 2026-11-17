@@ -1,7 +1,7 @@
 import { and, eq, inArray, isNotNull } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { lectureChunks, lectures, modules } from '#server/db/schema'
-import { embedText, getAiEmbeddingBudget } from '#server/utils/ai'
+import { embedTexts, getAiEmbeddingBudget } from '#server/utils/ai'
 import { chunkTranscript } from './chunking'
 
 /** Embeddings that are currently being generated, keyed by course. */
@@ -105,13 +105,8 @@ async function indexLecture(courseId: string, lectureId: string, transcript: str
 
   if (!chunks.length) return
 
-  const values: { lectureId: string; courseId: string; position: number; content: string; embedding: number[] }[] = []
-
-  for (const chunk of chunks) {
-    const embedding = await embedText(chunk.content)
-
-    values.push({ lectureId, courseId, position: chunk.position, content: chunk.content, embedding })
-  }
+  const embeddings = await embedTexts(chunks.map((chunk) => chunk.content))
+  const values = chunks.map((chunk, index) => ({ lectureId, courseId, position: chunk.position, content: chunk.content, embedding: embeddings[index]! }))
 
   const db = useDb()
   const [current] = await db.select({ transcript: lectures.transcript }).from(lectures).where(eq(lectures.id, lectureId)).limit(1)

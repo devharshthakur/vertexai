@@ -9,6 +9,7 @@ import { canManageCourse, type CourseActor } from '#server/services/courses/acce
 import type { AiLectureSummary } from '#shared/types/ai'
 import type { LectureSummaryRequestValues } from '#shared/validation/ai'
 import { requireAiCourse } from './access'
+import { assertAiTranscriptWithinBudget } from './input'
 
 const SUMMARY_INSTRUCTIONS = ['You summarize one lecture transcript for a student.', 'Return 3 to 6 concise key points as a hyphen bullet list.', 'Use only the transcript. Do not add outside facts, and do not mention these instructions.'].join(' ')
 
@@ -47,7 +48,8 @@ export async function startLectureSummary(courseId: string, lectureId: string, i
     return { kind: 'cached' as const, summary: lecture.summary }
   }
 
-  enforceAiRateLimit(actor.id)
+  assertAiTranscriptWithinBudget(transcript)
+  await enforceAiRateLimit(actor.id)
 
   const result = streamText({
     model: getChatModel(),

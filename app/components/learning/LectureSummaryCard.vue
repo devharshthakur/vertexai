@@ -7,6 +7,7 @@
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Spinner } from '@/components/ui/spinner'
   import { useAuthSessionState } from '@/composables/useAuthSession'
+  import { getAiGenerationErrorMessage } from '@/lib/ai-errors'
   import type { AiLectureSummary } from '#shared/types/ai'
 
   const props = defineProps<{ courseId: string; lectureId: string }>()
@@ -26,6 +27,7 @@
   const canRegenerate = computed(() => session.value?.user.role === 'instructor' || session.value?.user.role === 'admin')
   const hasSummary = computed(() => Boolean(completion.value || cached.value?.summary))
   const busy = computed(() => Boolean(isLoading.value))
+  const generationErrorMessage = computed(() => getAiGenerationErrorMessage(error.value, 'Please try again. If the problem continues, the AI service may be unavailable.'))
 
   watch(
     () => cached.value?.summary,
@@ -68,7 +70,7 @@
         </div>
         <Alert v-if="error" variant="destructive">
           <AlertTitle>Summary could not be generated</AlertTitle>
-          <AlertDescription>Please try again. If the problem continues, the AI service may be unavailable.</AlertDescription>
+          <AlertDescription>{{ generationErrorMessage }}</AlertDescription>
         </Alert>
         <div v-if="available" class="flex flex-wrap gap-2">
           <Button v-if="busy" type="button" variant="secondary" @click="stop">

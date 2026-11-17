@@ -6,6 +6,7 @@
   import { toast } from 'vue-sonner'
   import QuizQuestionsPreview from '@/components/instructor/QuizQuestionsPreview.vue'
   import { useInstructorDraft } from '@/composables/useInstructorDrafts'
+  import { getAiGenerationErrorMessage } from '@/lib/ai-errors'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -108,7 +109,8 @@
 
   /** Subscribe to the questions so the running totals follow edits and add/remove. */
   const questionCount = form.useSelector((state) => state.values.questions.length)
-  const totalPoints = form.useSelector((state) => state.values.questions.reduce((total, question) => total + (Number(question.points) || 0), 0))
+  const totalPoints = form.useSelector((state) => state.values.questions.reduce((total, question) => total + (Number.isFinite(question.points) ? question.points : 0), 0))
+  const hasSubmittedForm = form.useSelector((state) => state.submissionAttempts > 0)
 
   const { mutateAsync: createQuiz, isPending: isCreating } = useMutation({
     mutationFn: (payload: CreateQuizValues) =>
@@ -158,8 +160,8 @@
       })
       toast.success('Quiz draft ready. Review the questions before creating the quiz.')
     },
-    onError: () => {
-      toast.error('We could not draft a quiz from this lecture. Check the transcript and the AI configuration, then try again.')
+    onError: (error) => {
+      toast.error(getAiGenerationErrorMessage(error, 'We could not draft a quiz from this lecture. Check the transcript and the AI configuration, then try again.'))
     }
   })
 
@@ -299,11 +301,22 @@
 
                 <form.Field name="passingScore">
                   <template #default="{ field }">
-                    <Field :data-invalid="!field.state.meta.isValid">
+                    <Field :data-invalid="(field.state.meta.isBlurred || hasSubmittedForm) && !field.state.meta.isValid">
                       <FieldLabel for="quiz-passing-score">Passing score</FieldLabel>
-                      <Input id="quiz-passing-score" :model-value="field.state.value" :aria-invalid="!field.state.meta.isValid" type="number" min="1" max="100" step="1" required @update:model-value="(value) => field.handleChange(Number(value) || 0)" @blur="field.handleBlur" />
+                      <Input
+                        id="quiz-passing-score"
+                        :model-value="Number.isFinite(field.state.value) ? field.state.value : ''"
+                        :aria-invalid="(field.state.meta.isBlurred || hasSubmittedForm) && !field.state.meta.isValid"
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        required
+                        @update:model-value="(value) => field.handleChange(value === '' ? Number.NaN : Number(value))"
+                        @blur="field.handleBlur"
+                      />
                       <FieldDescription>Percentage of the total points a student needs to pass.</FieldDescription>
-                      <FieldError v-if="!field.state.meta.isValid" :errors="field.state.meta.errors" />
+                      <FieldError v-if="(field.state.meta.isBlurred || hasSubmittedForm) && !field.state.meta.isValid" :errors="field.state.meta.errors" />
                     </Field>
                   </template>
                 </form.Field>
@@ -369,21 +382,21 @@
 
                           <form.Field :name="questionFieldName(index, 'points')">
                             <template #default="{ field: questionPointsField }">
-                              <Field :data-invalid="!questionPointsField.state.meta.isValid">
+                              <Field :data-invalid="(questionPointsField.state.meta.isBlurred || hasSubmittedForm) && !questionPointsField.state.meta.isValid">
                                 <FieldLabel :for="`question-${index}-points`">Points</FieldLabel>
                                 <Input
                                   :id="`question-${index}-points`"
-                                  :model-value="questionPointsField.state.value"
-                                  :aria-invalid="!questionPointsField.state.meta.isValid"
+                                  :model-value="Number.isFinite(questionPointsField.state.value) ? questionPointsField.state.value : ''"
+                                  :aria-invalid="(questionPointsField.state.meta.isBlurred || hasSubmittedForm) && !questionPointsField.state.meta.isValid"
                                   type="number"
                                   min="0.01"
                                   max="100"
                                   step="0.01"
                                   required
-                                  @update:model-value="(value) => questionPointsField.handleChange(Number(value) || 0)"
+                                  @update:model-value="(value) => questionPointsField.handleChange(value === '' ? Number.NaN : Number(value))"
                                   @blur="questionPointsField.handleBlur"
                                 />
-                                <FieldError v-if="!questionPointsField.state.meta.isValid" :errors="questionPointsField.state.meta.errors" />
+                                <FieldError v-if="(questionPointsField.state.meta.isBlurred || hasSubmittedForm) && !questionPointsField.state.meta.isValid" :errors="questionPointsField.state.meta.errors" />
                               </Field>
                             </template>
                           </form.Field>

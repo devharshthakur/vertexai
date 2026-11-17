@@ -69,7 +69,7 @@ export async function startAiChat(courseId: string, input: AiChatRequestValues, 
 
   const result = streamText({
     model: getChatModel(),
-    instructions: buildTutorInstructions(course.title, passages),
+    instructions: buildTutorInstructions(course.title, passages, input.depth),
     messages: await convertToModelMessages(messages),
     abortSignal
   })

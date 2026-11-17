@@ -6,6 +6,10 @@ export const MAX_AI_CHAT_REQUEST_BYTES = 256 * 1024
 export const MAX_AI_CHAT_MESSAGE_CHARACTERS = 16_000
 export const MAX_AI_CHAT_CONVERSATION_CHARACTERS = 64_000
 
+/** How much background a tutor answer assumes the student has. */
+export const AI_EXPLANATION_DEPTHS = ['beginner', 'intermediate', 'advanced'] as const
+export type AiExplanationDepth = (typeof AI_EXPLANATION_DEPTHS)[number]
+
 /**
  * AI tutor request schemas.
  *
@@ -17,7 +21,8 @@ export const MAX_AI_CHAT_CONVERSATION_CHARACTERS = 64_000
 export const aiChatRequestSchema = z
   .object({
     messages: z.array(z.custom<AiChatMessage>()).min(1, 'Send at least one message.').max(100),
-    trigger: z.enum(['submit-message', 'regenerate-message']).default('submit-message')
+    trigger: z.enum(['submit-message', 'regenerate-message']).default('submit-message'),
+    depth: z.enum(AI_EXPLANATION_DEPTHS, { error: 'Choose a valid explanation depth.' }).default('intermediate')
   })
   .superRefine(({ messages }, context) => {
     let totalCharacters = 0

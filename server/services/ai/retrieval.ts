@@ -2,6 +2,7 @@ import { cosineDistance, eq } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { lectureChunks, lectures } from '#server/db/schema'
 import { embedText } from '#server/utils/ai'
+import type { AiExplanationDepth } from '#shared/validation/ai'
 
 /** How many transcript passages one answer may be grounded in. */
 const retrievedPassages = 6
@@ -47,8 +48,15 @@ export async function retrieveCoursePassages(courseId: string, question: string)
   }))
 }
 
+/** How the answer should be pitched, per depth the student picked. */
+const DEPTH_INSTRUCTIONS: Record<AiExplanationDepth, string> = {
+  beginner: 'Explain at beginner depth: define each term you introduce, build the idea in small steps, and use a simple, concrete example. Avoid unexplained jargon.',
+  intermediate: 'Explain at intermediate depth: assume the basics, be precise, connect the idea to the rest of the course, and use a short example where it helps.',
+  advanced: "Explain at advanced depth: use the field's terminology, be concise, and focus on nuance, trade-offs, and edge cases rather than the basics."
+}
+
 /** Builds the strict grounding instructions shared by chat answers. */
-export function buildTutorInstructions(courseTitle: string, passages: RetrievedPassage[]): string {
+export function buildTutorInstructions(courseTitle: string, passages: RetrievedPassage[], depth: AiExplanationDepth): string {
   const context = passages.length ? passages.map((passage, index) => `[${index + 1}] Lecture: ${passage.lectureTitle} (passage ${passage.position + 1})\n${passage.content}`).join('\n\n') : 'No lecture transcript is available for this course.'
 
   return [
@@ -57,6 +65,7 @@ export function buildTutorInstructions(courseTitle: string, passages: RetrievedP
     'If the context does not contain the answer, say that the course material does not cover it, and do not guess.',
     'Do not invent lecture titles, facts, or quotations. Refer to the lectures you used by title.',
     'Keep answers clear and concise. Use short paragraphs and simple hyphen bullets when a list helps.',
+    DEPTH_INSTRUCTIONS[depth],
     '',
     'Course context:',
     context

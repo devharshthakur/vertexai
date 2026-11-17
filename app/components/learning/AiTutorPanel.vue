@@ -11,14 +11,19 @@
   import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
   import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
   import { ScrollArea } from '@/components/ui/scroll-area'
+  import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
   import { Textarea } from '@/components/ui/textarea'
   import type { AiChatHistory, AiChatMessage, AiCitation } from '#shared/types/ai'
+  import { AI_EXPLANATION_DEPTHS, type AiExplanationDepth } from '#shared/validation/ai'
 
   const props = defineProps<{ courseId: string }>()
 
   const { data: history, error: historyError } = await useFetch<AiChatHistory>(`/api/courses/${props.courseId}/ai/chat`, {
     default: () => ({ messages: [], available: true })
   })
+
+  const depth = ref<AiExplanationDepth>('intermediate')
+  const depthOptions = AI_EXPLANATION_DEPTHS.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))
 
   const { messages, status, error, sendMessage, stop, regenerate, clearError } = useChat<AiChatMessage>({
     transport: new DefaultChatTransport({ api: `/api/courses/${props.courseId}/ai/chat` }),
@@ -56,7 +61,11 @@
     if (!text || !canSend.value) return
 
     input.value = ''
-    sendMessage({ text })
+    sendMessage({ text }, { body: { depth: depth.value } })
+  }
+
+  function regenerateAnswer() {
+    return regenerate({ body: { depth: depth.value } })
   }
 
   /** Enter submits; Shift+Enter adds a line. IME confirmation never submits. */
@@ -122,6 +131,22 @@
         </Alert>
 
         <form class="flex flex-col gap-3" @submit.prevent="submit">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div class="flex flex-col gap-1">
+              <label for="ai-depth" class="text-sm font-medium">Explanation depth</label>
+              <p class="text-xs text-muted-foreground">Beginner defines the terms; advanced assumes the basics.</p>
+            </div>
+            <Select v-model="depth" :disabled="!available || busy">
+              <SelectTrigger id="ai-depth" class="w-full sm:w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem v-for="option in depthOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
           <FieldGroup>
             <Field>
               <FieldLabel for="ai-tutor-input">Your question</FieldLabel>
@@ -138,7 +163,7 @@
               <SendIcon data-icon="inline-start" />
               Send
             </Button>
-            <Button type="button" variant="outline" :disabled="busy || !available || !messages.length" @click="regenerate()">
+            <Button type="button" variant="outline" :disabled="busy || !available || !messages.length" @click="regenerateAnswer()">
               <RotateCcwIcon data-icon="inline-start" />
               Regenerate
             </Button>

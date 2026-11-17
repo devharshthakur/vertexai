@@ -91,7 +91,7 @@ With the stack running and `pnpm demo:assets` done:
 2. Open **Learning Tailwind CSS** and start a lecture. The player, the notes, and the bookmarks all work.
 3. Ask the AI tutor a question about the course. The answer cites the lecture it used — that citation is the point of the feature.
 4. Sign in as `instructor@example.com` and open the authoring view for the same course.
-5. Sign in as `admin@example.com` and open the approvals queue.
+5. Sign in as `admin@example.com`, open the approvals queue, then **User accounts**. Change a role, suspend and restore the account, and open — but do not confirm — the delete dialog.
 6. Check the wiring: `curl http://localhost:3000/api/health` returns `{"status":"ok","database":"up"}`.
 
 ## Known gaps
@@ -101,7 +101,6 @@ These are not implemented; the product scope is in `docs/PRD/`:
 - Instructor analytics (where learners struggle).
 - The AI study aids: flashcards, quiz drafts, study plans, mastery scoring.
 - Adaptive explanations at different levels.
-- Admin moderation beyond course approvals.
 
 `FEATURES.md` keeps the full split between what works and what is planned.
 

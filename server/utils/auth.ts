@@ -1,6 +1,7 @@
 import { drizzleAdapter } from '@better-auth/drizzle-adapter'
 import { betterAuth } from 'better-auth'
 import { admin } from 'better-auth/plugins/admin'
+import { adminAc, userAc } from 'better-auth/plugins/admin/access'
 import { useDb } from '../db'
 import * as authSchema from '../db/schema/auth'
 import { githubCredentials } from './auth-providers'
@@ -30,7 +31,17 @@ export const auth = betterAuth({
     admin({
       // New accounts start as students; admins promote them later.
       defaultRole: 'student',
-      adminRoles: ['admin']
+      adminRoles: ['admin'],
+      // The admin plugin ships `user` and `admin` roles. The application has
+      // three, so they are declared here — otherwise the plugin's own
+      // `setRole` endpoint would only accept its built-in names. Only `admin`
+      // carries administrative permissions; the other two are ordinary
+      // accounts, exactly like the built-in `user` role.
+      roles: {
+        student: userAc,
+        instructor: userAc,
+        admin: adminAc
+      }
     })
   ]
 })

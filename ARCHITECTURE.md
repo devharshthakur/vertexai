@@ -140,11 +140,11 @@ Routes are grouped by domain, and every route delegates to a service.
 | Assignments  | `/api/courses/[id]/assignments`, `/api/assignments/[id]/submit`, `/api/assignments/[id]/submissions`, `/api/submissions/[id]/grade` and `/file` | Owner/admin create and grade; enrolled students submit and read their own results            |
 | Account      | `GET /api/me`, `/api/me/streak`, `/api/me/badges`                                                                                               | Signed in                                                                                    |
 | Achievements | `GET /api/certificates/[id]/file`                                                                                                               | Signed in; the certificate's recipient or an admin                                           |
-| Admin        | `GET /api/admin/courses/pending`, `POST /api/admin/courses/[id]/decision`                                                                       | Admin                                                                                        |
+| Admin        | `GET /api/admin/courses/pending`, `POST /api/admin/courses/[id]/decision`, `/api/admin/users` (list, role, suspend, delete)                     | Admin                                                                                        |
 | Auth         | `/api/auth/**`, `GET /api/auth-providers`                                                                                                       | Better Auth; the provider list is public                                                     |
 | Health       | `GET /api/health`                                                                                                                               | Public                                                                                       |
 
-Course logic is split by job under `server/services/courses/`: `queries` for reads, `commands` for writes and lifecycle transitions, `presenters` for turning database rows into shared response types, and `access` for ownership and visibility rules. The other services follow the same shape: `courses/enrollments`, `courses/progress`, `courses/learning-tools`, `courses/materials`, `quizzes`, and `achievements` (certificates and badges; `achievements/pdf` renders them). `server/services/ai/` holds the tutor: access checks, transcript chunking and lazy indexing, retrieval, chat, and summaries.
+Course logic is split by job under `server/services/courses/`: `queries` for reads, `commands` for writes and lifecycle transitions, `presenters` for turning database rows into shared response types, and `access` for ownership and visibility rules. The other services follow the same shape: `courses/enrollments`, `courses/progress`, `courses/learning-tools`, `courses/materials`, `quizzes`, `achievements` (certificates and badges; `achievements/pdf` renders them), and `admin/users` (the account directory and the Better Auth admin calls). `server/services/ai/` holds the tutor: access checks, transcript chunking and lazy indexing, retrieval, chat, and summaries.
 
 ## Data model
 
@@ -197,7 +197,8 @@ Design rules worth knowing:
 `server/utils/auth.ts` creates the Better Auth instance on the Drizzle adapter:
 
 - Email and password sign-in is enabled, with a minimum password length of 8 and automatic sign-in after sign-up.
-- The admin plugin gives new accounts the `student` role and treats `admin` as the administrative role.
+- The admin plugin gives new accounts the `student` role and treats `admin` as the administrative role. The application's three roles are declared to the plugin (`student`, `instructor`, `admin`); only `admin` carries administrative permissions, so the plugin's own endpoints accept the application's role names.
+- An administrator can change roles, suspend and restore accounts, and delete accounts from the admin workspace. Suspending revokes the account's sessions and blocks sign-in; an account that still owns courses or has reviewed a course submission cannot be deleted.
 - GitHub is registered only when both credentials are present, so a checkout without OAuth still boots.
 - `server/api/auth/[...all].ts` mounts Better Auth on `/api/auth/**`; `app/lib/auth-client.ts` points the client at the same origin.
 

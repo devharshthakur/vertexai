@@ -5,6 +5,7 @@
   import ModuleManager from '@/components/instructor/ModuleManager.vue'
   import QuizManager from '@/components/instructor/QuizManager.vue'
   import AssignmentManager from '@/components/instructor/AssignmentManager.vue'
+  import { ChartColumnIcon } from '@lucide/vue'
   import { provideInstructorDrafts } from '@/composables/useInstructorDrafts'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
@@ -105,6 +106,12 @@
         </Badge>
         <Button variant="outline" as-child>
           <NuxtLink :to="`/courses/${course!.id}`">Preview</NuxtLink>
+        </Button>
+        <Button variant="outline" as-child>
+          <NuxtLink :to="`/instructor/courses/${course!.id}/analytics`">
+            <ChartColumnIcon data-icon="inline-start" />
+            Analytics
+          </NuxtLink>
         </Button>
         <Button v-if="course!.status === 'draft' || course!.status === 'rejected'" :disabled="isSubmitting" @click="submitCourse()">
           <Spinner v-if="isSubmitting" data-icon="inline-start" />

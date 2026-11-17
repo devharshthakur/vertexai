@@ -52,6 +52,42 @@ export async function getLearningCourse(courseId: string, userId: string): Promi
   }
 }
 
+/** Playback reports arrive about every 10 seconds; allow for scheduling jitter. */
+const POSITION_REPORT_TOLERANCE_SECONDS = 2
+
+/**
+ * A long pause is not watch time.
+ *
+ * The client saves on pause and resumes reporting afterwards, so the gap
+ * between two reports can be much longer than the playback it represents. The
+ * elapsed time is capped before it is used as an allowance.
+ */
+const MAX_REPORT_GAP_SECONDS = 30
+
+interface PreviousPosition {
+  positionSeconds: number
+  lastPositionAt: Date
+}
+
+/**
+ * Estimates how many of the reported seconds were actually watched.
+ *
+ * The player reports its current position, not a duration. The forward
+ * movement is the upper bound; the wall-clock time since the previous report
+ * is the lower one. Capping by elapsed time keeps a seek from being counted as
+ * watching, while a normal report still adds its full interval.
+ */
+function estimateWatchedSeconds(previous: PreviousPosition | undefined, positionSeconds: number, now: Date): number {
+  if (!previous) return 0
+
+  const advance = positionSeconds - previous.positionSeconds
+  if (advance <= 0) return 0
+
+  const elapsed = Math.min(MAX_REPORT_GAP_SECONDS, Math.max(0, Math.floor((now.getTime() - previous.lastPositionAt.getTime()) / 1000)))
+
+  return Math.min(advance, elapsed + POSITION_REPORT_TOLERANCE_SECONDS)
+}
+
 export async function updateLectureProgress(courseId: string, lectureId: string, userId: string, input: ProgressUpdate): Promise<void> {
   const db = useDb()
   await db.transaction(async (tx) => {
@@ -70,10 +106,31 @@ export async function updateLectureProgress(courseId: string, lectureId: string,
       .limit(1)
     if (!lecture) throw new ServiceError('not_found')
 
+    const now = new Date()
+    const [previous] =
+      input.action === 'position' ?
+        await tx
+          .select({
+            positionSeconds: lectureProgress.positionSeconds,
+            watchedSeconds: lectureProgress.watchedSeconds,
+            lastPositionAt: lectureProgress.lastPositionAt
+          })
+          .from(lectureProgress)
+          .where(and(eq(lectureProgress.enrollmentId, enrollment.id), eq(lectureProgress.lectureId, lectureId)))
+          .for('update')
+          .limit(1)
+      : []
+
     const update =
-      input.action === 'view' ? { viewedAt: new Date() }
-      : input.action === 'position' ? { positionSeconds: input.positionSeconds }
+      input.action === 'view' ? { viewedAt: now, lastPositionAt: now }
+      : input.action === 'position' ?
+        {
+          positionSeconds: input.positionSeconds,
+          watchedSeconds: (previous?.watchedSeconds ?? 0) + estimateWatchedSeconds(previous, input.positionSeconds, now),
+          lastPositionAt: now
+        }
       : { completed: true }
+
     await tx
       .insert(lectureProgress)
       .values({ enrollmentId: enrollment.id, lectureId, ...update })

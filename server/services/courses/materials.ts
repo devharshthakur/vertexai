@@ -5,6 +5,7 @@ import type { CourseMaterialSummary } from '#shared/types/course-materials'
 import type { CourseMaterialUploadFields } from '#shared/validation/course-materials'
 import { MAX_COURSE_MATERIAL_BYTES } from '#shared/validation/course-materials'
 import { ServiceError } from '#server/utils/service-error'
+import { sanitizeUploadFilename } from '#server/services/uploads/filename'
 import { assertCanManageCourse, canManageCourse, type CourseActor } from './access'
 import { deleteCourseMaterialFile, getCourseMaterialPath, readCourseMaterialHeader } from './material-storage'
 
@@ -37,16 +38,7 @@ function toSummary(row: typeof courseMaterials.$inferSelect): CourseMaterialSumm
 }
 
 async function validateUploadedMaterial(file: UploadedMaterial) {
-  const filename = file.filename
-    .split(/[\\/]/)
-    .at(-1)
-    ?.split('')
-    .filter((character) => {
-      const code = character.charCodeAt(0)
-      return code >= 32 && code !== 127
-    })
-    .join('')
-    .trim()
+  const filename = sanitizeUploadFilename(file.filename)
   const extension = filename?.slice(filename.lastIndexOf('.')).toLowerCase()
   const type = extension ? MATERIAL_TYPES[extension] : undefined
 

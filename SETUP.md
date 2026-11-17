@@ -171,11 +171,12 @@ pnpm setup
 | `AI_CHAT_MODEL`                             | Optional chat model override                                 | `openai/gpt-6-luna`                        |
 | `AI_EMBEDDING_MODEL`                        | Optional transcript embedding model override                 | `openai/text-embedding-3-large`            |
 | `AI_EMBEDDING_MAX_INPUT_TOKENS`             | Input window of the embedding model, in tokens               | `8192`                                     |
+| `AI_GENERATION_MAX_TRANSCRIPT_CHARACTERS`   | Maximum transcript size sent to summary and quiz generation  | `64000`                                    |
 | `AI_EMBEDDING_CHUNK_TOKENS`                 | Size of one indexed transcript chunk, in tokens              | `1500`                                     |
 
 Without `AI_GATEWAY_API_KEY`, the tutor and summary cards show an unavailable state and every other feature keeps working. Restart the dev server after changing it, because the value is read when the Nuxt config loads. Model overrides use the gateway `provider/model` format, for example `anthropic/claude-sonnet-5.5`. The AI features send lecture transcripts to the model provider behind the gateway, so use material you are allowed to share with that provider. The AI migration enables the `vector` extension and needs the `pgvector` image already used by Compose.
 
-A transcript can be longer than the embedding model accepts in one request, so the tutor splits it into chunks of `AI_EMBEDDING_CHUNK_TOKENS` tokens and embeds them one by one. Every chunk must fit the model's input window, so `AI_EMBEDDING_CHUNK_TOKENS` has to stay below `AI_EMBEDDING_MAX_INPUT_TOKENS`; the app refuses to start otherwise. Lower the chunk size for a finer-grained index, raise it for fewer embedding requests per lecture.
+A transcript can be longer than the embedding model accepts in one request, so the tutor splits it into chunks of `AI_EMBEDDING_CHUNK_TOKENS` tokens and embeds them in bounded batches. Every chunk must fit the model's input window, so `AI_EMBEDDING_CHUNK_TOKENS` has to stay below `AI_EMBEDDING_MAX_INPUT_TOKENS`; the app refuses to start otherwise. Lower the chunk size for a finer-grained index, raise it for fewer embedding requests per lecture. Summary and quiz-draft requests reject transcripts above `AI_GENERATION_MAX_TRANSCRIPT_CHARACTERS`; this character cap bounds request size, but is not an exact model-token budget.
 
 Lecture vectors are stored with 1536 dimensions, so every embedding request asks the model for that width. Vectors from different embedding models are not comparable: if you change `AI_EMBEDDING_MODEL`, clear the stored vectors with `DELETE FROM lecture_chunks;` so the tutor re-indexes the course with the new model.
 
@@ -305,12 +306,12 @@ When the probe fails, the endpoint returns `503` with `{ "status": "error", "dat
 Create the first admin from the command line. The database must be running and migrated:
 
 ```bash
-pnpm dlx auth@1.7.18 create-admin --config server/utils/auth.ts \
+pnpm dlx auth@1.7.19 create-admin --config server/utils/auth.ts \
   --email you@example.com --name "Your Name" --role admin
 ```
 
 > [!NOTE]
-> Keep the `auth` CLI version in these commands aligned with the installed `better-auth` version (`1.7.18` in `package.json`).
+> Keep the `auth` CLI version in these commands aligned with the installed `better-auth` version (`1.7.19` in `package.json`).
 
 ### Database commands
 

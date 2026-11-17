@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { courses, enrollments, modules, quizAnswers, quizAttempts, quizOptions, quizQuestions, quizzes } from '#server/db/schema'
 import type { QuizAttemptDetail, QuizDetailForStudent, QuizGradedAnswerItem, QuizInstructorOption, QuizInstructorQuestion, QuizStudentQuestion, QuizStudentSummary } from '#shared/types/quizzes'
@@ -101,12 +101,13 @@ interface QuizSummaryInput {
   questions: QuestionRow[]
   options: OptionRow[]
   attempts: AttemptRow[]
+  instructorAttempts: AttemptRow[]
   actorId: string
   includeInstructor: boolean
 }
 
 /** Projects a quiz row into the shared summary without ever exposing answer keys. */
-function toQuizSummary({ quiz, courseId, moduleTitle, questions, options, attempts, actorId, includeInstructor }: QuizSummaryInput): QuizStudentSummary {
+function toQuizSummary({ quiz, courseId, moduleTitle, questions, options, attempts, instructorAttempts, actorId, includeInstructor }: QuizSummaryInput): QuizStudentSummary {
   const openAttempt = attempts.find((attempt) => attempt.userId === actorId && attempt.submittedAt === null)
   const submitted = attempts.filter((attempt) => attempt.userId === actorId && attempt.submittedAt !== null).sort((left, right) => (right.submittedAt?.getTime() ?? 0) - (left.submittedAt?.getTime() ?? 0))
   const latest = submitted[0]
@@ -135,8 +136,8 @@ function toQuizSummary({ quiz, courseId, moduleTitle, questions, options, attemp
     instructor:
       includeInstructor ?
         {
-          attemptCount: attempts.filter((attempt) => attempt.submittedAt !== null).length,
-          passCount: attempts.filter((attempt) => attempt.submittedAt !== null && attempt.passed === true).length,
+          attemptCount: instructorAttempts.filter((attempt) => attempt.submittedAt !== null).length,
+          passCount: instructorAttempts.filter((attempt) => attempt.submittedAt !== null && attempt.passed === true).length,
           questions: questions.map((question) => toInstructorQuestion(question, optionsByQuestion.get(question.id) ?? []))
         }
       : null
@@ -209,10 +210,27 @@ export async function listCourseQuizzes(courseId: string, actor: CourseActor): P
   if (quizIds.length === 0) return []
 
   const { questions, options } = await loadQuizStructure(quizIds)
-  const attempts = await useDb()
+  const ownAttempts = await useDb()
     .select()
     .from(quizAttempts)
-    .where(and(inArray(quizAttempts.quizId, quizIds), manages ? undefined : eq(quizAttempts.userId, actor.id)))
+    .where(and(inArray(quizAttempts.quizId, quizIds), eq(quizAttempts.userId, actor.id)))
+  const instructorAttempts =
+    manages ?
+      await useDb()
+        .select()
+        .from(quizAttempts)
+        .where(
+          and(
+            inArray(quizAttempts.quizId, quizIds),
+            sql`exists (
+              select 1
+              from ${enrollments}
+              where ${enrollments.userId} = ${quizAttempts.userId}
+                and ${enrollments.courseId} = ${courseId}
+            )`
+          )
+        )
+    : ownAttempts
 
   const questionsByQuiz = new Map<string, QuestionRow[]>()
   for (const question of questions) {
@@ -223,7 +241,8 @@ export async function listCourseQuizzes(courseId: string, actor: CourseActor): P
       questionsByQuiz.set(question.quizId, [question])
     }
   }
-  const attemptsByQuiz = groupAttemptsByQuiz(attempts)
+  const attemptsByQuiz = groupAttemptsByQuiz(ownAttempts)
+  const instructorAttemptsByQuiz = groupAttemptsByQuiz(instructorAttempts)
 
   return rows.map(({ quiz, moduleTitle }) =>
     toQuizSummary({
@@ -233,6 +252,7 @@ export async function listCourseQuizzes(courseId: string, actor: CourseActor): P
       questions: questionsByQuiz.get(quiz.id) ?? [],
       options,
       attempts: attemptsByQuiz.get(quiz.id) ?? [],
+      instructorAttempts: instructorAttemptsByQuiz.get(quiz.id) ?? [],
       actorId: actor.id,
       includeInstructor: manages
     })
@@ -290,6 +310,7 @@ export async function createCourseQuiz(courseId: string, values: CreateQuizValue
     questions: created.questions,
     options: created.options,
     attempts: [],
+    instructorAttempts: [],
     actorId: actor.id,
     includeInstructor: true
   })
@@ -320,6 +341,7 @@ export async function getQuizForStudent(quizId: string, actor: CourseActor): Pro
       questions,
       options,
       attempts,
+      instructorAttempts: [],
       actorId: actor.id,
       includeInstructor: false
     }),

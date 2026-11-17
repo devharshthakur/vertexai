@@ -20,14 +20,23 @@ export async function getCourseAnalytics(courseId: string, actor: CourseActor): 
   if (!course) throw new ServiceError('not_found')
   assertCanManageCourse(course.instructorId, actor)
 
-  const [enrollmentStats] = await db
+  const [courseLectureStats] = await db.select({ total: count() }).from(lectures).innerJoin(modules, eq(modules.id, lectures.moduleId)).where(eq(modules.courseId, courseId))
+
+  const enrollmentProgressRows = await db
     .select({
-      total: count(),
-      averageProgress: avg(enrollments.progressPercent),
-      completed: sql<number>`count(*) filter (where ${enrollments.progressPercent} >= 100)`.mapWith(Number)
+      completedLectures: sql<number>`count(distinct ${lectureProgress.lectureId}) filter (where ${lectureProgress.completed} and ${modules.courseId} = ${courseId})`.mapWith(Number)
     })
     .from(enrollments)
+    .leftJoin(lectureProgress, eq(lectureProgress.enrollmentId, enrollments.id))
+    .leftJoin(lectures, eq(lectures.id, lectureProgress.lectureId))
+    .leftJoin(modules, eq(modules.id, lectures.moduleId))
     .where(eq(enrollments.courseId, courseId))
+    .groupBy(enrollments.id)
+
+  const totalLectures = courseLectureStats?.total ?? 0
+  const enrollmentProgress = enrollmentProgressRows.map(({ completedLectures }) => (totalLectures ? (completedLectures / totalLectures) * 100 : 0))
+  const averageProgress = enrollmentProgress.length ? enrollmentProgress.reduce((total, progress) => total + progress, 0) / enrollmentProgress.length : 0
+  const completedStudents = enrollmentProgress.filter((progress) => progress >= 100).length
 
   const moduleRows = await db.select({ id: modules.id, title: modules.title }).from(modules).where(eq(modules.courseId, courseId)).orderBy(asc(modules.orderIndex), asc(modules.id))
   const moduleTitles = new Map(moduleRows.map((row) => [row.id, row.title]))
@@ -81,7 +90,18 @@ export async function getCourseAnalytics(courseId: string, actor: CourseActor): 
           passed: sql<number>`count(*) filter (where ${quizAttempts.passed})`.mapWith(Number)
         })
         .from(quizAttempts)
-        .where(and(inArray(quizAttempts.quizId, quizIds), isNotNull(quizAttempts.submittedAt)))
+        .where(
+          and(
+            inArray(quizAttempts.quizId, quizIds),
+            isNotNull(quizAttempts.submittedAt),
+            sql`exists (
+              select 1
+              from ${enrollments}
+              where ${enrollments.userId} = ${quizAttempts.userId}
+                and ${enrollments.courseId} = ${courseId}
+            )`
+          )
+        )
         .groupBy(quizAttempts.quizId)
     : []
 
@@ -119,9 +139,9 @@ export async function getCourseAnalytics(courseId: string, actor: CourseActor): 
     courseId: course.id,
     title: course.title,
     summary: {
-      enrolledStudents: enrollmentStats?.total ?? 0,
-      averageProgressPercent: Number(enrollmentStats?.averageProgress ?? 0),
-      completedStudents: enrollmentStats?.completed ?? 0,
+      enrolledStudents: enrollmentProgress.length,
+      averageProgressPercent: averageProgress,
+      completedStudents,
       totalWatchedSeconds
     },
     lectures: lectureAnalytics,

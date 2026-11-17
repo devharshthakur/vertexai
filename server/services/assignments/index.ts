@@ -1,9 +1,10 @@
-import { and, asc, eq, isNull } from 'drizzle-orm'
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm'
 import { useDb } from '#server/db'
 import { assignmentSubmissions, assignments, courses, enrollments, users } from '#server/db/schema'
 import type { AssignmentInstructorSubmission, AssignmentSubmissionSummary, AssignmentSummary } from '#shared/types/assignments'
 import type { CreateAssignmentValues, GradeAssignmentSubmissionValues } from '#shared/validation/assignments'
 import { ServiceError } from '#server/utils/service-error'
+import { sanitizeUploadFilename } from '#server/services/uploads/filename'
 import { assertCanManageCourse, canManageCourse, type CourseActor } from '../courses/access'
 import { containsNullByte, deleteCourseMaterialFile, getCourseMaterialPath, readCourseMaterialHeader } from '../courses/material-storage'
 
@@ -44,16 +45,7 @@ function toAssignmentSummary(row: typeof assignments.$inferSelect, submission: A
 }
 
 async function validateAssignmentFile(file: UploadedAssignmentFile) {
-  const filename = file.filename
-    .split(/[\\/]/)
-    .at(-1)
-    ?.split('')
-    .filter((character) => {
-      const code = character.charCodeAt(0)
-      return code >= 32 && code !== 127
-    })
-    .join('')
-    .trim()
+  const filename = sanitizeUploadFilename(file.filename)
   const extension = filename?.slice(filename.lastIndexOf('.')).toLowerCase()
   if (!filename || filename.length > 255 || !extension || (!['.pdf', '.zip'].includes(extension) && !CODE_EXTENSIONS.has(extension))) {
     throw new ServiceError('invalid_input', 'Choose a PDF, ZIP, or supported source-code file.')
@@ -122,7 +114,14 @@ async function assertCanSubmit(assignmentId: string, actor: CourseActor) {
 export async function listCourseAssignments(courseId: string, actor: CourseActor): Promise<AssignmentSummary[]> {
   await assertCanReadAssignments(courseId, actor)
   const rows = await useDb().select().from(assignments).where(eq(assignments.courseId, courseId)).orderBy(asc(assignments.dueAt), asc(assignments.createdAt))
-  const submissions = await useDb().select().from(assignmentSubmissions).where(eq(assignmentSubmissions.userId, actor.id))
+  const assignmentIds = rows.map((row) => row.id)
+  const submissions =
+    assignmentIds.length ?
+      await useDb()
+        .select()
+        .from(assignmentSubmissions)
+        .where(and(eq(assignmentSubmissions.userId, actor.id), inArray(assignmentSubmissions.assignmentId, assignmentIds)))
+    : []
   const byAssignment = new Map(submissions.map((row) => [row.assignmentId, toSubmissionSummary(row)]))
   return rows.map((row) => toAssignmentSummary(row, byAssignment.get(row.id) ?? null))
 }

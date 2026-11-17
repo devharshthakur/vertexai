@@ -18,6 +18,7 @@ VertexAI aims to cover the full teaching loop: authoring, publishing, learning, 
 | AI tutor             | Per-course, grounded streaming chat that cites the lecture transcripts it used and keeps a per-user thread                                                                 |
 | Lecture summaries    | On-demand AI key points for a lecture, cached until the transcript changes; instructors and admins can regenerate                                                          |
 | Quizzes              | Instructor-authored module quizzes (multiple-choice and multi-select), student attempts, instant auto-grading, and retakes                                                 |
+| Quiz drafts          | AI drafts 5–10 quiz questions from a lecture transcript for the instructor to review, edit, and create                                                                     |
 | Instructor analytics | Per-lecture starts, completions, and drop-off; estimated watch time; and quiz averages and pass rates for the course's own instructor                                      |
 | Notes and bookmarks  | Timestamped notes and bookmarks attached to a lecture                                                                                                                      |
 | Assignments          | Instructor rubrics and deadlines, enrolled-student file submissions, protected downloads, manual grading                                                                   |
@@ -31,7 +32,7 @@ VertexAI aims to cover the full teaching loop: authoring, publishing, learning, 
 
 These come from the product requirements and are not implemented yet:
 
-- **AI study aids**: flashcards, quiz drafts, study plans, and mastery scoring.
+- **AI study aids**: flashcards, study plans, and mastery scoring.
 - **Adaptive explanations** at beginner, intermediate, and advanced levels.
 
 The AI tutor and lecture summaries need an `AI_GATEWAY_API_KEY` for the Vercel AI Gateway. Without one they show an unavailable state; the rest of the app keeps working.

@@ -105,3 +105,34 @@ export interface QuizAttemptDetail {
   totalPoints: number
   results: QuizGradedAnswerItem[] | null
 }
+
+/** One option in an AI-generated quiz draft. */
+export interface QuizDraftOption {
+  optionText: string
+  isCorrect: boolean
+}
+
+/**
+ * One question in an AI-generated quiz draft.
+ *
+ * The draft is not stored. The instructor reviews and edits it in the quiz form
+ * before the normal create endpoint saves it.
+ */
+export interface QuizDraftQuestion {
+  questionText: string
+  questionType: QuizQuestionType
+  points: number
+  explanation: string | null
+  options: QuizDraftOption[]
+}
+
+/** A quiz drafted from one lecture transcript, ready for instructor review. */
+export interface QuizDraft {
+  lectureId: string
+  lectureTitle: string
+  moduleId: string
+  moduleTitle: string
+  title: string
+  passingScore: number
+  questions: QuizDraftQuestion[]
+}

@@ -33,6 +33,7 @@ This is the product idea: the tutor answers from _your_ course material and show
 | `server/services/ai/chunking.ts`               | How a long transcript is split into embeddable chunks                           |
 | `server/services/ai/retrieval.ts`              | The cosine-distance query that selects the passages                             |
 | `server/services/ai/chat-thread.ts`            | How one conversation per user and course is kept consistent                     |
+| `server/services/ai/quiz-draft.ts`             | Structured quiz drafts from a transcript, normalized to the quiz form's rules   |
 | `server/api/courses/[id]/ai/chat.post.ts`      | The route that streams the answer                                               |
 | `app/components/learning/AiTutorPanel.vue`     | The client: `useChat`, the citation chips, the retry path                       |
 | `docs/adr/0001-chunked-transcript-indexing.md` | Why the transcript is indexed as passages                                       |
@@ -90,7 +91,7 @@ With the stack running and `pnpm demo:assets` done:
 1. Sign in as `student@example.com` / `password@1234`.
 2. Open **Learning Tailwind CSS** and start a lecture. The player, the notes, and the bookmarks all work.
 3. Ask the AI tutor a question about the course. The answer cites the lecture it used — that citation is the point of the feature.
-4. Sign in as `instructor@example.com` and open the authoring view for the same course.
+4. Sign in as `instructor@example.com` and open the authoring view for the same course. In the Quizzes card, choose a lecture under **Draft questions from a lecture** and press **Draft with AI** — the form fills with questions to review before creating the quiz.
 5. As the student, finish a lecture and submit its quiz. Sign in as the instructor again and open **Analytics** from the course editor or the course card — the lecture row shows the drop-off and watch time, and the quiz row shows the score.
 6. Sign in as `admin@example.com`, open the approvals queue, then **User accounts**. Change a role, suspend and restore the account, and open — but do not confirm — the delete dialog.
 7. Check the wiring: `curl http://localhost:3000/api/health` returns `{"status":"ok","database":"up"}`.
@@ -99,7 +100,7 @@ With the stack running and `pnpm demo:assets` done:
 
 These are not implemented; the product scope is in `docs/PRD/`:
 
-- The AI study aids: flashcards, quiz drafts, study plans, mastery scoring.
+- The AI study aids: flashcards, study plans, mastery scoring.
 - Adaptive explanations at different levels.
 
 `FEATURES.md` keeps the full split between what works and what is planned.

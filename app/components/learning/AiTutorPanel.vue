@@ -1,20 +1,19 @@
 <script setup lang="ts">
-  import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue'
+  import { computed, shallowRef } from 'vue'
   import { useChat } from '@ai-sdk/vue'
   import { DefaultChatTransport } from 'ai'
-  import { RotateCcwIcon, SendIcon, SparklesIcon, SquareIcon } from '@lucide/vue'
-  import { cn } from 'cn'
+  import { ArrowUpIcon, ChevronDownIcon, SparklesIcon, SquareIcon } from '@lucide/vue'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-  import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-  import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-  import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
-  import { ScrollArea } from '@/components/ui/scroll-area'
-  import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-  import { Textarea } from '@/components/ui/textarea'
-  import type { AiChatHistory, AiChatMessage, AiCitation } from '#shared/types/ai'
+  import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+  import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+  import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from '@/components/ui/input-group'
+  import { MessageScroller, MessageScrollerButton, MessageScrollerContent, MessageScrollerItem, MessageScrollerProvider, MessageScrollerViewport } from '@/components/ui/message-scroller'
+  import { TooltipProvider } from '@/components/ui/tooltip'
+  import type { AiChatHistory, AiChatMessage } from '#shared/types/ai'
   import { AI_EXPLANATION_DEPTHS, type AiExplanationDepth } from '#shared/validation/ai'
+  import AiTutorMessage from './AiTutorMessage.vue'
 
   const props = defineProps<{ courseId: string }>()
 
@@ -24,6 +23,7 @@
 
   const depth = ref<AiExplanationDepth>('intermediate')
   const depthOptions = AI_EXPLANATION_DEPTHS.map((value) => ({ value, label: value.charAt(0).toUpperCase() + value.slice(1) }))
+  const depthLabel = computed(() => depthOptions.find((option) => option.value === depth.value)?.label ?? '')
 
   const { messages, status, error, sendMessage, stop, regenerate, clearError } = useChat<AiChatMessage>({
     transport: new DefaultChatTransport({ api: `/api/courses/${props.courseId}/ai/chat` }),
@@ -32,28 +32,11 @@
   })
 
   const input = shallowRef('')
-  const bottom = useTemplateRef<HTMLElement>('bottom')
   const available = computed(() => history.value?.available ?? false)
   const busy = computed(() => status.value === 'submitted' || status.value === 'streaming')
   const canSend = computed(() => available.value && !busy.value && Boolean(input.value.trim()))
-  const lastMessageLength = computed(() => messageText(messages.value.at(-1)).length)
-
-  watch([() => messages.value.length, lastMessageLength], scrollToBottom, { immediate: true })
-
-  /** Keeps the newest message in view without scrolling the page. */
-  async function scrollToBottom() {
-    await nextTick()
-    const viewport = bottom.value?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
-    viewport?.scrollTo({ top: viewport.scrollHeight })
-  }
-
-  function messageText(message: AiChatMessage | undefined): string {
-    return message?.parts.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('') ?? ''
-  }
-
-  function citationsFor(message: AiChatMessage): AiCitation[] {
-    return message.metadata?.citations ?? []
-  }
+  /** The server replaces the trailing answer, so only that one can be regenerated. */
+  const lastAnswerId = computed(() => [...messages.value].reverse().find((message) => message.role === 'assistant')?.id)
 
   function submit() {
     const text = input.value.trim()
@@ -64,8 +47,8 @@
     sendMessage({ text }, { body: { depth: depth.value } })
   }
 
-  function regenerateAnswer() {
-    return regenerate({ body: { depth: depth.value } })
+  function regenerateAnswer(messageId: string) {
+    return regenerate({ messageId, body: { depth: depth.value } })
   }
 
   /** Enter submits; Shift+Enter adds a line. IME confirmation never submits. */
@@ -93,28 +76,33 @@
     </CardHeader>
     <CardContent>
       <div class="flex flex-col gap-4">
-        <div class="h-80 rounded-lg border">
-          <ScrollArea class="h-full">
-            <div class="flex flex-col gap-4 p-3">
-              <Empty v-if="!messages.length">
-                <EmptyHeader>
-                  <EmptyTitle>Ask your first question</EmptyTitle>
-                  <EmptyDescription>Try asking for an explanation, an example, or how two lectures connect.</EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-              <div v-for="message in messages" :key="message.id" class="flex flex-col gap-1">
-                <span class="text-xs font-medium text-muted-foreground">{{ message.role === 'user' ? 'You' : 'AI tutor' }}</span>
-                <div :class="cn('max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap', message.role === 'user' ? 'self-end bg-primary text-primary-foreground' : 'bg-muted')">{{ messageText(message) }}</div>
-                <div v-if="citationsFor(message).length" class="flex flex-wrap gap-2 pt-1">
-                  <Badge v-for="citation in citationsFor(message)" :key="citation.lectureId" class="max-w-full" variant="secondary" :title="citation.excerpt">
-                    <span class="truncate">Source: {{ citation.title }}</span>
-                  </Badge>
-                </div>
-              </div>
-              <div ref="bottom" />
+        <TooltipProvider>
+          <MessageScrollerProvider auto-scroll default-scroll-position="last-anchor">
+            <div class="relative h-96 rounded-lg border">
+              <MessageScroller>
+                <MessageScrollerViewport>
+                  <MessageScrollerContent>
+                    <div class="flex flex-col gap-8 p-3">
+                      <Empty v-if="!messages.length">
+                        <EmptyHeader>
+                          <EmptyMedia variant="icon">
+                            <SparklesIcon />
+                          </EmptyMedia>
+                          <EmptyTitle>Ask your first question</EmptyTitle>
+                          <EmptyDescription>Try asking for an explanation, an example, or how two lectures connect.</EmptyDescription>
+                        </EmptyHeader>
+                      </Empty>
+                      <MessageScrollerItem v-for="message in messages" :key="message.id" :message-id="message.id" :scroll-anchor="message.role === 'user'">
+                        <AiTutorMessage :message="message" :course-id="courseId" :streaming="busy && message.id === lastAnswerId" :regenerable="!busy && message.role === 'assistant' && message.id === lastAnswerId" @regenerate="regenerateAnswer(message.id)" />
+                      </MessageScrollerItem>
+                    </div>
+                  </MessageScrollerContent>
+                </MessageScrollerViewport>
+                <MessageScrollerButton />
+              </MessageScroller>
             </div>
-          </ScrollArea>
-        </div>
+          </MessageScrollerProvider>
+        </TooltipProvider>
 
         <Alert v-if="!available">
           <AlertTitle>AI tutor unavailable</AlertTitle>
@@ -130,44 +118,38 @@
           <Button class="mt-2" variant="outline" size="sm" @click="clearError">Dismiss</Button>
         </Alert>
 
-        <form class="flex flex-col gap-3" @submit.prevent="submit">
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-            <div class="flex flex-col gap-1">
-              <label for="ai-depth" class="text-sm font-medium">Explanation depth</label>
-              <p class="text-xs text-muted-foreground">Beginner defines the terms; advanced assumes the basics.</p>
-            </div>
-            <Select v-model="depth" :disabled="!available || busy">
-              <SelectTrigger id="ai-depth" class="w-full sm:w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectGroup>
-                  <SelectItem v-for="option in depthOptions" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-          <FieldGroup>
-            <Field>
-              <FieldLabel for="ai-tutor-input">Your question</FieldLabel>
-              <Textarea id="ai-tutor-input" v-model="input" rows="3" :disabled="!available || busy" placeholder="What does this lecture mean by…?" @keydown="onInputKeydown" />
-              <FieldDescription>Press Enter to send, Shift+Enter for a new line.</FieldDescription>
-            </Field>
-          </FieldGroup>
-          <div class="flex flex-wrap gap-2">
-            <Button v-if="busy" type="button" variant="secondary" @click="stop">
-              <SquareIcon data-icon="inline-start" />
-              Stop
-            </Button>
-            <Button v-else type="submit" :disabled="!canSend">
-              <SendIcon data-icon="inline-start" />
-              Send
-            </Button>
-            <Button type="button" variant="outline" :disabled="busy || !available || !messages.length" @click="regenerateAnswer()">
-              <RotateCcwIcon data-icon="inline-start" />
-              Regenerate
-            </Button>
-          </div>
+        <form class="flex flex-col gap-2" @submit.prevent="submit">
+          <InputGroup>
+            <InputGroupTextarea v-model="input" :disabled="!available || busy" placeholder="What does this lecture mean by…?" aria-label="Your question" @keydown="onInputKeydown" />
+            <InputGroupAddon align="block-end">
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <InputGroupButton size="sm" variant="outline" class="ml-auto" :disabled="!available" :aria-label="`Explanation depth: ${depthLabel}`">
+                    <span class="text-muted-foreground">Depth</span>
+                    {{ depthLabel }}
+                    <ChevronDownIcon />
+                  </InputGroupButton>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" class="w-44">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel>Explanation depth</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup v-model="depth">
+                      <DropdownMenuRadioItem v-for="option in depthOptions" :key="option.value" :value="option.value">
+                        {{ option.label }}
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <InputGroupButton v-if="busy" size="icon-sm" variant="secondary" aria-label="Stop the answer" @click="stop()">
+                <SquareIcon />
+              </InputGroupButton>
+              <InputGroupButton v-else type="submit" size="icon-sm" variant="default" :disabled="!canSend" aria-label="Send">
+                <ArrowUpIcon />
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
+          <p class="text-xs text-muted-foreground">Press Enter to send, Shift+Enter for a new line. Beginner defines the terms, advanced assumes the basics.</p>
         </form>
       </div>
     </CardContent>

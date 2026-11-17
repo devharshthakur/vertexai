@@ -6,6 +6,7 @@
   import LectureSummaryCard from '@/components/learning/LectureSummaryCard.vue'
   import LecturePreviewPlayer from '@/components/course/LecturePreviewPlayer.vue'
   import { useLectureContent } from '@/composables/useLectureContent'
+  import { useCourseMaterials } from '@/composables/useCourseMaterials'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Badge } from '@/components/ui/badge'
   import { Button } from '@/components/ui/button'
@@ -16,18 +17,18 @@
   import { useMutation, useQueryClient } from '@tanstack/vue-query'
   import { toast } from 'vue-sonner'
   import type { LearningCourse } from '#shared/types/learning'
-  import type { CourseMaterialSummary } from '#shared/types/course-materials'
 
   definePageMeta({ middleware: 'auth' })
   const route = useRoute()
   const courseId = computed(() => String(route.params.courseId))
   const lectureId = computed(() => String(route.params.lectureId))
   const courseRequest = useFetch<LearningCourse>(() => `/api/courses/${courseId.value}/learn`)
-  const materialsRequest = useFetch<CourseMaterialSummary[]>(() => `/api/courses/${courseId.value}/materials`, { default: () => [] })
-  const [{ data, error, pending, refresh }, { data: materials, error: materialsError }] = await Promise.all([courseRequest, materialsRequest])
+  const materialsRequest = useCourseMaterials(courseId)
+  const [{ data, error, pending, refresh }] = await Promise.all([courseRequest])
   const player = useTemplateRef<InstanceType<typeof LearningPlayer>>('player')
   const queryClient = useQueryClient()
-  const { current, lectureMaterials } = useLectureContent(data, materials, lectureId)
+  const { current, lectureMaterials } = useLectureContent(data, materialsRequest.materials, lectureId)
+  const materialsError = materialsRequest.error
   const saveError = shallowRef(false)
 
   function getCurrentTime() {
@@ -99,7 +100,12 @@
     <p v-if="pending">Loading your course…</p>
     <Alert v-else-if="error || !data || !current">
       <AlertTitle>Unable to open this lecture</AlertTitle>
-      <AlertDescription>Make sure you are enrolled and the lecture is available.</AlertDescription>
+      <AlertDescription>
+        <div class="flex flex-col items-start gap-3">
+          <span>Make sure you are enrolled and the lecture is available.</span>
+          <Button v-if="error" size="sm" variant="outline" @click="refresh()">Try again</Button>
+        </div>
+      </AlertDescription>
     </Alert>
     <template v-else>
       <header class="flex flex-col gap-2">

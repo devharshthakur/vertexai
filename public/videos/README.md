@@ -1,89 +1,46 @@
 # Demo lecture videos
 
-Each demo course reads its lecture from its own folder:
+Each demo course has a folder under `public/videos/`:
 
 ```text
 public/videos/<slug>/
-  video.mp4
-  transcript.txt
   about.md
+  transcript.txt
+  video.mp4
 ```
 
-| Course                | Slug         | Source video                                |
-| --------------------- | ------------ | ------------------------------------------- |
-| Learning TypeScript   | `typescript` | https://www.youtube.com/watch?v=BCg4U1FzODs |
-| Learning React        | `react`      | https://www.youtube.com/watch?v=hQAHSlTtcmY |
-| Learning Tailwind CSS | `tailwind`   | https://www.youtube.com/watch?v=6biMWgD6_JY |
+| Course                | Folder       |
+| --------------------- | ------------ |
+| Learning TypeScript   | `typescript` |
+| Learning React        | `react`      |
+| Learning Tailwind CSS | `tailwind`   |
 
-The links identify the intended source videos. Download them only if you have
-permission to use and redistribute the content.
+`about.md` starts with the lecture title as a heading. `transcript.txt` is
+required for seeding. `video.mp4` is optional; without it, the lecture has no
+playable video.
 
-The folders are committed; video files are ignored by Git. `transcript.txt` and
-`about.md` are enough to seed the demo — the lecture is then created without a
-video and the player shows its "no video" state. Run `pnpm demo:assets` to add
-the video files. Everything in `public/videos/` is publicly served by Nuxt, so
-use demo material you are allowed to distribute.
+## Download videos
 
-## Obtaining the videos
-
-The easiest path is the download script, which fetches the release archive,
-verifies its checksum, and installs the video files:
+Video files are not committed to the repository. Run:
 
 ```bash
 pnpm demo:assets
 ```
 
-It is a no-op when the videos are already in place, and `pnpm demo:assets
---force` downloads them again.
-
-The archive is also published on the
-[demo-videos-v1 release](https://github.com/devharshthakur/vertexai/releases/download/demo-videos-v1/vertexai-demo-videos-v1.zip)
-(~630 MB). It contains one `video.mp4` per course under `public/videos/<slug>/`.
-
-From the project root:
+The script downloads and verifies the demo archive. To download it manually:
 
 ```bash
 curl -LO https://github.com/devharshthakur/vertexai/releases/download/demo-videos-v1/vertexai-demo-videos-v1.zip
 curl -LO https://github.com/devharshthakur/vertexai/releases/download/demo-videos-v1/vertexai-demo-videos-v1.zip.sha256
 shasum -a 256 -c vertexai-demo-videos-v1.zip.sha256
 unzip vertexai-demo-videos-v1.zip
-rm vertexai-demo-videos-v1.zip vertexai-demo-videos-v1.zip.sha256
 ```
 
-The archive extracts into `public/videos/<slug>/` and includes the committed
-`about.md` and `transcript.txt` files, so it does not need to be merged with them.
-Only download and redistribute these videos where you have permission to do so.
+Use videos only when you have permission to use and redistribute them.
+Everything under `public/videos/` is publicly served by the app.
 
-## Video file
+## Seed the demo
 
-The video file is optional. The seed uses `video.mp4` when present and otherwise
-the first `.mp4` file in the folder; without one, the lecture is seeded with no
-video. Use MP4 with H.264 video and AAC audio so it plays in every modern
-browser. Other video formats are ignored.
-
-## `about.md`
-
-The first heading is the lecture title. The remaining text is used as the
-plain-text course description.
-
-```markdown
-# Introduction to TypeScript
-
-A short description of the course and what students will learn.
-```
-
-## `transcript.txt`
-
-Plain-text transcript of the lecture. It is required by the demo seed and is the transcript stored on the seeded lecture.
-
-## Seeding
-
-Run `pnpm demo:setup` for a fresh demo database. It validates every folder first,
-then deletes the Compose project's containers and volumes, creates a database,
-applies migrations, and seeds it. All existing data in those volumes is lost.
-For an existing migrated database, use `pnpm db:seed` instead. Missing or
-malformed files stop either command with the affected path.
-
-The container stack mounts this folder into the app container, which copies the
-videos into the volume it serves them from. The videos are therefore never
-baked into the image, and a rebuild keeps them.
+Run `pnpm demo:setup` for a fresh demo database. It removes the Compose project's
+containers and volumes before seeding; existing data in those volumes is lost.
+For an existing migrated database, run `pnpm db:seed`.

@@ -3,12 +3,12 @@
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
   import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-  import type { AssignmentInstructorSubmission, AssignmentSummary } from '#shared/types/assignments'
+  import type { AssignmentInstructorSubmission, AssignmentSubmissionSummary, AssignmentSummary } from '#shared/types/assignments'
 
   const props = defineProps<{ assignment: AssignmentSummary }>()
   const { data: submissions, pending: loading, error: loadError } = await useFetch<AssignmentInstructorSubmission[]>(() => `/api/assignments/${props.assignment.id}/submissions`, { default: () => [] })
-  function updateSubmission(updated: AssignmentInstructorSubmission) {
-    submissions.value = submissions.value.map((item) => (item.id === updated.id ? updated : item))
+  function updateSubmission(updated: AssignmentSubmissionSummary) {
+    submissions.value = submissions.value.map((item) => (item.id === updated.id ? { ...item, ...updated } : item))
   }
 </script>
 

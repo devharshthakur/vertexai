@@ -13,7 +13,7 @@
   import { Input } from '@/components/ui/input'
   import { Spinner } from '@/components/ui/spinner'
   import { Textarea } from '@/components/ui/textarea'
-  import type { AssignmentInstructorSubmission, AssignmentSummary } from '#shared/types/assignments'
+  import type { AssignmentInstructorSubmission, AssignmentSubmissionSummary, AssignmentSummary } from '#shared/types/assignments'
   import { gradeAssignmentSubmissionSchema, type GradeAssignmentSubmissionValues } from '#shared/validation/assignments'
 
   const props = defineProps<{
@@ -21,7 +21,7 @@
     submission: AssignmentInstructorSubmission
   }>()
   const emit = defineEmits<{
-    saved: [submission: AssignmentInstructorSubmission]
+    saved: [submission: AssignmentSubmissionSummary]
   }>()
 
   const maxPoints = computed(() => props.assignment.rubric.reduce((total, item) => total + item.points, 0))
@@ -58,7 +58,7 @@
 
   const { mutate: saveGradeRequest, isPending: isSaving } = useMutation({
     mutationFn: (payload: GradeAssignmentSubmissionValues) =>
-      $fetch<AssignmentInstructorSubmission>(`/api/submissions/${props.submission.id}/grade`, {
+      $fetch<AssignmentSubmissionSummary>(`/api/submissions/${props.submission.id}/grade`, {
         method: 'PUT',
         body: payload
       }),

@@ -6,14 +6,14 @@ const MAX_POOL_SIZE = 10
 
 type Db = ReturnType<typeof createDb>
 
-function createDb() {
+function createPool(max: number) {
   const connectionString = process.env.DATABASE_URL
 
   if (!connectionString) {
     throw new Error('[db] DATABASE_URL is not set. Copy .env.example to .env.')
   }
 
-  const pool = new Pool({ connectionString, max: MAX_POOL_SIZE })
+  const pool = new Pool({ connectionString, max })
 
   // An idle client that errors is emitted on the pool itself. Without a
   // listener Node treats it as an unhandled 'error' event and exits.
@@ -21,14 +21,32 @@ function createDb() {
     console.error('[db] idle client error', error)
   })
 
-  return drizzle({ client: pool, schema })
+  return pool
+}
+
+function createDb() {
+  return drizzle({ client: usePool(), schema })
+}
+
+const globalForDb = globalThis as typeof globalThis & { __vertexaiDb?: Db; __vertexaiPool?: Pool; __vertexaiAiLockPool?: Pool }
+
+/**
+ * The pools are cached on `globalThis` so Nuxt's dev-server reloads reuse
+ * shared connections instead of leaking a new pool on each reload.
+ */
+function usePool() {
+  globalForDb.__vertexaiPool ??= createPool(MAX_POOL_SIZE)
+  return globalForDb.__vertexaiPool
 }
 
 /**
- * The pool is cached on `globalThis` so Nitro's dev-server reloads reuse a
- * single connection pool instead of leaking one per reload.
+ * Chat advisory locks use their own bounded pool so long-lived streams cannot
+ * occupy every connection used by application queries.
  */
-const globalForDb = globalThis as typeof globalThis & { __vertexaiDb?: Db }
+export function useAiChatLockPool() {
+  globalForDb.__vertexaiAiLockPool ??= createPool(4)
+  return globalForDb.__vertexaiAiLockPool
+}
 
 /**
  * Returns the shared Drizzle client. The connection is created on first use,

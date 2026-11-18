@@ -1,7 +1,8 @@
 <script setup lang="ts">
   import { UploadIcon } from '@lucide/vue'
-  import { useMutation } from '@tanstack/vue-query'
+  import { useMutation, useQueryClient } from '@tanstack/vue-query'
   import { useFileDialog } from '@vueuse/core'
+  import { courseMaterialKeys, useCourseMaterials } from '@/composables/useCourseMaterials'
   import { toast } from 'vue-sonner'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
@@ -14,7 +15,8 @@
   import { COURSE_MATERIAL_EXTENSIONS, MAX_COURSE_MATERIAL_BYTES } from '#shared/validation/course-materials'
 
   const props = defineProps<{ courseId: string; modules: ModuleSummary[] }>()
-  const { data: materials, pending, error, refresh } = await useFetch<CourseMaterialSummary[]>(() => `/api/courses/${props.courseId}/materials`, { default: () => [] })
+  const { materials, pending, error } = useCourseMaterials(() => props.courseId)
+  const queryClient = useQueryClient()
   const materialToRemove = shallowRef<CourseMaterialSummary | null>(null)
   const acceptedExtensions = COURSE_MATERIAL_EXTENSIONS.join(',')
   const pendingUploadTarget = shallowRef<{ moduleId: string; lectureId: string | null } | null>(null)
@@ -66,7 +68,7 @@
       return $fetch(`/api/courses/${props.courseId}/materials`, { method: 'POST', body })
     },
     onSuccess: async () => {
-      await refresh()
+      await queryClient.invalidateQueries({ queryKey: courseMaterialKeys.byCourse(props.courseId) })
       toast.success('Material uploaded.')
     },
     onError: () => {
@@ -81,7 +83,7 @@
   } = useMutation({
     mutationFn: (material: CourseMaterialSummary) => $fetch(materialUrl(material.id), { method: 'DELETE' }),
     onSuccess: async () => {
-      await refresh()
+      await queryClient.invalidateQueries({ queryKey: courseMaterialKeys.byCourse(props.courseId) })
       toast.success('Material removed.')
     },
     onError: () => {

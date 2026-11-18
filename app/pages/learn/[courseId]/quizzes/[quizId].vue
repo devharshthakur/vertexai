@@ -1,7 +1,10 @@
 <script setup lang="ts">
+  import { useEventListener } from '@vueuse/core'
   import { useMutation } from '@tanstack/vue-query'
+  import { onBeforeRouteLeave, onBeforeRouteUpdate } from 'vue-router'
   import { toast } from 'vue-sonner'
   import QuizAttemptResults from '@/components/learning/QuizAttemptResults.vue'
+  import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
   import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
   import { Button } from '@/components/ui/button'
   import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -21,16 +24,24 @@
   const quizId = computed(() => String(route.params.quizId))
   const { data, pending, error, refresh } = await useFetch<QuizDetailForStudent>(() => `/api/quizzes/${quizId.value}`)
 
-  const initialAttemptId = data.value?.quiz.openAttemptId ?? data.value?.quiz.latestAttempt?.id ?? null
-  const { data: initialAttempt } = await useFetch<QuizAttemptDetail | null>(() => `/api/attempts/${initialAttemptId}`, {
+  const initialAttemptId = data.value?.quiz.courseId === courseId.value ? (data.value.quiz.openAttemptId ?? data.value.quiz.latestAttempt?.id ?? null) : null
+  const { data: initialAttempt } = await useFetch<QuizAttemptDetail | null>(`/api/attempts/${initialAttemptId ?? 'none'}`, {
     immediate: Boolean(initialAttemptId),
     default: () => null
   })
 
-  const quiz = computed(() => data.value?.quiz ?? null)
-  const questions = computed(() => [...(data.value?.questions ?? [])].sort((left, right) => left.orderIndex - right.orderIndex))
+  const quiz = computed(() => (data.value?.quiz.courseId === courseId.value ? data.value.quiz : null))
+  const questions = computed(() => (quiz.value ? [...(data.value?.questions ?? [])].sort((left, right) => left.orderIndex - right.orderIndex) : []))
   const activeAttempt = shallowRef<QuizAttemptDetail | null>(initialAttempt.value)
   const selectedOptionIds = reactive<Record<string, string[]>>({})
+  const hasUnsentAnswers = computed(() => Object.values(selectedOptionIds).some((optionIds) => optionIds.length > 0))
+  const pendingNavigation = shallowRef<((allowed: boolean) => void) | null>(null)
+  const confirmOpen = computed({
+    get: () => pendingNavigation.value !== null,
+    set: (open) => {
+      if (!open) resolveNavigation(false)
+    }
+  })
 
   const QUESTION_TYPE_LABELS: Record<QuizQuestionType, string> = {
     mcq: 'Multiple choice',
@@ -43,6 +54,59 @@
   function clearSelections() {
     for (const key of Object.keys(selectedOptionIds)) selectedOptionIds[key] = []
   }
+
+  function resolveNavigation(allowed: boolean) {
+    const resolve = pendingNavigation.value
+    pendingNavigation.value = null
+    resolve?.(allowed)
+  }
+
+  function confirmDiscardingAnswers() {
+    if (!hasUnsentAnswers.value) return true
+    if (pendingNavigation.value) return false
+    return new Promise<boolean>((resolve) => {
+      pendingNavigation.value = resolve
+    })
+  }
+
+  onBeforeRouteLeave(confirmDiscardingAnswers)
+  onBeforeRouteUpdate((to, from) => {
+    if (to.path === from.path) return true
+    return confirmDiscardingAnswers()
+  })
+  if (import.meta.client) {
+    useEventListener(window, 'beforeunload', (event) => {
+      if (!hasUnsentAnswers.value) return
+      event.preventDefault()
+      event.returnValue = ''
+    })
+  }
+
+  watch(quizId, () => {
+    activeAttempt.value = null
+    clearSelections()
+  })
+  watch(data, (quizData, _previous, onCleanup) => {
+    if (!quizData || quizData.quiz.id !== quizId.value || quizData.quiz.courseId !== courseId.value) {
+      activeAttempt.value = null
+      return
+    }
+    const attemptId = quizData.quiz.openAttemptId ?? quizData.quiz.latestAttempt?.id
+    if (!attemptId) {
+      activeAttempt.value = null
+      return
+    }
+
+    const controller = new AbortController()
+    onCleanup(() => controller.abort())
+    $fetch<QuizAttemptDetail>(`/api/attempts/${attemptId}`, { signal: controller.signal })
+      .then((attempt) => {
+        activeAttempt.value = attempt
+      })
+      .catch(() => {
+        // Keep a just-started attempt visible if its follow-up detail request fails.
+      })
+  })
 
   function setMcqOption(questionId: string, value: unknown) {
     if (typeof value === 'string' && value) selectedOptionIds[questionId] = [value]
@@ -123,9 +187,18 @@
       <p v-if="quiz" class="text-muted-foreground">{{ quiz.moduleTitle }} · {{ quiz.questionCount }} questions · {{ quiz.totalPoints }} points · Passing score: {{ quiz.passingScore }}%</p>
     </header>
 
-    <Alert v-if="error" variant="destructive">
+    <Alert v-if="data && data.quiz.courseId !== courseId" variant="destructive">
+      <AlertTitle>Quiz does not belong to this course</AlertTitle>
+      <AlertDescription>Return to the course quiz list and choose a quiz from this course.</AlertDescription>
+    </Alert>
+    <Alert v-else-if="error" variant="destructive">
       <AlertTitle>Quiz could not be loaded</AlertTitle>
-      <AlertDescription>Make sure you are enrolled in this course and try again.</AlertDescription>
+      <AlertDescription>
+        <div class="flex flex-col items-start gap-3">
+          <span>Make sure you are enrolled in this course and try again.</span>
+          <Button size="sm" variant="outline" @click="refresh()">Try again</Button>
+        </div>
+      </AlertDescription>
     </Alert>
     <p v-else-if="pending" class="text-sm text-muted-foreground" role="status">Loading quiz…</p>
     <template v-else-if="quiz">
@@ -191,5 +264,17 @@
         </CardContent>
       </Card>
     </template>
+    <AlertDialog v-model:open="confirmOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Discard unanswered selections?</AlertDialogTitle>
+          <AlertDialogDescription>Your selected answers have not been submitted. Leaving this quiz discards them.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep answering</AlertDialogCancel>
+          <Button variant="destructive" @click="resolveNavigation(true)">Discard answers</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>

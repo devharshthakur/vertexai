@@ -1,9 +1,9 @@
-import { defineEventHandler } from 'nuxt/server'
+import { defineEventHandler, readValidatedBody } from 'nuxt/server'
 import { courseIdSchema, updateCourseSchema } from '#shared/validation/courses'
 import { updateCourse } from '#server/services/courses/commands'
 import { withServiceErrors } from '#server/utils/errors'
 import { requireRole } from '#server/utils/require-session'
-import { parseBody, parseParam } from '#server/utils/validate'
+import { parseParam } from '#server/utils/validate'
 
 /**
  * Updates the metadata of a course.
@@ -15,7 +15,7 @@ import { parseBody, parseParam } from '#server/utils/validate'
 export default defineEventHandler(async (event) => {
   const session = await requireRole(event, 'instructor', 'admin')
   const courseId = parseParam(event, 'id', courseIdSchema)
-  const body = await parseBody(event, updateCourseSchema)
+  const body = await readValidatedBody(event, updateCourseSchema)
 
   return withServiceErrors(async () => {
     return await updateCourse(courseId, body, {

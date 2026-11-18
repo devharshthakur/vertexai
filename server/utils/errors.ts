@@ -9,19 +9,26 @@ import { ServiceError } from './service-error'
  */
 export function toHttpError(error: unknown): unknown {
   if (error instanceof ServiceError) {
-    const statusCode =
+    const status =
       error.code === 'invalid_input' ? 400
       : error.code === 'forbidden' ? 403
       : error.code === 'conflict' ? 409
+      : error.code === 'unavailable' ? 503
+      : error.code === 'rate_limited' ? 429
       : 404
 
+    const statusText =
+      error.code === 'invalid_input' ? 'Bad Request'
+      : error.code === 'forbidden' ? 'Forbidden'
+      : error.code === 'conflict' ? 'Conflict'
+      : error.code === 'unavailable' ? 'Service Unavailable'
+      : error.code === 'rate_limited' ? 'Too Many Requests'
+      : 'Not Found'
+
     return createError({
-      statusCode,
-      statusMessage:
-        error.code === 'invalid_input' ? 'Bad Request'
-        : error.code === 'forbidden' ? 'Forbidden'
-        : error.code === 'conflict' ? 'Conflict'
-        : 'Not Found'
+      status,
+      statusText,
+      ...(error.message === error.code ? {} : { message: error.message })
     })
   }
 

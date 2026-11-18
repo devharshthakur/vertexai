@@ -1,0 +1,2 @@
+ALTER TABLE "lecture_progress" ADD COLUMN "watched_seconds" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "lecture_progress" ADD COLUMN "last_position_at" timestamp DEFAULT now() NOT NULL;

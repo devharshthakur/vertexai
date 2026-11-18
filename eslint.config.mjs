@@ -28,7 +28,7 @@ const designSystem = {
  * @type {import('eslint').Linter.Config}
  */
 const databaseSafety = {
-  files: ['server/**/*.ts', 'seed/**/*.ts'],
+  files: ['server/**/*.ts', 'demo/**/*.ts'],
   plugins: { drizzle },
   rules: {
     'drizzle/enforce-delete-with-where': ['error', { drizzleObjectName: ['db', 'tx', 'useDb'] }],

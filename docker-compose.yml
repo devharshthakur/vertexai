@@ -21,5 +21,59 @@ services:
       retries: 10
       start_period: 10s
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      # Inside the Compose network the database answers on its service name.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-vertexai}:${POSTGRES_PASSWORD:-vertexai}@db:5432/${POSTGRES_DB:-vertexai}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      BETTER_AUTH_URL: ${APP_URL:-http://localhost:${APP_PORT:-3000}}
+      # The AI tutor needs a gateway key. Without one it shows its
+      # unavailable state and every other feature keeps working.
+      AI_GATEWAY_API_KEY: ${AI_GATEWAY_API_KEY:-}
+      NUXT_AI_CHAT_MODEL: ${AI_CHAT_MODEL:-openai/gpt-6-luna}
+      NUXT_AI_EMBEDDING_MODEL: ${AI_EMBEDDING_MODEL:-openai/text-embedding-3-large}
+      NUXT_AI_EMBEDDING_MAX_INPUT_TOKENS: ${AI_EMBEDDING_MAX_INPUT_TOKENS:-8192}
+      NUXT_AI_EMBEDDING_CHUNK_TOKENS: ${AI_EMBEDDING_CHUNK_TOKENS:-1500}
+      # Uploaded course materials live on their own volume, outside the image.
+      COURSE_MATERIALS_DIR: /data/course-materials
+      # The demo assets are prepared before the demo data is seeded: the
+      # transcripts come from the image, the videos from the mounted folder.
+      DEMO_ASSETS_DIR: /app/.output/public/videos
+      DEMO_ASSETS_SOURCE: /app/demo-assets
+      DEMO_VIDEO_INBOX: /inbox
+      # The stack comes up ready to use: the migrations are applied and the
+      # demo courses are seeded the first time the database is empty.
+      DB_AUTO_MIGRATE: 'true'
+      DEMO_SEED: 'true'
+    ports:
+      - '${APP_PORT:-3000}:3000'
+    volumes:
+      # The demo lecture videos are mounted, never baked into the image.
+      - ./public/videos:/inbox:ro
+      - vertexai-videos:/app/.output/public/videos
+      - vertexai-materials:/data/course-materials
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 volumes:
   vertexai-pgdata:
+  vertexai-materials:
+  vertexai-videos:

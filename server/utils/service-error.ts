@@ -4,7 +4,7 @@
  * Services never build HTTP responses; they raise one of these instead. The
  * routes translate the code into a status code.
  */
-export type ServiceErrorCode = 'not_found' | 'forbidden' | 'conflict' | 'invalid_input'
+export type ServiceErrorCode = 'not_found' | 'forbidden' | 'conflict' | 'invalid_input' | 'unavailable' | 'rate_limited'
 
 export class ServiceError extends Error {
   constructor(

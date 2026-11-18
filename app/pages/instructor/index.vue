@@ -94,7 +94,10 @@
           <p v-else class="text-sm text-muted-foreground">No description yet.</p>
         </CardContent>
         <CardFooter>
-          <NuxtLink :to="`/instructor/courses/${course.id}`" class="text-sm font-medium underline-offset-4 hover:underline"> Edit course </NuxtLink>
+          <div class="flex flex-wrap items-center gap-4">
+            <NuxtLink :to="`/instructor/courses/${course.id}`" class="text-sm font-medium underline-offset-4 hover:underline"> Edit course </NuxtLink>
+            <NuxtLink :to="`/instructor/courses/${course.id}/analytics`" class="text-sm font-medium underline-offset-4 hover:underline"> Analytics </NuxtLink>
+          </div>
         </CardFooter>
       </Card>
     </div>

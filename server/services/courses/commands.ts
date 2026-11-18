@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, sql } from 'drizzle-orm'
 import { useDb, type Db } from '#server/db'
-import { courseApprovals, courses, lectures, modules } from '#server/db/schema'
+import { courseApprovals, courses, lectureChunks, lectures, modules } from '#server/db/schema'
 import type { CourseSummary, LectureSummary, ModuleSummary } from '#shared/types/courses'
 import type { AddModuleValues, CreateCourseValues, CreateLectureValues, ReorderLecturesValues, ReorderModulesValues, ReviewCourseValues, UpdateCourseValues, UpdateLectureValues } from '#shared/validation/courses'
 import { ServiceError } from '#server/utils/service-error'
@@ -134,16 +134,30 @@ export async function updateLecture(courseId: string, moduleId: string, lectureI
 
   if (!existingLecture || existingLecture.moduleId !== existingModule.id) throw new ServiceError('not_found')
 
-  const [row] = await useDb()
-    .update(lectures)
-    .set({
-      ...(input.title !== undefined && { title: input.title }),
-      ...(input.videoUrl !== undefined && { videoUrl: input.videoUrl }),
-      ...(input.transcript !== undefined && { transcript: input.transcript }),
-      ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds })
-    })
-    .where(eq(lectures.id, existingLecture.id))
-    .returning()
+  const transcriptChanged = input.transcript !== undefined && input.transcript !== existingLecture.transcript
+
+  const row = await useDb().transaction(async (tx) => {
+    const [updated] = await tx
+      .update(lectures)
+      .set({
+        ...(input.title !== undefined && { title: input.title }),
+        ...(input.videoUrl !== undefined && { videoUrl: input.videoUrl }),
+        ...(input.transcript !== undefined && { transcript: input.transcript }),
+        ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds }),
+        // A new transcript invalidates both the indexed passages and the cached summary.
+        ...(transcriptChanged && { summary: null, summaryGeneratedAt: null })
+      })
+      .where(eq(lectures.id, existingLecture.id))
+      .returning()
+
+    // The indexed passages belong to the old transcript, so they are dropped
+    // and the tutor indexes the new one the next time it is used.
+    if (transcriptChanged) {
+      await tx.delete(lectureChunks).where(eq(lectureChunks.lectureId, existingLecture.id))
+    }
+
+    return updated
+  })
 
   return toLectureSummary(row!)
 }

@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite'
+import { createRuntimeConfig } from './config/runtime.ts'
 
 const videoJsElements = new Set(['video-player', 'video-neutral-skin'])
 
@@ -47,9 +48,10 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 5
   },
+  runtimeConfig: createRuntimeConfig(),
   typescript: {
     nodeTsConfig: {
-      include: ['../drizzle.config.ts', '../eslint.config.mjs', '../prettier.config.js', '../.nano-staged.mjs', '../scripts/*.ts', '../seed/*.ts'],
+      include: ['../drizzle.config.ts', '../eslint.config.mjs', '../prettier.config.js', '../.nano-staged.mjs', '../scripts/*.ts', '../demo/*.ts'],
       compilerOptions: {
         types: ['node'],
         checkJs: true,

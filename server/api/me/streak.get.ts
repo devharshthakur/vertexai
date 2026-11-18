@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'nuxt/server'
-import { getMyLearningStreak } from '#server/services/learning-tools-service'
+import { getMyLearningStreak } from '#server/services/courses/learning-tools'
 import { requireSession } from '#server/utils/require-session'
 
 export default defineEventHandler(async (event) => {

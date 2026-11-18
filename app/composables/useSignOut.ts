@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/vue-query'
 import { isNavigationFailure, NavigationFailureType } from 'vue-router'
+import { toast } from 'vue-sonner'
 import { refreshAuthSession } from '@/composables/useAuthSession'
 import { authClient } from '@/lib/auth-client'
 
@@ -12,7 +13,13 @@ export function useSignOut() {
     const navigationResult = await navigateTo('/')
     if (isNavigationFailure(navigationResult, NavigationFailureType.aborted)) return
 
-    await authClient.signOut()
+    try {
+      const result = await authClient.signOut()
+      if (result.error) throw result.error
+    } catch {
+      toast.error('We could not sign you out. Your account is still signed in; please try again.')
+      return
+    }
     // Refresh after navigating so the session store reflects the sign-out.
     await refreshAuthSession()
     // Do not let one account's cached data reach the next one.

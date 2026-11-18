@@ -51,6 +51,17 @@ export const lectureProgress = pgTable(
       .notNull()
       .references(() => lectures.id, { onDelete: 'cascade' }),
     positionSeconds: integer('position_seconds').default(0).notNull(),
+    /**
+     * Estimated seconds actually watched, accumulated from playback updates.
+     *
+     * The player reports its position every few seconds, so the server adds
+     * the forward movement, capped by the wall-clock time since the previous
+     * update. A seek therefore contributes nothing beyond the tolerance, while
+     * normal playback adds its real duration.
+     */
+    watchedSeconds: integer('watched_seconds').default(0).notNull(),
+    /** When the last playback update arrived; used to cap the watched delta. */
+    lastPositionAt: timestamp('last_position_at').defaultNow().notNull(),
     completed: boolean('completed').default(false).notNull(),
     viewedAt: timestamp('viewed_at').defaultNow().notNull()
   },

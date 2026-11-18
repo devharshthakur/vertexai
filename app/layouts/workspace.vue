@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { BookOpenCheckIcon, ShieldCheckIcon } from '@lucide/vue'
+  import { BookOpenCheckIcon, ShieldCheckIcon, UsersIcon } from '@lucide/vue'
   import AppContainer from '@/components/layout/AppContainer.vue'
   import { Button } from '@/components/ui/button'
   import { Separator } from '@/components/ui/separator'
@@ -25,6 +25,12 @@
             <NuxtLink to="/admin/approvals">
               <ShieldCheckIcon data-icon="inline-start" />
               Course approvals
+            </NuxtLink>
+          </Button>
+          <Button v-if="isAdmin" variant="ghost" size="sm" as-child>
+            <NuxtLink to="/admin/users">
+              <UsersIcon data-icon="inline-start" />
+              User accounts
             </NuxtLink>
           </Button>
         </nav>

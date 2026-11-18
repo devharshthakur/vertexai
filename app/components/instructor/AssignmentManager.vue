@@ -59,6 +59,7 @@
 
   /** Subscribe to the rubric so edits and add/remove updates the running total. */
   const rubricTotal = form.useSelector((state) => state.values.rubric.reduce((total, criterion) => total + (Number(criterion.points) || 0), 0))
+  const hasSubmittedForm = form.useSelector((state) => state.submissionAttempts > 0)
 
   /** Deep field names keep array typing for the rubric row errors. */
   function criterionFieldName(index: number, key: 'description' | 'points') {
@@ -170,21 +171,21 @@
                       </form.Field>
                       <form.Field :name="criterionFieldName(index, 'points')">
                         <template #default="{ field: criterionField }">
-                          <Field :data-invalid="!criterionField.state.meta.isValid">
+                          <Field :data-invalid="(criterionField.state.meta.isBlurred || hasSubmittedForm) && !criterionField.state.meta.isValid">
                             <FieldLabel :for="`points-${index}`">Points</FieldLabel>
                             <Input
                               :id="`points-${index}`"
-                              :model-value="criterionField.state.value"
-                              :aria-invalid="!criterionField.state.meta.isValid"
+                              :model-value="Number.isFinite(criterionField.state.value) ? criterionField.state.value : ''"
+                              :aria-invalid="(criterionField.state.meta.isBlurred || hasSubmittedForm) && !criterionField.state.meta.isValid"
                               type="number"
                               min="0.01"
                               max="100"
                               step="0.01"
                               required
-                              @update:model-value="(value) => criterionField.handleChange(Number(value) || 0)"
+                              @update:model-value="(value) => criterionField.handleChange(value === '' ? Number.NaN : Number(value))"
                               @blur="criterionField.handleBlur"
                             />
-                            <FieldError v-if="!criterionField.state.meta.isValid" :errors="criterionField.state.meta.errors" />
+                            <FieldError v-if="(criterionField.state.meta.isBlurred || hasSubmittedForm) && !criterionField.state.meta.isValid" :errors="criterionField.state.meta.errors" />
                           </Field>
                         </template>
                       </form.Field>

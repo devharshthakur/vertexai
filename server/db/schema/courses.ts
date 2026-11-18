@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm'
-import { index, integer, numeric, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { index, integer, numeric, pgTable, text, timestamp, uuid, varchar, vector } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 import { COURSE_STATUSES } from '../../../shared/validation/courses'
 
@@ -65,9 +65,39 @@ export const lectures = pgTable(
     resourceUrls: text('resource_urls')
       .array()
       .default(sql`'{}'::text[]`)
-      .notNull()
+      .notNull(),
+    /** Cached AI summary of the transcript. */
+    summary: text('summary'),
+    summaryGeneratedAt: timestamp('summary_generated_at', { withTimezone: true })
   },
   (table) => [index('lectures_moduleId_idx').on(table.moduleId)]
+)
+
+/**
+ * One embedded piece of a lecture transcript.
+ *
+ * A transcript can be longer than the embedding model accepts in one request,
+ * so the tutor indexes it in chunks. Each row holds one chunk with its vector,
+ * and the course id is stored next to it so retrieval stays a single scoped
+ * query instead of a join through modules and lectures.
+ */
+export const lectureChunks = pgTable(
+  'lecture_chunks',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    lectureId: uuid('lecture_id')
+      .notNull()
+      .references(() => lectures.id, { onDelete: 'cascade' }),
+    courseId: uuid('course_id')
+      .notNull()
+      .references(() => courses.id, { onDelete: 'cascade' }),
+    /** Position of the chunk inside the transcript, from zero. */
+    position: integer('position').notNull(),
+    content: text('content').notNull(),
+    embedding: vector('embedding', { dimensions: 1536 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull()
+  },
+  (table) => [index('lecture_chunks_courseId_idx').on(table.courseId), index('lecture_chunks_lectureId_idx').on(table.lectureId), index('lecture_chunks_embedding_hnsw_idx').using('hnsw', table.embedding.op('vector_cosine_ops'))]
 )
 
 export const coursesRelations = relations(courses, ({ one, many }) => ({
@@ -86,9 +116,10 @@ export const modulesRelations = relations(modules, ({ one, many }) => ({
   lectures: many(lectures)
 }))
 
-export const lecturesRelations = relations(lectures, ({ one }) => ({
+export const lecturesRelations = relations(lectures, ({ one, many }) => ({
   module: one(modules, {
     fields: [lectures.moduleId],
     references: [modules.id]
-  })
+  }),
+  chunks: many(lectureChunks)
 }))
